@@ -1,0 +1,32 @@
+{
+  "name": "moret",
+  "version": "1.0.0",
+  "description": "Moret Exchange",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "moret"
+  },
+  "keywords": [
+    "moret",
+    "options",
+    "exchange",
+    "volatility",
+    "token"
+  ],
+  "author": "eightwoods",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@chainlink/contracts": "^0.1.7",
+    "@openzeppelin/contracts": "^4.1.0",
+    "@sushiswap/core": "^1.4.2",
+    "@truffle/hdwallet-provider": "^1.4.0",
+    "web3": "^1.3.6"
+  }
+}
