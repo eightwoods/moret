@@ -132,7 +132,7 @@ contract GovernanceToken is ERC20, Ownable, AccessControl
 
     function sweepBalance() external onlyOwner{
         uint256 _amount = address(this).balance;
-        (bool _sent, ) = msg.sender.call{value: _amount}("");
+        (bool _sent, ) = payable(msg.sender).call{value: _amount}("");
         require(_sent, "Withdrawal failed.");
         emit cashSweep(_amount);
     }

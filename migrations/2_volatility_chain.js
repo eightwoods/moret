@@ -1,17 +1,36 @@
-const settings ={
-  priceSourceId: 0x9326BFA02ADD2366b30bacB125260Af641031331,
-  parameterDecimals: 8,
-  tokenName: "ETH"
-};
+const settings={
+    priceSourceId: '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada',
+    parameterDecimals: 8,
+    tokenName: "MATIC",
+    tenor: 86400,
+    params: [5000000,20000000,0,0,90000000,10000000]
+    };
 
 const volChain = artifacts.require("./VolatilityChain");
 
-module.exports =(deployer, owner) => deployer.then(()=> deployVolChain(deployer, owner));
+module.exports = (deployer) => deployer
+  .then(()=> deployVolChain(deployer))
+  .then(()=> setVolChain())
+  .then(()=> displayVolChain());
 
-function deployVolChain(deployer, owner){
-  return deployer.deploy(volChain,
+function deployVolChain(deployer){
+  return deployer.deploy(
+    volChain,
     settings.priceSourceId,
     settings.parameterDecimals,
     settings.tokenName,
+    {overwrite: true}
   );
+}
+
+async function setVolChain(){
+  const varChainInstance = (await volChain.deployed());
+  varChainInstance.resetVolParams(settings.tenor, settings.params);
+}
+
+async function displayVolChain(){
+  const varChainInstance = (await volChain.deployed());
+  console.log(`=========
+    Deployed VolChain: ${volChain.address}
+    =========`)
 }

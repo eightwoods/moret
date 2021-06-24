@@ -1,2 +1,5 @@
 .secret
 node_modules
+.deps
+app.js
+app

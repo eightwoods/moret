@@ -60,7 +60,7 @@ module.exports = {
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     ropsten: {
-    provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}$`),
+    provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
     networkCheckTimeout: 1000000000,
     network_id: 3,       // Ropsten's id
     gas: 5500000,        // Ropsten has a lower block limit than mainnet
@@ -69,10 +69,20 @@ module.exports = {
     skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },
     kovan: {
-    provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/${infuraKey}$`, 42),
+    provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/${infuraKey}`),
       networkCheckTimeout: 1000000000,
     network_id: 42,       // Kovan's id
     gas: 5500000,        // Ropsten has a lower block limit than mainnet
+    confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+    timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+    skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
+  },
+  mumbai: {
+    provider: () => new HDWalletProvider(mnemonic, `https://polygon-mumbai.infura.io/v3/${infuraKey}`),
+      networkCheckTimeout: 1000000000,
+    network_id: 80001,       // Kovan's id
+    gas: 5500000,
+    gasPrice: 10e9,
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
     timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
     skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
