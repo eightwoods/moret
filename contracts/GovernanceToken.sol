@@ -108,7 +108,7 @@ contract GovernanceToken is ERC20, Ownable, AccessControl
         if(!tenors.contains(_tenor)){
             tenors.add(_tenor);
         }
-        require(_underlyingHash==VolatilityToken(_tokenAddress).underlyingHash());
+        /* require(_underlyingHash==VolatilityToken(_tokenAddress).descriptionHash()); */
         volTokensList[_underlyingHash][_tenor] = VolatilityToken(_tokenAddress);
         decimalList[_underlyingHash] = volTokensList[_underlyingHash][_tenor].decimals();
 

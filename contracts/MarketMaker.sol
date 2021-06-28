@@ -41,18 +41,22 @@ contract MarketMaker is ERC20, AccessControl
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
   /* address internal constant CHAINLINK_FEED_ADDRESS = 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada; */
-  address internal constant UNISWAP_ROUTER_ADDRESS = 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
+  /* address internal constant UNISWAP_ROUTER_ADDRESS = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff; */
   /* address internal constant AAVE_LENDING_ADDRESS = 0xE0fBa4Fc209b4948668006B2bE61711b7f465bAe; */
 
-  address internal constant DAI_ADDRESS = 0x2d7882beDcbfDDce29Ba99965dd3cdF7fcB10A1e;
-  address internal constant TOKEN_ADDRESS = 0x0000000000000000000000000000000000001010;
+  address internal constant UNISWAP_ROUTER_ADDRESS = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+  address internal constant STABLE_ADDRESS = 0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa;
+  address internal constant MORET_ADDRESS = 0xe0c522e2C07a1D42bC71f312C71548Cee10D92fb;
+  address internal constant UNDERLYING_ADDRESS = 0x2d7882beDcbfDDce29Ba99965dd3cdF7fcB10A1e;
+  address internal WETH;// = 0x0000000000000000000000000000000000001010;
 
   /* address internal constant VOLCHAIN_ADDRESS = 0xf425f1274A20E801B9Bd8e6dF6414F0e337d5fba;
   address internal constant GOVERNANCE_ADDRESS = 0xaaebF0f601355831a64823A89AbdFF6f1e43D592; */
 
   AggregatorV3Interface internal priceInterface;
   VolatilityChain internal volatilityChain;
-  IUniswapV2Router02 uniswapRouter;
+  IUniswapV2Router02 internal uniswapRouter;
+  ERC20 internal underlyingToken;
   /* IPeripheryPayments uniswapPayments; */
   /* ILendingPool lendingPool; */
 
@@ -121,9 +125,8 @@ contract MarketMaker is ERC20, AccessControl
         string memory _name,
         string memory _symbol,
         address _chainlinkAddress,
-        address _moretAddress,
         address _volChainAddress,
-        bool _isUnderlyingNative
+        address _underlyingCoinAddress
         )  payable
     ERC20(_name, _symbol)
     {
@@ -133,18 +136,21 @@ contract MarketMaker is ERC20, AccessControl
 
       priceInterface = AggregatorV3Interface(_chainlinkAddress);
       uniswapRouter = IUniswapV2Router02(UNISWAP_ROUTER_ADDRESS);
+      WETH = uniswapRouter.WETH();
+      underlyingToken = ERC20(_underlyingCoinAddress);
+      isUnderlyingNative = WETH==_underlyingCoinAddress;
+
       /* uniswapPayments = IPeripheryPayments(UNISWAP_ROUTER_ADDRESS); */
       /* lendingPool = ILendingPool(AAVE_LENDING_ADDRESS); */
 
-      fundingTokens[mainFundingHash] = ERC20(DAI_ADDRESS);
+      fundingTokens[mainFundingHash] = ERC20(STABLE_ADDRESS);
       volatilityChain = VolatilityChain(_volChainAddress);
-      isUnderlyingNative = _isUnderlyingNative;
 
       priceDecimals = priceInterface.decimals();
       priceMultiplier = 10 ** priceDecimals;
 
       contractAddr = payable(address(this));
-      moretToken = GovernanceToken(payable(_moretAddress));
+      moretToken = GovernanceToken(payable(MORET_ADDRESS));
 
       _mint(msg.sender, ethMultiplier);
     }
@@ -153,10 +159,10 @@ contract MarketMaker is ERC20, AccessControl
     {
         VolatilityToken _volToken = VolatilityToken(_tokenAddress);
 
-        if(!isUnderlyingNative)
+        /* if(!isUnderlyingNative)
         {
-          require(_volToken.underlyingHash() == keccak256(abi.encodePacked(ERC20(TOKEN_ADDRESS).symbol() )));
-        }
+          require(_volToken.descriptionHash() == keccak256(abi.encodePacked(underlyingToken.symbol() )));
+        } */
 
         uint256 _tenor = _volToken.tenor();
         if(!tenors.contains(_tenor)){
@@ -167,10 +173,10 @@ contract MarketMaker is ERC20, AccessControl
 
         emit newVolatilityToken(_tenor, _tokenAddress);
     }
-
+/*
     function getUnderlyingAddress() external pure returns(address){
       return TOKEN_ADDRESS;
-    }
+    } */
 
     function removeTenor(uint256 _tenor) external onlyRole(ADMIN_ROLE) {
         require(tenors.contains(_tenor));
@@ -205,7 +211,7 @@ contract MarketMaker is ERC20, AccessControl
         uint256 _intrinsicValue = calcIntrinsicValue(_strike, _price, _poType) * _amount / priceMultiplier;
         uint256 _timeValue = calcTimeValue( _price, _volatility) * _amount / priceMultiplier;
         /* uint256 _margin = MulDiv(volPremiumFixedAddon, _amount, pctDenominator); */
-        uint256 _addon = calcVolPremiumAddon(_strike, _poType, _amount);
+        uint256 _addon = calcVolPremiumAddon(_poType, _amount);
 
         return (_intrinsicValue + (_timeValue * (pctDenominator + _addon) / pctDenominator)) * priceMultiplier / _price;
     }
@@ -231,7 +237,7 @@ contract MarketMaker is ERC20, AccessControl
     }
 
 
-    function calcVolPremiumAddon(uint256 _strike, PayoffType  _poType, uint256 _amount) public view returns(uint256){
+    function calcVolPremiumAddon(PayoffType  _poType, uint256 _amount) public view returns(uint256){
         //int256 _delta = calculateContractDelta( _strike,   _poType,  _amount);
         uint256 _utilityAddon = calcUtilityPremiumAddon(_amount, _poType);
         /* uint256 _hedgeCapacityAddon = calcHedgeCapacityPremiumAddon(_delta); */
@@ -354,8 +360,8 @@ contract MarketMaker is ERC20, AccessControl
 
         require( _payin == (optionsList[_id].premium + optionsList[_id].fee));
 
-        require(ERC20(TOKEN_ADDRESS).transferFrom(msg.sender, contractAddr, optionsList[_id].premium), "Premium payment failed.");
-        require(ERC20(TOKEN_ADDRESS).transferFrom(msg.sender, payable(address(moretToken)), optionsList[_id].fee), "Premium payment failed.");
+        require(underlyingToken.transferFrom(msg.sender, contractAddr, optionsList[_id].premium), "Premium payment failed.");
+        require(underlyingToken.transferFrom(msg.sender, payable(address(moretToken)), optionsList[_id].fee), "Premium payment failed.");
 
         stampActiveOption(_id);
 
@@ -459,7 +465,7 @@ contract MarketMaker is ERC20, AccessControl
         }
         if(!isUnderlyingNative)
         {
-          require(ERC20(TOKEN_ADDRESS).transfer(msg.sender, _payoffValue), "Transfer failed.");
+          require(underlyingToken.transfer(msg.sender, _payoffValue), "Transfer failed.");
         }
 
         optionsList[_id].exerciseTime = block.timestamp;
@@ -480,11 +486,11 @@ contract MarketMaker is ERC20, AccessControl
         int256 _targetDelta = calculateTotalDelta();
 
         //int256 _changesInDeltaUnderM1 = 0; //_targetDelta.min(-int256(_grossCapital)) - hedgePositionAmount.min(-int256(_grossCapital));
-        int256 _changesInDeltaM1T0 = 0; //_targetDelta.min(0).max(-int256(_grossCapital)) - hedgePositionAmount.min(0).max(-int256(_grossCapital));
+        int256 _changesInDelta_m1_0 = 0; //_targetDelta.min(0).max(-int256(_grossCapital)) - hedgePositionAmount.min(0).max(-int256(_grossCapital));
         //int256 _changesInDeltaOver1 = 0;//_targetDelta.max(int256(_grossCapital)) - hedgePositionAmount.max(int256(_grossCapital));
 
-        if(_targetDelta<0){_changesInDeltaM1T0+= _targetDelta;}
-        if(hedgePositionAmount<0){_changesInDeltaM1T0-= hedgePositionAmount;}
+        if(_targetDelta<0){_changesInDelta_m1_0+= _targetDelta;}
+        if(hedgePositionAmount<0){_changesInDelta_m1_0-= hedgePositionAmount;}
 
         // uint256 _newLoanForStable = uint256(-_changesInDeltaUnderM1.min(0));
         // uint256 _repayLoanForStable = uint256(_changesInDeltaUnderM1.max(0));
@@ -493,65 +499,79 @@ contract MarketMaker is ERC20, AccessControl
         // uint256 _repayLoanForUnderlying = uint256(-_changesInDeltaOver1.min(0));
 
         (uint256 _price, )=queryPrice();
-        int _swappedETH = 0;
+        int _swappedUnderlying = 0;
 
-        if(_changesInDeltaM1T0<0)
+        if(_changesInDelta_m1_0<0)
         {
-            uint256 _newStable = uint256(-_changesInDeltaM1T0);
-            uint256[] memory _swappedAmounts = swapIn( _price,  _newStable,  _deadline);
+            uint256 _newStable = uint256(-_changesInDelta_m1_0);
+            uint256[] memory _swappedAmounts = swapToStable( _price,  _newStable,  _deadline);
 
-            _swappedETH -= int256(_swappedAmounts[0]);
+            _swappedUnderlying -= int256(_swappedAmounts[0]);
             emit hedgePositionUpdated(-int256(_swappedAmounts[0]), int256(_swappedAmounts[1]), (_swappedAmounts[1] * ethMultiplier / _newStable));
         }
-        if(_changesInDeltaM1T0>0)
+        if(_changesInDelta_m1_0>0)
         {
-            uint256 _unwindStable = uint256(_changesInDeltaM1T0);
-            uint256[] memory _swappedAmounts = swapIn( _price,  _unwindStable,  _deadline);
+            uint256 _unwindStable = uint256(_changesInDelta_m1_0);
+            uint256[] memory _swappedAmounts = swapToUnderlying( _price,  _unwindStable,  _deadline);
 
-            _swappedETH += int256(_swappedAmounts[1]);
+            _swappedUnderlying += int256(_swappedAmounts[1]);
             emit hedgePositionUpdated(int256(_swappedAmounts[1]), -int256(_swappedAmounts[0]), (_swappedAmounts[0] * ethMultiplier/ _unwindStable));
         }
 
-        hedgePositionAmount += _swappedETH;
+        hedgePositionAmount += _swappedUnderlying;
     }
 
-    function swapIn(uint256 _price, uint256 _newStable, uint256 _deadline) public payable onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
+    function swapToStable(uint256 _price, uint256 _newStable, uint256 _deadline) public onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
     {
-        uint256 _priceLimit = (_price *(pctDenominator - uniswapSlippageAllowance)/ pctDenominator);
-        uint256 _amountOutMinimum = (_newStable * _priceLimit / priceMultiplier);
+        uint256 _priceLimit = (_price * (pctDenominator + uniswapSlippageAllowance)/ pctDenominator);
+        uint256 _amountInMaximum = (_newStable * priceMultiplier / _priceLimit );
 
         address[] memory path = new address[](2);
-        path[0] = TOKEN_ADDRESS;
         path[1] = address(fundingTokens[mainFundingHash]);
 
-        return uniswapRouter.swapExactTokensForTokens(
-          _newStable,
-          _amountOutMinimum,
-          path,
-          contractAddr,
-          _deadline
-           );
-        /* uniswapPayments.refundETH(); */
+        if(isUnderlyingNative)
+        {
+          path[0] = WETH;
+          return uniswapRouter.swapETHForExactTokens{value: _amountInMaximum}(_newStable, path, contractAddr, _deadline);
+        }
+        if(!isUnderlyingNative)
+        {
+          path[0] = address(underlyingToken);
 
+          return uniswapRouter.swapTokensForExactTokens(
+            _newStable,
+            _amountInMaximum,
+            path,
+            contractAddr,
+            _deadline
+             );
+        }
     }
 
-    function swapOut(uint256 _price, uint256 _unwindStable, uint256 _deadline) public payable onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
+    function swapToUnderlying(uint256 _price, uint256 _unwindStable, uint256 _deadline) public onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
     {
       uint256 _priceLimit = (_price *(pctDenominator + uniswapSlippageAllowance)/ pctDenominator);
-      uint256 _amountInMaximum = (_unwindStable* _priceLimit/ priceMultiplier);
+      uint256 _amountOutMinimum = (_unwindStable * priceMultiplier / _priceLimit);
 
       address[] memory path = new address[](2);
       path[0] = address(fundingTokens[mainFundingHash]);
-      path[1] = TOKEN_ADDRESS;
 
-      return uniswapRouter.swapTokensForExactTokens(
+      if(isUnderlyingNative)
+      {
+        path[1] = WETH;
+        return uniswapRouter.swapExactTokensForETH(_unwindStable, _amountOutMinimum, path, contractAddr, _deadline);
+      }
+      if(!isUnderlyingNative)
+      {
+        path[1] = address(underlyingToken);
+      return uniswapRouter.swapExactTokensForTokens(
         _unwindStable,
-        _amountInMaximum,
+        _amountOutMinimum,
         path,
         contractAddr,
         _deadline
          );
-      /* uniswapPayments.refundETH(); */
+      }
 
     }
 
@@ -574,7 +594,7 @@ contract MarketMaker is ERC20, AccessControl
     }
 
     // This needs to be scheduled the same time as price update.
-    function calculateTotalDelta() internal view returns(int256)
+    function calculateTotalDelta() public view returns(int256)
     {
       uint256 _totalContracts = activeOptions.length();
       int256 _totalDelta= 0;
@@ -590,7 +610,6 @@ contract MarketMaker is ERC20, AccessControl
       }
       return _totalDelta;
     }
-
 
     function calculateContractDelta(uint256 _strike, PayoffType  _poType, uint256 _amount) public view returns(int256){
        (uint256 _price, ) = queryPrice();
@@ -651,7 +670,7 @@ contract MarketMaker is ERC20, AccessControl
       {
           return contractAddr.balance;
       }
-      return ERC20(TOKEN_ADDRESS).balanceOf(contractAddr);
+      return underlyingToken.balanceOf(contractAddr);
     }
 
     function addCapital(uint256 _depositAmount) external payable{
@@ -664,7 +683,7 @@ contract MarketMaker is ERC20, AccessControl
           require(msg.value==_depositAmount);
         }
         if(!isUnderlyingNative)
-        {require(ERC20(TOKEN_ADDRESS).transferFrom(msg.sender, contractAddr, _depositAmount), "Transfer failed.");
+        {require(underlyingToken.transferFrom(msg.sender, contractAddr, _depositAmount), "Transfer failed.");
       }
 
         _mint(msg.sender, _mintMPTokenAmount);
@@ -687,7 +706,7 @@ contract MarketMaker is ERC20, AccessControl
         {
           return contractAddr.balance + (getTotalStableCoinBalances() * priceMultiplier / _price);
         }
-        return ERC20(TOKEN_ADDRESS).balanceOf(contractAddr) + (getTotalStableCoinBalances() * priceMultiplier / _price);
+        return underlyingToken.balanceOf(contractAddr) + (getTotalStableCoinBalances() * priceMultiplier / _price);
     }
 
     function calculateAverageGrossCapital() public view returns(uint256){
@@ -705,7 +724,7 @@ contract MarketMaker is ERC20, AccessControl
           payable(msg.sender).transfer(_withdrawValue);
         }
         if(!isUnderlyingNative){
-          require(ERC20(TOKEN_ADDRESS).transfer(msg.sender, _withdrawValue), "Withdrawal failed.");
+          require(underlyingToken.transfer(msg.sender, _withdrawValue), "Withdrawal failed.");
         }
 
         emit capitalWithdrawn(msg.sender, _burnMPTokenAmount, _withdrawValue);
@@ -767,7 +786,7 @@ contract MarketMaker is ERC20, AccessControl
 
         if(!isUnderlyingNative)
         {
-          require(ERC20(TOKEN_ADDRESS).transfer(msg.sender, ERC20(TOKEN_ADDRESS).balanceOf(contractAddr)), "Withdrawal failed.");
+          require(underlyingToken.transfer(msg.sender, underlyingToken.balanceOf(contractAddr)), "Withdrawal failed.");
         }
 
           emit cashSweep();

@@ -27,6 +27,7 @@
     "@openzeppelin/contracts": "^4.1.0",
     "@sushiswap/core": "^1.4.2",
     "@truffle/hdwallet-provider": "^1.4.0",
+    "@uniswap/v2-periphery": "*",
     "web3": "^1.3.6"
   }
 }
