@@ -13,7 +13,7 @@ import "./OptionVault.sol";
 import "./VolatilityToken.sol";
 import "./MoretMarketMaker.sol";
 
-contract Exchange is AccessControl, IOption
+contract Exchange is AccessControl, EOption
 {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -75,7 +75,9 @@ contract Exchange is AccessControl, IOption
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-        emit newOptionBought(msg.sender, block.timestamp, _id, _payInCost, false);
+
+        emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
+
     }
 
     function purchaseOptionInVol(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType,
@@ -103,7 +105,8 @@ contract Exchange is AccessControl, IOption
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-      emit newOptionBought(msg.sender, block.timestamp, _id, _payInCost, true);
+      emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
+
     }
 
     function exerciseOption(uint256 _id) external  {
@@ -119,7 +122,7 @@ contract Exchange is AccessControl, IOption
           optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
           optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-        emit optionExercised(_id, block.timestamp);
+        emit optionExercised(msg.sender, optionVault.getOption(_id), _payoffValue);
     }
 
     function expireOption(uint256 _id) internal {

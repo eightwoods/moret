@@ -1,84 +1,289 @@
 {
-  "contractName": "IVolatilityChain",
+  "contractName": "EOption",
   "abi": [
     {
       "anonymous": false,
       "inputs": [
         {
           "indexed": false,
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256",
-          "name": "_tenor",
+          "name": "_mintMPTokenAmount",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "_timeStamp",
+          "name": "_addedValue",
           "type": "uint256"
+        }
+      ],
+      "name": "capitalAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_burnMPTokenAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_withdrawValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "capitalWithdrawn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_purchaser",
+          "type": "address"
         },
         {
           "components": [
             {
+              "internalType": "enum OptionLibrary.PayoffType",
+              "name": "poType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "holder",
+              "type": "address"
+            },
+            {
+              "internalType": "enum OptionLibrary.OptionStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
               "internalType": "uint256",
-              "name": "startTime",
+              "name": "id",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "endTime",
+              "name": "createTime",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "open",
+              "name": "effectiveTime",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "highest",
+              "name": "tenor",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "lowest",
+              "name": "exerciseTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "spot",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "strike",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
               "name": "volatility",
               "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "premium",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "fee",
+              "type": "uint256"
             }
           ],
           "indexed": false,
-          "internalType": "struct IVolatilityChain.PriceStamp",
-          "name": "_book",
+          "internalType": "struct OptionLibrary.Option",
+          "name": "_option",
           "type": "tuple"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_cost",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "_inVol",
+          "type": "bool"
         }
       ],
-      "name": "volatilityChainBlockAdded",
+      "name": "newOptionBought",
       "type": "event"
     },
     {
+      "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_purchaser",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_time",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256",
           "name": "_tenor",
           "type": "uint256"
-        }
-      ],
-      "name": "getVol",
-      "outputs": [
+        },
         {
+          "indexed": false,
           "internalType": "uint256",
-          "name": "",
+          "name": "_amount",
           "type": "uint256"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
+      "name": "newVolatilityTokenBought",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_purchaser",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "enum OptionLibrary.PayoffType",
+              "name": "poType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "holder",
+              "type": "address"
+            },
+            {
+              "internalType": "enum OptionLibrary.OptionStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "effectiveTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tenor",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "exerciseTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "spot",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "strike",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "volatility",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "premium",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "fee",
+              "type": "uint256"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct OptionLibrary.Option",
+          "name": "_option",
+          "type": "tuple"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_payoff",
+          "type": "uint256"
+        }
+      ],
+      "name": "optionExercised",
+      "type": "event"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_tenor\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_timeStamp\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"startTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"open\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"highest\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lowest\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"volatility\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"struct IVolatilityChain.PriceStamp\",\"name\":\"_book\",\"type\":\"tuple\"}],\"name\":\"volatilityChainBlockAdded\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_tenor\",\"type\":\"uint256\"}],\"name\":\"getVol\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":\"IVolatilityChain\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":{\"keccak256\":\"0xa5618a0a8c71ad227ad2cf0917fea32ba0f77a06a7d1d502c324753b96e074ca\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3be23b97c4f7ba931b56b581d4873b5785c93e72b25a811572208d6e02e86445\",\"dweb:/ipfs/Qmc5NZ9bGpT5Rh8j5MHwsxRa1w3bVpM3ZXPJF1NV8UGNEu\"]},\"/Users/mac/Documents/GitHub/moret/contracts/OptionLibrary.sol\":{\"keccak256\":\"0x90abedcd4c314e2e0165c90481e44b1cd68ddd852a4f89f1eb7db0090508c631\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://c329e3201aa50896da0f74b952af8a407ed8b3c446a010f8981fdda29b8f6f77\",\"dweb:/ipfs/QmSmUE57ByJSEdJ35fnjCNUmn13svJU1QgukQM8gGQVbPf\"]}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_mintMPTokenAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_addedValue\",\"type\":\"uint256\"}],\"name\":\"capitalAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_burnMPTokenAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_withdrawValue\",\"type\":\"uint256\"}],\"name\":\"capitalWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_purchaser\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"enum OptionLibrary.PayoffType\",\"name\":\"poType\",\"type\":\"uint8\"},{\"internalType\":\"address\",\"name\":\"holder\",\"type\":\"address\"},{\"internalType\":\"enum OptionLibrary.OptionStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"createTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"effectiveTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tenor\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"exerciseTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"spot\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"strike\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"volatility\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"premium\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"struct OptionLibrary.Option\",\"name\":\"_option\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_cost\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"_inVol\",\"type\":\"bool\"}],\"name\":\"newOptionBought\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_purchaser\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_time\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_tenor\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"newVolatilityTokenBought\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_purchaser\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"enum OptionLibrary.PayoffType\",\"name\":\"poType\",\"type\":\"uint8\"},{\"internalType\":\"address\",\"name\":\"holder\",\"type\":\"address\"},{\"internalType\":\"enum OptionLibrary.OptionStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"createTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"effectiveTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tenor\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"exerciseTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"spot\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"strike\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"volatility\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"premium\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"struct OptionLibrary.Option\",\"name\":\"_option\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_payoff\",\"type\":\"uint256\"}],\"name\":\"optionExercised\",\"type\":\"event\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":\"EOption\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":{\"keccak256\":\"0xa5618a0a8c71ad227ad2cf0917fea32ba0f77a06a7d1d502c324753b96e074ca\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://3be23b97c4f7ba931b56b581d4873b5785c93e72b25a811572208d6e02e86445\",\"dweb:/ipfs/Qmc5NZ9bGpT5Rh8j5MHwsxRa1w3bVpM3ZXPJF1NV8UGNEu\"]},\"/Users/mac/Documents/GitHub/moret/contracts/OptionLibrary.sol\":{\"keccak256\":\"0x90abedcd4c314e2e0165c90481e44b1cd68ddd852a4f89f1eb7db0090508c631\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://c329e3201aa50896da0f74b952af8a407ed8b3c446a010f8981fdda29b8f6f77\",\"dweb:/ipfs/QmSmUE57ByJSEdJ35fnjCNUmn13svJU1QgukQM8gGQVbPf\"]}},\"version\":1}",
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "immutableReferences": {},
@@ -3026,7 +3231,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.1",
-  "updatedAt": "2021-07-02T23:42:32.088Z",
+  "updatedAt": "2021-07-02T23:42:32.082Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

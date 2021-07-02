@@ -12,7 +12,7 @@ import "./OptionLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract VolatilityToken is ERC20, AccessControl, IOption
+contract VolatilityToken is ERC20, AccessControl
 {
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   bytes32 public constant MARKET_MAKING_ROLE = keccak256("MARKET_MAKING_ROLE");

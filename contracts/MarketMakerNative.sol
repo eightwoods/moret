@@ -14,7 +14,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./MoretInterfaces.sol";
 import "./FullMath.sol";
 
-contract MarketMakerNative is ERC20, AccessControl, IOption
+contract MarketMakerNative is ERC20, AccessControl, EOption
 {
   using EnumerableSet for EnumerableSet.UintSet;
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -275,8 +275,8 @@ contract MarketMakerNative is ERC20, AccessControl, IOption
         swapSlippageAllowance = OptionLibrary.Percent(_multiplier, _denominator);
     }
 
-    function getHolderCount() external view returns(uint256){return holderList.length();}
-    function getHolderAddress(uint256 _index) external view returns(address) {return holderList.at(_index);}
+    /* function getHolderCount() external view returns(uint256){return holderList.length();}
+    function getHolderAddress(uint256 _index) external view returns(address) {return holderList.at(_index);} */
     function getHoldersOptionCount(address _address) external view returns(uint256){return activeOptionsPerOwner[_address].length();}
     function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory) {return optionVault.getOption(activeOptionsPerOwner[_address].at(_index));}
     /* function getOptionPayoff(uint256 _id) external view returns(uint256){return optionVault.getOptionPayoffValue(_id);} */

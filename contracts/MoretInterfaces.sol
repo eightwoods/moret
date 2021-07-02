@@ -8,9 +8,9 @@ pragma solidity ^0.8.4;
 
 import "./OptionLibrary.sol";
 
-interface IOption{
-    event newOptionBought(address _purchaser, uint256 _time, uint256 _id, uint256 _cost, bool _inVol);
-    event optionExercised(uint256 _time, uint256 _id);
+interface EOption{
+    event newOptionBought(address indexed _purchaser, OptionLibrary.Option _option, uint256 _cost, bool _inVol);
+    event optionExercised(address indexed _purchaser, OptionLibrary.Option _option, uint256 _payoff);
     event capitalAdded(address _recipient, uint256 _mintMPTokenAmount, uint256 _addedValue);
     event capitalWithdrawn(address _recipient, uint256 _burnMPTokenAmount, uint256 _withdrawValue);
     event newVolatilityTokenBought(address _purchaser, uint256 _time, uint256 _tenor, uint256 _amount);
@@ -33,8 +33,30 @@ interface IOption{
 }
 
 interface IVolatilityChain{
+  event volatilityChainBlockAdded(uint256 _tenor, uint256 _timeStamp, PriceStamp _book);
+
+  struct PriceStamp{
+    uint256 startTime;
+    uint256 endTime;
+    uint256 open;
+    uint256 highest;
+    uint256 lowest;
+    uint256 volatility;
+  }
+
+  struct VolParam{
+      uint256 initialVol;
+      uint256 ltVol;
+      uint256 ltVolWeighted;
+      uint256 w; // parameter for long-term average
+      uint256 p; // parameter for moving average
+      uint256 q; // paramter for auto regression
+  }
+
   function getVol(uint256 _tenor) external view returns(uint256);
+
 }
+
 
 interface IOptionVault{
   function calculateContractDelta(uint256 _id) external view returns(int256);

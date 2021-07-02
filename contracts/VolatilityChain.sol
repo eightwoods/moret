@@ -9,13 +9,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-/* import "../interfaces/Interfaces.sol"; */
 
 import "./FullMath.sol";
+import "./MoretInterfaces.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 // import "https://github.com/smartcontractkit/chainlink/blob/master/evm-contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
- contract VolatilityChain is Ownable, AccessControl
+ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain
  {
        using EnumerableSet for EnumerableSet.UintSet;
 
@@ -29,33 +29,15 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 
    mapping(uint256=>mapping(uint256=>PriceStamp)) private priceBook;
-   mapping(uint256=>uint256) private latestBookTime;
+   mapping(uint256=>uint256) public latestBookTime;
    uint256 public decimals;
-   uint256 private priceMultiplier;
+   uint256 internal priceMultiplier;
 
     uint256 public volatilityUpdateCounter;
     uint256 public volatilityUpdateTime;
     mapping(uint256=> VolParam) public volatilityParameters;
    uint256 public volParamDecimals;
-   uint256 private parameterMultiplier;
-
-   struct PriceStamp{
-    uint256 startTime;
-    uint256 endTime;
-    uint256 open;
-    uint256 highest;
-    uint256 lowest;
-    uint256 volatility;
-  }
-
-  struct VolParam{
-      uint256 initialVol;
-      uint256 ltVol;
-      uint256 ltVolWeighted;
-      uint256 w; // parameter for long-term average
-      uint256 p; // parameter for moving average
-      uint256 q; // paramter for auto regression
-  }
+   uint256 internal parameterMultiplier;
 
    constructor(
      address _priceSourceId,
@@ -70,25 +52,25 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
       tenors.add(1 days);
 
-    priceInterface = AggregatorV3Interface(_priceSourceId);
-    description = priceInterface.description();
-    decimals = priceInterface.decimals();
-    priceMultiplier = 10 ** decimals;
+      priceInterface = AggregatorV3Interface(_priceSourceId);
+      description = priceInterface.description();
+      decimals = priceInterface.decimals();
+      priceMultiplier = 10 ** decimals;
 
-    volParamDecimals = _parameterDecimals;
-    parameterMultiplier = 10 ** _parameterDecimals;
+      volParamDecimals = _parameterDecimals;
+      parameterMultiplier = 10 ** _parameterDecimals;
 
    }
 
-   function getVol(uint256 _tenor) external view returns(uint256)
+   function getVol(uint256 _tenor) external override view returns(uint256)
    {
        require(tenors.contains(_tenor), "Input option tenor is not allowed.");
-     return priceBook[_tenor][latestBookTime[_tenor]].volatility;
+       return priceBook[_tenor][latestBookTime[_tenor]].volatility;
     }
 
   function queryPrice() public view returns(uint256, uint256){
-    (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
-   return (uint256(_price), uint256(_timeStamp));
+      (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
+      return (uint256(_price), uint256(_timeStamp));
   }
 
    function update() external onlyRole(UPDATE_ROLE){
@@ -120,31 +102,17 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
          priceBook[_tenor][_timeStamp].open = priceBook[_tenor][_timeStamp].highest = priceBook[_tenor][_timeStamp].lowest = _updatePrice;
 
          latestBookTime[_tenor] = _timeStamp;
-
-         emit VolatilityUpdated(_timeStamp, _tenor, _updatePrice, _latestVolatility);
-
+         emit volatilityChainBlockAdded(_tenor, _timeStamp, priceBook[_tenor][_timeStamp]);
        }
 
      }
 
      volatilityUpdateTime = _timeStamp;
      volatilityUpdateCounter ++;
-     emit OneUpdateCompleted(_timeStamp, _updatePrice, volatilityUpdateCounter);
+
    }
 
-   function resetVolParamsList(uint256[] memory _tenorList, VolParam memory _volParams) public onlyOwner{
-     require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier);
-
-     for(uint256 i = 0;i<_tenorList.length;i++){
-       if(!tenors.contains(_tenorList[i]))
-       {
-         tenors.add(_tenorList[i]);
-       }
-       resetVolParams(_tenorList[i], _volParams);
-      }
-   }
-
-   function resetVolParams(uint256 _tenor, VolParam memory _volParams) public onlyOwner{
+   function resetVolParams(uint256 _tenor, VolParam memory _volParams) external onlyOwner{
        require(tenors.contains(_tenor));
        require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier);
        volatilityParameters[_tenor] = _volParams;
@@ -156,30 +124,16 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
        priceBook[_tenor][_timeStamp].volatility = volatilityParameters[_tenor].initialVol;
        priceBook[_tenor][_timeStamp].open = priceBook[_tenor][_timeStamp].highest = priceBook[_tenor][_timeStamp].lowest = _updatePrice;
 
-        emit NewParameters(_tenor, volatilityParameters[_tenor]);
    }
 
-   function removeTenor(uint256 _tenor) public onlyOwner{
+   function removeTenor(uint256 _tenor) external onlyOwner{
      require(tenors.contains(_tenor));
      tenors.remove(_tenor);
    }
 
-   /* function displayTenors() public view returns(uint256[] memory)
-{
-  uint256[] memory _displayTenors;
-  for(uint256 i = 0;i<tenors.length();i++)
-  {
-    _displayTenors.push(tenors.at(i));
-  }
-  return _displayTenors;
-} */
-   function displayPriceBook(uint256 _tenor) external view returns(PriceStamp memory){
+   function getPriceBook(uint256 _tenor) external view returns(PriceStamp memory){
         require(tenors.contains(_tenor), "Input option tenor is not allowed.");
        return priceBook[_tenor][latestBookTime[_tenor]];
    }
 
-    event OneUpdateCompleted(uint256 _updateTime, uint256 _updatePrice, uint256 _counter);
-    event VolatilityUpdated(uint256 _updateTime, uint256 _tenor, uint256 _updatePrice, uint256 _updateVolatility);
-    event NewTenor(uint256 _newTenor);
-    event NewParameters(uint256 _tenor, VolParam _volParams);
  }

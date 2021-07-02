@@ -13,7 +13,7 @@ import "./OptionVault.sol";
 import "./VolatilityToken.sol";
 import "./MarketMakerNative.sol";
 
-contract ExchangeNative is AccessControl, IOption
+contract ExchangeNative is AccessControl, EOption
 {
 bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     OptionLibrary.Percent public settlementFee = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
@@ -50,7 +50,7 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     }
 
     function purchaseOption(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, uint256 _amount)
-    external payable{
+    external payable {
       require(optionVault.containsTenor(_tenor), "Unsupported option tenor.");
       require((_poType == OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Unsupported option type.");
 
@@ -66,12 +66,13 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-      emit newOptionBought(msg.sender, block.timestamp, _id, msg.value, false);
+      emit newOptionBought(msg.sender, optionVault.getOption(_id), msg.value, false);
+
     }
 
     function purchaseOptionInVol(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, uint256 _amount,
       uint256 _payInCost)
-      external{
+      external {
       require(optionVault.containsTenor(_tenor), "Unsupported option tenor.");
       require((_poType == OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Unsupported option type.");
 
@@ -92,7 +93,8 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-      emit newOptionBought(msg.sender, block.timestamp, _id, _payInCost, true);
+      emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
+
     }
 
     function exerciseOption(uint256 _id) external  {
@@ -108,7 +110,7 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
           optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
           optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-        emit optionExercised(_id, block.timestamp);
+        emit optionExercised(msg.sender, optionVault.getOption(_id), _payoffValue);
     }
 
     function expireOption(uint256 _id) internal {
