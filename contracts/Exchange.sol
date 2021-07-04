@@ -8,23 +8,29 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./MoretInterfaces.sol";
 import "./OptionVault.sol";
 import "./VolatilityToken.sol";
 import "./MoretMarketMaker.sol";
+import "./FullMath.sol";
 
 contract Exchange is AccessControl, EOption
 {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    OptionLibrary.Percent public settlementFee = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
+    OptionLibrary.Percent public settlementFee = OptionLibrary.Percent(10 ** 5, 10 ** 6);
     OptionLibrary.Percent public volTransactionFees = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
-      address payable public contractAddress;
+    address payable public contractAddress;
 
     MoretMarketMaker internal marketMaker;
     OptionVault internal optionVault;
       ERC20 internal underlyingToken;
     mapping(uint256=>VolatilityToken) public volTokensList;
+
+    uint256 private constant ethMultiplier = 10 ** 18;
+    uint256 public maxUtilisation = 10 ** 18;
 
     constructor(
       address payable _marketMakerAddress,
@@ -44,25 +50,24 @@ contract Exchange is AccessControl, EOption
       underlyingToken = ERC20(marketMaker.underlyingAddress());
     }
 
-
-    function queryOptionCost(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, uint256 _amount) external view returns(uint256)
+    function queryOptionCost(uint256 _tenor, uint256 _strike, uint256 _amount,
+      OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
+      public view returns(uint256)
     {
-        (uint256 _premium, uint256 _fee) = optionVault.queryOptionCost(_tenor, _strike, _poType, _amount,
-          settlementFee, marketMaker.calcUtilityAddon(_amount, _poType) );
-        return _premium + _fee;
+        (uint256 _utilPrior, uint256 _utilAfter)  = marketMaker.calcUtilisation(_amount, _poType, _side);
+        require(Math.max(_utilPrior, _utilAfter)<= maxUtilisation, "Max utilisation breached.");
+
+        return optionVault.queryOptionCost(_tenor, _strike, _poType, _amount, _utilPrior, _utilAfter );
     }
 
     function purchaseOption(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType,
       uint256 _amount, uint256 _payInCost)
       external
       {
-      require(optionVault.containsTenor(_tenor), "Unsupported option tenor.");
-      require((_poType == OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Unsupported option type.");
+      uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType,OptionLibrary.OptionSide.Buy );
+      uint256 _fee = MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
 
-      (uint256 _premium, uint256 _fee) = optionVault.queryOptionCost(_tenor, _strike, _poType, _amount,
-        settlementFee, marketMaker.calcUtilityAddon(_amount, _poType) );
-
-      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, _amount, _premium, _fee );
+      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, OptionLibrary.OptionSide.Buy, _amount, _premium - _fee, _fee );
 
       require(_payInCost >= optionVault.queryDraftOptionCost(_id, false), "Entered premium incorrect.");
 
@@ -84,13 +89,10 @@ contract Exchange is AccessControl, EOption
       uint256 _amount, uint256 _payInCost)
       external
       {
-      require(optionVault.containsTenor(_tenor), "Unsupported option tenor.");
-      require((_poType == OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Unsupported option type.");
+      uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType,OptionLibrary.OptionSide.Buy );
+      uint256 _fee = MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
 
-      (uint256 _premium, uint256 _fee) = optionVault.queryOptionCost(_tenor, _strike, _poType, _amount,
-        settlementFee, marketMaker.calcUtilityAddon(_amount, _poType) );
-
-      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, _amount, _premium, _fee );
+      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, OptionLibrary.OptionSide.Buy, _amount, _premium - _fee, _fee );
       require(_payInCost >= optionVault.queryDraftOptionCost(_id, true), "Entered premium incorrect.");
 
       require(volTokensList[_tenor].transferFrom(msg.sender, contractAddress, _payInCost), 'Failed payment.');
@@ -107,6 +109,10 @@ contract Exchange is AccessControl, EOption
 
       emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
 
+    }
+
+    function getOptionPayoffValue(uint256 _id) external view returns(uint256){
+      return optionVault.getOptionPayoffValue(_id);
     }
 
     function exerciseOption(uint256 _id) external  {
@@ -146,8 +152,8 @@ contract Exchange is AccessControl, EOption
       function addVolToken(address payable _tokenAddress) external onlyRole(ADMIN_ROLE)
       {
           VolatilityToken _volToken = VolatilityToken(_tokenAddress);
-          require(_volToken.descriptionHash() == optionVault.descriptionHash());
-          require(optionVault.containsTenor(_volToken.tenor()));
+          /* require(_volToken.descriptionHash() == optionVault.descriptionHash());
+          require(optionVault.containsTenor(_volToken.tenor())); */
 
           volTokensList[_volToken.tenor()] = _volToken;
 
@@ -155,11 +161,12 @@ contract Exchange is AccessControl, EOption
 
       function quoteVolatilityCost(uint256 _tenor, uint256 _volAmount) public view returns(uint256, uint256)
       {
-          require(optionVault.containsTenor(_tenor));
+          /* require(optionVault.containsTenor(_tenor)); */
 
           (uint256 _price,) = optionVault.queryPrice();
+          (uint256 _volatility, ) = optionVault.queryVol(_tenor);
 
-          uint256 _value = volTokensList[_tenor].calculateMintValue(_volAmount, _price, optionVault.queryVol(_tenor));
+          uint256 _value = volTokensList[_tenor].calculateMintValue(_volAmount, _price, _volatility);
           uint256 _fee = _value * volTransactionFees.numerator/ volTransactionFees.denominator;
 
           return (_value, _fee);
@@ -188,8 +195,16 @@ contract Exchange is AccessControl, EOption
               volTransactionFees = OptionLibrary.Percent(_fee, _denominator);
           }
 
+
+            function resetMaxUtilisation(uint256 _maxUtil) external onlyRole(ADMIN_ROLE){
+                maxUtilisation = _maxUtil;
+            }
+
+
+
+
           function priceDecimals() external view returns(uint256){ return optionVault.priceDecimals();}
-          function queryVol(uint256 _tenor) external view returns(uint256){return optionVault.queryVol(_tenor);}
+          function queryVol(uint256 _tenor) external view returns(uint256, uint256){return optionVault.queryVol(_tenor);}
 
           receive() external payable{}
 

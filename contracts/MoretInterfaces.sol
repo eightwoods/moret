@@ -33,7 +33,7 @@ interface EOption{
 }
 
 interface IVolatilityChain{
-  event volatilityChainBlockAdded(uint256 _tenor, uint256 _timeStamp, PriceStamp _book);
+  event volatilityChainBlockAdded(uint256 indexed _tenor, uint256 _timeStamp, PriceStamp _book);
 
   struct PriceStamp{
     uint256 startTime;
@@ -41,7 +41,9 @@ interface IVolatilityChain{
     uint256 open;
     uint256 highest;
     uint256 lowest;
+    uint256 close;
     uint256 volatility;
+    uint256 accentus;
   }
 
   struct VolParam{
@@ -53,8 +55,11 @@ interface IVolatilityChain{
       uint256 q; // paramter for auto regression
   }
 
-  function getVol(uint256 _tenor) external view returns(uint256);
-
+  function getVol(uint256 _tenor) external view returns(uint256, uint256);
+  function queryPrice() external view returns(uint256, uint256);
+  function getPriceDecimals() external view returns (uint256);
+  function getPriceMultiplier() external view returns (uint256);
+  function getDecription() external view returns (string memory);
 }
 
 
@@ -62,6 +67,11 @@ interface IOptionVault{
   function calculateContractDelta(uint256 _id) external view returns(int256);
   function getOption(uint256 _id) external view returns(OptionLibrary.Option memory);
   function getOptionPayoffValue(uint256 _id) external view returns(uint256);
+
+  function queryVol(uint256 _tenor) external view returns(uint256, uint256);
+  function queryPrice() external view returns(uint256, uint256);
+  function priceMultiplier() external view returns (uint256);
+  function priceDecimals() external view returns(uint256);
 }
 
 /* interface IOptionContract{

@@ -7,13 +7,15 @@
 pragma solidity ^0.8.4;
 
 library OptionLibrary {
-  enum PayoffType { Call, Put }
+  enum PayoffType { Call, Put}
+  enum OptionSide{ Buy, Sell}
   enum OptionStatus { Draft, Active, Exercised, Expired}
 
   struct Option {
       PayoffType poType;
-      address holder;
+      OptionSide side;
       OptionStatus status;
+      address holder;
       uint256 id;
       uint256 createTime;
       uint256 effectiveTime;
@@ -65,13 +67,12 @@ library OptionLibrary {
       return _amount * _volatility / _priceMultiplier * 4 / 10;
   }
 
-  function calcPremium(uint256 _price, uint256 _volatility, uint256 _strike, PayoffType _poType, uint256 _amount,
-    Percent memory _volAddon, uint256 _priceMultiplier)
+  function calcPremium(uint256 _price, uint256 _volatility, uint256 _strike, PayoffType _poType, uint256 _amount, uint256 _priceMultiplier)
     public pure returns(uint256){
       uint256 _intrinsicValue = calcIntrinsicValue(_strike, _price, _amount, _poType);
       uint256 _timeValue = calcTimeValue(calcVolSkew(_strike, _price, _volatility, _priceMultiplier), _amount, _priceMultiplier);
 
-      return _intrinsicValue + (_timeValue * (_volAddon.denominator + _volAddon.numerator) / _volAddon.denominator) ;
+      return _intrinsicValue + _timeValue;
   }
 
   function calcFee(uint256 _amount, Percent memory _feeAddon) public pure returns(uint256)

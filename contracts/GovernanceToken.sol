@@ -53,7 +53,7 @@ contract GovernanceToken is ERC20, Ownable, AccessControl
     require(tokenHashSet.contains(_underlyingHash));
         require(tenors.contains(_tenor));
         (uint256 _price,) = volChainList[_underlyingHash].queryPrice();
-        uint256 _volatility = volChainList[_underlyingHash].getVol(_tenor);
+        (uint256 _volatility,) = volChainList[_underlyingHash].getVol(_tenor);
 
         uint256 _quote = volTokensList[_underlyingHash][_tenor].calculateMintValue(_volAmount, _price, _volatility);
 
@@ -67,7 +67,7 @@ contract GovernanceToken is ERC20, Ownable, AccessControl
         require(tenors.contains(_tenor));
 
         (uint256 _price,) = volChainList[_underlyingHash].queryPrice();
-        uint256 _volatility = volChainList[_underlyingHash].getVol(_tenor);
+        (uint256 _volatility,) = volChainList[_underlyingHash].getVol(_tenor);
 
         uint256 _amount = MulDiv(volTokensList[_underlyingHash][_tenor].calculateMintableAmount(_ethAmount, _price, _volatility), pctDenominator, governanceFees + pctDenominator);
         uint256 _fee = MulDiv(_ethAmount, governanceFees, governanceFees + pctDenominator);

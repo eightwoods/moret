@@ -27,10 +27,9 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
   EnumerableSet.UintSet tenors;
 
-
    mapping(uint256=>mapping(uint256=>PriceStamp)) private priceBook;
    mapping(uint256=>uint256) public latestBookTime;
-   uint256 public decimals;
+   uint256 internal priceDecimals;
    uint256 internal priceMultiplier;
 
     uint256 public volatilityUpdateCounter;
@@ -46,6 +45,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
      )  {
 
          _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+         _setupRole(UPDATE_ROLE, msg.sender);
 
          tokenHash = keccak256(abi.encodePacked(_tokenName));
 
@@ -54,27 +54,28 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
       priceInterface = AggregatorV3Interface(_priceSourceId);
       description = priceInterface.description();
-      decimals = priceInterface.decimals();
-      priceMultiplier = 10 ** decimals;
+      priceDecimals = priceInterface.decimals();
+      priceMultiplier = 10 ** priceDecimals;
 
       volParamDecimals = _parameterDecimals;
       parameterMultiplier = 10 ** _parameterDecimals;
 
    }
 
-   function getVol(uint256 _tenor) external override view returns(uint256)
+   function getVol(uint256 _tenor) external override view returns(uint256, uint256)
    {
        require(tenors.contains(_tenor), "Input option tenor is not allowed.");
-       return priceBook[_tenor][latestBookTime[_tenor]].volatility;
+       return (priceBook[_tenor][latestBookTime[_tenor]].volatility, priceBook[_tenor][latestBookTime[_tenor]].accentus);
     }
 
-  function queryPrice() public view returns(uint256, uint256){
+  function queryPrice() external override view returns(uint256, uint256){
       (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
       return (uint256(_price), uint256(_timeStamp));
   }
 
    function update() external onlyRole(UPDATE_ROLE){
-     (uint _updatePrice, uint _timeStamp) = queryPrice();
+     (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
+     uint256 _updatePrice = uint256(_price);
 
      for(uint i = 0;i< tenors.length();i++)
      {
@@ -91,14 +92,15 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
        if(_timeStamp>= (latestBookTime[_tenor] + _tenor))
        {
-         PriceStamp memory _currentStamp = priceBook[_tenor][latestBookTime[_tenor]];
-         uint256 _latestMove = Math.max(MulDiv(_currentStamp.highest, priceMultiplier, _currentStamp.open) - priceMultiplier , priceMultiplier - MulDiv(_currentStamp.lowest, priceMultiplier, _currentStamp.open ));
-         uint256 _latestVolatility = Sqrt(volatilityParameters[_tenor].ltVolWeighted + MulDiv(_latestMove * _latestMove, volatilityParameters[_tenor].q, parameterMultiplier) + MulDiv(_currentStamp.volatility * _currentStamp.volatility, volatilityParameters[_tenor].p, parameterMultiplier));
-
          priceBook[_tenor][latestBookTime[_tenor]].endTime = _timeStamp;
+         priceBook[_tenor][latestBookTime[_tenor]].close = _updatePrice;
+
+         uint256 _periodMove = (priceBook[_tenor][latestBookTime[_tenor]].open < _updatePrice)? (MulDiv(_updatePrice, priceMultiplier, priceBook[_tenor][latestBookTime[_tenor]].open) - priceMultiplier) : (priceMultiplier - MulDiv(_updatePrice, priceMultiplier, priceBook[_tenor][latestBookTime[_tenor]].open ));
+         uint256 _largestMove = Math.max(MulDiv(priceBook[_tenor][latestBookTime[_tenor]].highest, priceMultiplier, priceBook[_tenor][latestBookTime[_tenor]].open) - priceMultiplier , priceMultiplier - MulDiv(priceBook[_tenor][latestBookTime[_tenor]].lowest, priceMultiplier, priceBook[_tenor][latestBookTime[_tenor]].open ));
 
          priceBook[_tenor][_timeStamp].startTime = _timeStamp;
-         priceBook[_tenor][_timeStamp].volatility = _latestVolatility;
+         priceBook[_tenor][_timeStamp].volatility = Sqrt(volatilityParameters[_tenor].ltVolWeighted + MulDiv(_periodMove * _periodMove, volatilityParameters[_tenor].q, parameterMultiplier) + MulDiv(priceBook[_tenor][latestBookTime[_tenor]].volatility * priceBook[_tenor][latestBookTime[_tenor]].volatility, volatilityParameters[_tenor].p, parameterMultiplier));
+         priceBook[_tenor][_timeStamp].accentus = Sqrt(volatilityParameters[_tenor].ltVolWeighted + MulDiv(_largestMove * _largestMove, volatilityParameters[_tenor].q, parameterMultiplier) + MulDiv(priceBook[_tenor][latestBookTime[_tenor]].accentus * priceBook[_tenor][latestBookTime[_tenor]].accentus, volatilityParameters[_tenor].p, parameterMultiplier));
          priceBook[_tenor][_timeStamp].open = priceBook[_tenor][_timeStamp].highest = priceBook[_tenor][_timeStamp].lowest = _updatePrice;
 
          latestBookTime[_tenor] = _timeStamp;
@@ -118,8 +120,10 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
        volatilityParameters[_tenor] = _volParams;
        volatilityParameters[_tenor].ltVolWeighted = MulDiv(volatilityParameters[_tenor].ltVol*volatilityParameters[_tenor].ltVol, volatilityParameters[_tenor].w, parameterMultiplier);
 
-        (uint _updatePrice, uint _timeStamp) = queryPrice();
-        latestBookTime[_tenor] = _timeStamp;
+       (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
+       uint256 _updatePrice = uint256(_price);
+
+       latestBookTime[_tenor] = _timeStamp;
        priceBook[_tenor][_timeStamp].startTime = _timeStamp;
        priceBook[_tenor][_timeStamp].volatility = volatilityParameters[_tenor].initialVol;
        priceBook[_tenor][_timeStamp].open = priceBook[_tenor][_timeStamp].highest = priceBook[_tenor][_timeStamp].lowest = _updatePrice;
@@ -135,5 +139,9 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
         require(tenors.contains(_tenor), "Input option tenor is not allowed.");
        return priceBook[_tenor][latestBookTime[_tenor]];
    }
+
+   function getPriceMultiplier() external override view returns (uint256){return priceMultiplier;}
+   function getPriceDecimals() external override view returns (uint256) {return priceDecimals;}
+   function getDecription() external override view returns (string memory) {return description;}
 
  }

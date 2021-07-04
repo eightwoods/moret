@@ -9,8 +9,8 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./MoretInterfaces.sol";
 import "./FullMath.sol";
 
@@ -19,7 +19,6 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
   using EnumerableSet for EnumerableSet.UintSet;
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  address payable contractAddress;
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   uint256 private constant ethMultiplier = 10 ** 18;
 
@@ -28,7 +27,6 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
   EnumerableSet.AddressSet holderList;
 
   IUniswapV2Router02 internal uniswapRouter;
-  AggregatorV3Interface internal priceInterface;
   IOptionVault internal optionVault;
 
   uint256 public lockedPremium = 0;
@@ -36,12 +34,9 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
   uint256 public putExposure = 0;
   int256 public hedgePositionAmount = 0;
 
-  uint256 public priceMultiplier;
-  uint256 public priceDecimals;
-
-  OptionLibrary.Percent public maxCollateralisation = OptionLibrary.Percent(10 * 10 ** 5, 10 ** 6);
+  /* OptionLibrary.Percent public maxCollateralisation = OptionLibrary.Percent(10 * 10 ** 5, 10 ** 6);
   OptionLibrary.Percent public volPremiumMultiplier = OptionLibrary.Percent(10 ** 5 , 10 ** 6) ;
-  OptionLibrary.Percent public volPremiumPenalty = OptionLibrary.Percent(5 * 10 ** 5, 10 ** 6) ;
+  OptionLibrary.Percent public volPremiumPenalty = OptionLibrary.Percent(5 * 10 ** 5, 10 ** 6) ; */
   OptionLibrary.Percent public swapSlippageAllowance = OptionLibrary.Percent (2 * 10**4, 10**6);
 
   /* address internal constant UNISWAP_ROUTER_ADDRESS = 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
@@ -56,24 +51,18 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
       address _wethAddress,
       address _fundingAddress,
       address _optionAddress,
-      address _swapRouterAddress,
-      address _priceSourceId
+      address _swapRouterAddress
       ) payable
       ERC20(_name, _symbol)
       {
           _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
           _setupRole(ADMIN_ROLE, msg.sender);
 
-          priceInterface = AggregatorV3Interface(_priceSourceId);
           uniswapRouter = IUniswapV2Router02(_swapRouterAddress);
           optionVault = IOptionVault(_optionAddress);
 
           stableCoinAddress = _fundingAddress;
           WETH = _wethAddress;//uniswapRouter.WETH();
-
-          contractAddress = payable(address(this));
-          priceDecimals = priceInterface.decimals();
-          priceMultiplier = 10 ** priceDecimals;
 
           _mint(msg.sender, ethMultiplier);
       }
@@ -105,11 +94,6 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
         lockedPremium -= _removePremium;
         callExposure -= _removeCallExposure;
         putExposure -= _removePutExposure;
-      }
-
-      function queryPrice() public view returns(uint256){
-        (,int _price,,,) = priceInterface.latestRoundData();
-       return uint256(_price);
       }
 
     function calcTotalDelta() public view returns(int256)
@@ -154,26 +138,28 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
 
     function swapToStable(uint256 _newStable, uint256 _deadline) public onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
     {
-        uint256 _priceLimit = queryPrice() * (swapSlippageAllowance.denominator + swapSlippageAllowance.numerator)/ swapSlippageAllowance.denominator;
-        uint256 _amountInMaximum = (_newStable * priceMultiplier / _priceLimit );
+        (uint256 _price,) = optionVault.queryPrice();
+        uint256 _priceLimit = _price * (swapSlippageAllowance.denominator + swapSlippageAllowance.numerator)/ swapSlippageAllowance.denominator;
+        uint256 _amountInMaximum = (_newStable * optionVault.priceMultiplier() / _priceLimit );
 
         address[] memory path = new address[](2);
         path[0] = address(WETH);
         path[1] = address(stableCoinAddress);
 
-        return uniswapRouter.swapETHForExactTokens{value: _amountInMaximum}(_newStable, path, contractAddress, _deadline);
+        return uniswapRouter.swapETHForExactTokens{value: _amountInMaximum}(_newStable, path, payable(address(this)), _deadline);
     }
 
     function swapToUnderlying(uint256 _unwindStable, uint256 _deadline) public onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
     {
-      uint256 _priceLimit = queryPrice() *(swapSlippageAllowance.denominator + swapSlippageAllowance.numerator)/ swapSlippageAllowance.denominator;
-      uint256 _amountOutMinimum = (_unwindStable * priceMultiplier / _priceLimit);
+      (uint256 _price,) = optionVault.queryPrice();
+      uint256 _priceLimit = _price *(swapSlippageAllowance.denominator + swapSlippageAllowance.numerator)/ swapSlippageAllowance.denominator;
+      uint256 _amountOutMinimum = (_unwindStable * optionVault.priceMultiplier() / _priceLimit);
 
       address[] memory path = new address[](2);
       path[0] = address(stableCoinAddress);
       path[1] = address(WETH);
 
-      return uniswapRouter.swapExactTokensForETH(_unwindStable, _amountOutMinimum, path, contractAddress, _deadline);
+      return uniswapRouter.swapExactTokensForETH(_unwindStable, _amountOutMinimum, path, payable(address(this)), _deadline);
     }
 
     function quoteCapitalCost(uint256 _mpAmount) external view returns(uint256){
@@ -201,9 +187,9 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
     }
 
     function calcCapital(bool _net, bool _average) public view returns(uint256){
-        uint256 _price = queryPrice();
-        uint256 _capital = ERC20(stableCoinAddress).balanceOf(contractAddress) * priceMultiplier / _price;
-        _capital += contractAddress.balance ;
+        (uint256 _price,) = optionVault.queryPrice();
+        uint256 _capital = ERC20(stableCoinAddress).balanceOf(payable(address(this))) * optionVault.priceMultiplier() / _price;
+        _capital += payable(address(this)).balance ;
 
         if(_net)
         {
@@ -218,23 +204,21 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
         return _capital;
     }
 
-    function calcUtilityRatios(uint256 _amount, OptionLibrary.PayoffType  _poType) public view returns(uint256, uint256, uint256){
+    function calcUtilisation(uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
+    external view returns(uint256, uint256){
         uint256 _grossCapital = calcCapital(false, false);
-        uint256 _existingExposure = callExposure>= putExposure? callExposure: putExposure;
-        uint256 _newExposure = _existingExposure;
 
-        if(_poType==OptionLibrary.PayoffType.Call){
-          _newExposure = (callExposure + _amount) >= putExposure? (callExposure + _amount): putExposure;
-        }
-        if(_poType==OptionLibrary.PayoffType.Put){
-          _newExposure = (callExposure) >= (putExposure + _amount)? (callExposure): (putExposure + _amount);
-        }
+        uint256 _newCallExposure = (_poType==OptionLibrary.PayoffType.Call)?
+          ((_side==OptionLibrary.OptionSide.Buy)? (callExposure+_amount): (callExposure - Math.min(callExposure, _amount)) )
+          : callExposure;
+        uint256 _newPutExposure = (_poType==OptionLibrary.PayoffType.Put)?
+          ((_side==OptionLibrary.OptionSide.Buy)? (putExposure+_amount): (putExposure - Math.min(putExposure, _amount)) )
+          : putExposure;
 
-        return ((_existingExposure * maxCollateralisation.denominator / _grossCapital ),
-          (_newExposure * maxCollateralisation.denominator/ _grossCapital ),
-          maxCollateralisation.denominator);
+        return (MulDiv(Math.max(callExposure, putExposure), ethMultiplier, _grossCapital ),
+          MulDiv(Math.max(_newCallExposure, _newPutExposure) , ethMultiplier, _grossCapital ));
     }
-
+/*
     function calcUtilityAddon(uint256 _amount, OptionLibrary.PayoffType  _poType) external view returns(OptionLibrary.Percent memory){
         (uint256 _utilityBefore, uint256 _utilityAfter, uint256 _denominator) = calcUtilityRatios(_amount, _poType);
         require(_utilityBefore < maxCollateralisation.numerator, "Max collateralisation breached.");
@@ -253,13 +237,13 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
         }
 
         return OptionLibrary.Percent((_addonBefore + _addonAfter) / 2, _denominator);
-    }
+    } */
 
     function sweepBalance() external onlyRole(ADMIN_ROLE){
-        payable(msg.sender).transfer(contractAddress.balance);
+        payable(msg.sender).transfer(payable(address(this)).balance);
     }
 
-    function resetMaxCollateralisation(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
+    /* function resetMaxCollateralisation(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
         maxCollateralisation = OptionLibrary.Percent(_multiplier, _denominator);
     }
 
@@ -269,7 +253,7 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
 
     function resetVolPremiumPenalty(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
         volPremiumPenalty = OptionLibrary.Percent(_multiplier, _denominator);
-    }
+    } */
 
     function resetSwapSlippageAllowance(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
         swapSlippageAllowance = OptionLibrary.Percent(_multiplier, _denominator);
@@ -280,6 +264,7 @@ contract MarketMakerNative is ERC20, AccessControl, EOption
     function getHoldersOptionCount(address _address) external view returns(uint256){return activeOptionsPerOwner[_address].length();}
     function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory) {return optionVault.getOption(activeOptionsPerOwner[_address].at(_index));}
     /* function getOptionPayoff(uint256 _id) external view returns(uint256){return optionVault.getOptionPayoffValue(_id);} */
+    function priceDecimals() external view returns(uint256){ return optionVault.priceDecimals();}
 
     receive() external payable{}
 

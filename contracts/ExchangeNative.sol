@@ -23,6 +23,10 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     MarketMakerNative internal marketMaker;
     OptionVault internal optionVault;
 
+
+        uint256 private constant ethMultiplier = 10 ** 18;
+        uint256 public maxUtilisation = 10 ** 18;
+
     mapping(uint256=>VolatilityToken) public volTokensList;
 
     constructor(
@@ -41,22 +45,22 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
       contractAddress = payable(address(this));
     }
 
-    function queryOptionCost(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, uint256 _amount)
-    external view returns(uint256)
+    function queryOptionCost(uint256 _tenor, uint256 _strike, uint256 _amount,
+      OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
+    public view returns(uint256)
     {
-        (uint256 _premium, uint256 _fee) = optionVault.queryOptionCost(_tenor, _strike, _poType, _amount,
-          settlementFee, marketMaker.calcUtilityAddon(_amount, _poType) );
-        return _premium + _fee;
+      (uint256 _utilPrior, uint256 _utilAfter)  = marketMaker.calcUtilisation(_amount, _poType, _side);
+      require(Math.max(_utilPrior, _utilAfter)<= maxUtilisation, "Max utilisation breached.");
+
+      return optionVault.queryOptionCost(_tenor, _strike, _poType, _amount, _utilPrior, _utilAfter );
     }
 
     function purchaseOption(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, uint256 _amount)
     external payable {
-      require(optionVault.containsTenor(_tenor), "Unsupported option tenor.");
-      require((_poType == OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Unsupported option type.");
+      uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType,OptionLibrary.OptionSide.Buy );
+      uint256 _fee = MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
 
-      (uint256 _premium, uint256 _fee) = optionVault.queryOptionCost(_tenor, _strike, _poType, _amount, settlementFee, marketMaker.calcUtilityAddon(_amount, _poType) );
-
-      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, _amount, _premium, _fee );
+      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, OptionLibrary.OptionSide.Buy, _amount, _premium - _fee, _fee );
       require(msg.value >= optionVault.queryDraftOptionCost(_id, false), "Entered premium incorrect.");
       payable(address(marketMaker)).transfer(optionVault.queryOptionPremium(_id));
 
@@ -73,12 +77,10 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     function purchaseOptionInVol(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, uint256 _amount,
       uint256 _payInCost)
       external {
-      require(optionVault.containsTenor(_tenor), "Unsupported option tenor.");
-      require((_poType == OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Unsupported option type.");
+      uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType,OptionLibrary.OptionSide.Buy );
+      uint256 _fee = MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
 
-      (uint256 _premium, uint256 _fee) = optionVault.queryOptionCost(_tenor, _strike, _poType, _amount, settlementFee, marketMaker.calcUtilityAddon(_amount, _poType) );
-
-      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, _amount, _premium, _fee );
+      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, OptionLibrary.OptionSide.Buy, _amount, _premium - _fee, _fee );
       require(_payInCost >= optionVault.queryDraftOptionCost(_id, true), "Entered premium incorrect.");
 
       require(volTokensList[_tenor].transferFrom(msg.sender, contractAddress, _payInCost), 'Failed payment.');
@@ -95,6 +97,10 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
       emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
 
+    }
+
+    function getOptionPayoffValue(uint256 _id) external view returns(uint256){
+      return optionVault.getOptionPayoffValue(_id);
     }
 
     function exerciseOption(uint256 _id) external  {
@@ -134,8 +140,8 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
       function addVolToken(address payable _tokenAddress) external onlyRole(ADMIN_ROLE)
       {
           VolatilityToken _volToken = VolatilityToken(_tokenAddress);
-          require(_volToken.descriptionHash() == optionVault.descriptionHash());
-          require(optionVault.containsTenor(_volToken.tenor()));
+          /* require(_volToken.descriptionHash() == optionVault.descriptionHash());
+          require(optionVault.containsTenor(_volToken.tenor())); */
 
           volTokensList[_volToken.tenor()] = _volToken;
 
@@ -143,11 +149,12 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
       function quoteVolatilityCost(uint256 _tenor, uint256 _volAmount) public view returns(uint256, uint256)
       {
-          require(optionVault.containsTenor(_tenor));
+          /* require(optionVault.containsTenor(_tenor)); */
 
           (uint256 _price,) = optionVault.queryPrice();
+          (uint256 _volatility, ) = optionVault.queryVol(_tenor);
 
-          uint256 _value = volTokensList[_tenor].calculateMintValue(_volAmount, _price, optionVault.queryVol(_tenor));
+          uint256 _value = volTokensList[_tenor].calculateMintValue(_volAmount, _price, _volatility);
           uint256 _fee = _value * volTransactionFees.numerator/ volTransactionFees.denominator;
 
           return (_value, _fee);
@@ -175,8 +182,15 @@ bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
           volTransactionFees = OptionLibrary.Percent(_fee, _denominator);
       }
 
+
+
+                  function resetMaxUtilisation(uint256 _maxUtil) external onlyRole(ADMIN_ROLE){
+                      maxUtilisation = _maxUtil;
+                  }
+
+
       function priceDecimals() external view returns(uint256){ return optionVault.priceDecimals();}
-      function queryVol(uint256 _tenor) external view returns(uint256){return optionVault.queryVol(_tenor);}
+      function queryVol(uint256 _tenor) external view returns(uint256, uint256){return optionVault.queryVol(_tenor);}
 
           receive() external payable{}
 
