@@ -1,299 +1,232 @@
 {
-  "contractName": "EOption",
+  "contractName": "IUniswapV2Router02",
   "abi": [
     {
-      "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
           "internalType": "address",
-          "name": "_recipient",
+          "name": "to",
           "type": "address"
         },
         {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "_mintMPTokenAmount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_addedValue",
+          "name": "deadline",
           "type": "uint256"
         }
       ],
-      "name": "capitalAdded",
-      "type": "event"
+      "name": "swapExactTokensForTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
     },
     {
-      "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountInMax",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
           "internalType": "address",
-          "name": "_recipient",
+          "name": "to",
           "type": "address"
         },
         {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "_burnMPTokenAmount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_withdrawValue",
+          "name": "deadline",
           "type": "uint256"
         }
       ],
-      "name": "capitalWithdrawn",
-      "type": "event"
+      "name": "swapTokensForExactTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
     },
     {
-      "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
-          "internalType": "address",
-          "name": "_purchaser",
-          "type": "address"
-        },
-        {
-          "components": [
-            {
-              "internalType": "enum OptionLibrary.PayoffType",
-              "name": "poType",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum OptionLibrary.OptionSide",
-              "name": "side",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum OptionLibrary.OptionStatus",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "address",
-              "name": "holder",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "createTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "effectiveTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tenor",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "exerciseTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "spot",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "strike",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "volatility",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "premium",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "fee",
-              "type": "uint256"
-            }
-          ],
-          "indexed": false,
-          "internalType": "struct OptionLibrary.Option",
-          "name": "_option",
-          "type": "tuple"
-        },
-        {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "_cost",
+          "name": "amountOutMin",
           "type": "uint256"
         },
         {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "_inVol",
-          "type": "bool"
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
         }
       ],
-      "name": "newOptionBought",
-      "type": "event"
+      "name": "swapExactETHForTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
     },
     {
-      "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountInMax",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
           "internalType": "address",
-          "name": "_purchaser",
+          "name": "to",
           "type": "address"
         },
         {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "_time",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_tenor",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_amount",
+          "name": "deadline",
           "type": "uint256"
         }
       ],
-      "name": "newVolatilityTokenBought",
-      "type": "event"
+      "name": "swapTokensForExactETH",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
     },
     {
-      "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
           "internalType": "address",
-          "name": "_purchaser",
+          "name": "to",
           "type": "address"
         },
         {
-          "components": [
-            {
-              "internalType": "enum OptionLibrary.PayoffType",
-              "name": "poType",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum OptionLibrary.OptionSide",
-              "name": "side",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum OptionLibrary.OptionStatus",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "address",
-              "name": "holder",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "createTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "effectiveTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tenor",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "exerciseTime",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "spot",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "strike",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "volatility",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "premium",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "fee",
-              "type": "uint256"
-            }
-          ],
-          "indexed": false,
-          "internalType": "struct OptionLibrary.Option",
-          "name": "_option",
-          "type": "tuple"
-        },
-        {
-          "indexed": false,
           "internalType": "uint256",
-          "name": "_payoff",
+          "name": "deadline",
           "type": "uint256"
         }
       ],
-      "name": "optionExercised",
-      "type": "event"
+      "name": "swapExactTokensForETH",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "path",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapETHForExactTokens",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_mintMPTokenAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_addedValue\",\"type\":\"uint256\"}],\"name\":\"capitalAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_burnMPTokenAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_withdrawValue\",\"type\":\"uint256\"}],\"name\":\"capitalWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_purchaser\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"enum OptionLibrary.PayoffType\",\"name\":\"poType\",\"type\":\"uint8\"},{\"internalType\":\"enum OptionLibrary.OptionSide\",\"name\":\"side\",\"type\":\"uint8\"},{\"internalType\":\"enum OptionLibrary.OptionStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"address\",\"name\":\"holder\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"createTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"effectiveTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tenor\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"exerciseTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"spot\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"strike\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"volatility\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"premium\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"struct OptionLibrary.Option\",\"name\":\"_option\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_cost\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"_inVol\",\"type\":\"bool\"}],\"name\":\"newOptionBought\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_purchaser\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_time\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_tenor\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"newVolatilityTokenBought\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_purchaser\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"enum OptionLibrary.PayoffType\",\"name\":\"poType\",\"type\":\"uint8\"},{\"internalType\":\"enum OptionLibrary.OptionSide\",\"name\":\"side\",\"type\":\"uint8\"},{\"internalType\":\"enum OptionLibrary.OptionStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"address\",\"name\":\"holder\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"createTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"effectiveTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"tenor\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"exerciseTime\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"spot\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"strike\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"volatility\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"premium\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"struct OptionLibrary.Option\",\"name\":\"_option\",\"type\":\"tuple\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_payoff\",\"type\":\"uint256\"}],\"name\":\"optionExercised\",\"type\":\"event\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":\"EOption\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":{\"keccak256\":\"0x61d6edf99cabd80cdbbdbf67802785d848c4be325c9c887981761ea4306d8380\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://a3b54b4ef43b9fc462cdcd48ab640655f0da6acf7aef2b2ab7a9c4f2a2cf9e8a\",\"dweb:/ipfs/QmNiUb7EG45TWEcu3UnHej7dNVAY5uHCCr6Aw92VSR4nux\"]},\"/Users/mac/Documents/GitHub/moret/contracts/OptionLibrary.sol\":{\"keccak256\":\"0x82642c1690d51b50661ae9bbda70ecdd05a85391fa634a01e207e4ad262c198c\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://0d620fb149e61038d7835ca15a409bcbba86997c842106621dcf84ba7db2f081\",\"dweb:/ipfs/QmRLwzePxJ9rK2Gpg5QGNiLAGUPgnScksySqVBzJExjq8T\"]}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapETHForExactTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactETHForTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactTokensForETH\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactTokensForTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountInMax\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapTokensForExactETH\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountInMax\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapTokensForExactTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":\"IUniswapV2Router02\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/mac/Documents/GitHub/moret/contracts/MoretInterfaces.sol\":{\"keccak256\":\"0x61d6edf99cabd80cdbbdbf67802785d848c4be325c9c887981761ea4306d8380\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://a3b54b4ef43b9fc462cdcd48ab640655f0da6acf7aef2b2ab7a9c4f2a2cf9e8a\",\"dweb:/ipfs/QmNiUb7EG45TWEcu3UnHej7dNVAY5uHCCr6Aw92VSR4nux\"]},\"/Users/mac/Documents/GitHub/moret/contracts/OptionLibrary.sol\":{\"keccak256\":\"0x82642c1690d51b50661ae9bbda70ecdd05a85391fa634a01e207e4ad262c198c\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://0d620fb149e61038d7835ca15a409bcbba86997c842106621dcf84ba7db2f081\",\"dweb:/ipfs/QmRLwzePxJ9rK2Gpg5QGNiLAGUPgnScksySqVBzJExjq8T\"]}},\"version\":1}",
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "immutableReferences": {},
@@ -6969,7 +6902,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.1",
-  "updatedAt": "2021-07-07T22:16:49.520Z",
+  "updatedAt": "2021-07-07T22:16:49.530Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

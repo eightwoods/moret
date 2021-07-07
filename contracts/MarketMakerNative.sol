@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
+/* import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol'; */
 import "./MoretInterfaces.sol";
 import "./FullMath.sol";
 

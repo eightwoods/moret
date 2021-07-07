@@ -23,6 +23,7 @@
   "author": "eightwoods",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@aave/protocol-v2": "^1.0.1",
     "@chainlink/contracts": "^0.1.7",
     "@openzeppelin/contracts": "^4.1.0",
     "@sushiswap/core": "^1.4.2",

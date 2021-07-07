@@ -6,6 +6,7 @@
 
 pragma solidity ^0.8.4;
 
+
 library OptionLibrary {
   enum PayoffType { Call, Put}
   enum OptionSide{ Buy, Sell}

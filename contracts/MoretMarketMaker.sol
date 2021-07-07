@@ -9,10 +9,8 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import "./MoretInterfaces.sol";
-import "./FullMath.sol";
+import "./MarketLibrary.sol";
 
 contract MoretMarketMaker is ERC20, AccessControl, EOption
 {
@@ -24,9 +22,9 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
 
   mapping(address=> EnumerableSet.UintSet) internal activeOptionsPerOwner;
   EnumerableSet.UintSet internal activeOptions;
-  EnumerableSet.AddressSet holderList;
 
   IUniswapV2Router02 internal uniswapRouter;
+  address internal lendingPoolAddressProvider;
   ERC20 internal underlyingToken;
 
   IOptionVault internal optionVault;
@@ -34,11 +32,10 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
   uint256 public lockedPremium = 0;
   uint256 public callExposure = 0;
   uint256 public putExposure = 0;
-  int256 public hedgePositionAmount = 0;
+  uint256 public shortPosition = 0;
 
-  /* OptionLibrary.Percent public volPremiumMultiplier = OptionLibrary.Percent(10 ** 5 , 10 ** 6) ;
-  OptionLibrary.Percent public volPremiumPenalty = OptionLibrary.Percent(5 * 10 ** 5, 10 ** 6) ; */
-  OptionLibrary.Percent public swapSlippageAllowance = OptionLibrary.Percent (2 * 10**4, 10**6);
+  uint256 public swapSlp = 2 * 10**16;
+  uint256 public lendingPoolRateMode = 1;
 
   address public underlyingAddress;
   address public fundingAddress;
@@ -49,7 +46,8 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       address _underlyingAddress,
       address _fundingAddress,
       address _optionAddress,
-      address _swapRouterAddress
+      address _swapRouterAddress,
+      address _lendingPoolAddressProvider
       )
       ERC20(_name, _symbol)
       {
@@ -57,6 +55,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
           _setupRole(ADMIN_ROLE, msg.sender);
 
           uniswapRouter = IUniswapV2Router02(_swapRouterAddress);
+          lendingPoolAddressProvider = _lendingPoolAddressProvider;
 
           fundingAddress = _fundingAddress;
           underlyingAddress = _underlyingAddress;
@@ -71,11 +70,6 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
         uint256 _newPremium, uint256 _newCallExposure, uint256 _newPutExposure)
         external
       {
-        if(!holderList.contains(_purchaser))
-        {
-            holderList.add(_purchaser);
-        }
-
         activeOptionsPerOwner[_purchaser].add(_id);
         activeOptions.add(_id);
         lockedPremium += _newPremium;
@@ -111,82 +105,89 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
 
     function updateHedges(uint256 _deadline) external payable onlyRole(ADMIN_ROLE)
     {
-        int256 _targetDelta = calcTotalDelta();
-        int256 _changesInDelta_m1_0 = 0;
+         int256 _targetDelta = calcTotalDelta();
+         uint256 _newShortPosition = shortPosition;
+         (uint256 _price,) = optionVault.queryPrice();
 
-        if(_targetDelta<0){_changesInDelta_m1_0+= _targetDelta;}
-        if(hedgePositionAmount<0){_changesInDelta_m1_0-= hedgePositionAmount;}
+         if(_targetDelta<-int256(shortPosition))
+         {
+           // repay all borrowing first
+           adjustBorrowing(_targetDelta);
+           // swap to funding
+           uint256 _swapToFunding = Math.min(underlyingToken.balanceOf(address(this)), uint256(-int256(shortPosition)-_targetDelta));
+           if(_swapToFunding>0){
+             uint[] memory _swappedAmountsToFunding = swapToken(_swapToFunding,
+               MulDiv(_swapToFunding, MulDiv(_price , ethMultiplier - swapSlp, ethMultiplier),  optionVault.priceMultiplier() ),
+               underlyingAddress,
+               fundingAddress,
+                _deadline);
+             _newShortPosition += _swappedAmountsToFunding[0];
+           }
+         }
+         if(_targetDelta>-int256(shortPosition))
+         {
+           // swap to underlying
+           uint256 _currentFunding = IERC20(fundingAddress).balanceOf(address(this));
+           uint256 _swapFunding = MulDiv(_currentFunding, Math.min(shortPosition, uint256(_targetDelta+int256(shortPosition))), shortPosition);
 
-        int _swappedUnderlying = 0;
+           if(_swapFunding>0){
+             uint[] memory _swappedAmountsToUnderlying = swapToken(_swapFunding,
+               MulDiv(_swapFunding, optionVault.priceMultiplier() , MulDiv(_price , ethMultiplier + swapSlp, ethMultiplier) ),
+               fundingAddress,
+               underlyingAddress,
+                _deadline);
+             _newShortPosition -= MulDiv(shortPosition, _swappedAmountsToUnderlying[0], _currentFunding);
+           }
+           // borrow
+           adjustBorrowing(_targetDelta);
+         }
 
-        if(_changesInDelta_m1_0<0)
-        {
-            uint256 _newStable = uint256(-_changesInDelta_m1_0);
-            uint256[] memory _swappedAmounts = swapToStable(_newStable,  _deadline);
-            _swappedUnderlying -= int256(_swappedAmounts[0]);
-        }
-        if(_changesInDelta_m1_0>0)
-        {
-            uint256 _unwindStable = uint256(_changesInDelta_m1_0);
-            uint256[] memory _swappedAmounts = swapToUnderlying( _unwindStable,  _deadline);
-            _swappedUnderlying += int256(_swappedAmounts[1]);
-        }
-
-        hedgePositionAmount += _swappedUnderlying;
+         shortPosition = _newShortPosition;
     }
 
-    function swapToStable(uint256 _newStable, uint256 _deadline) public onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
+    function adjustBorrowing(int256 _targetDelta) internal onlyRole(ADMIN_ROLE){
+      int256 _repayOrBorrow = MarketLibrary.calcRepayOrBorrow(_targetDelta, address(this), lendingPoolAddressProvider, underlyingAddress);
+      address _lendingPoolAddress = ILendingPoolAddressesProvider(lendingPoolAddressProvider).getLendingPool();
+
+      if(_repayOrBorrow < 0) // repay
+      {
+          ILendingPool(_lendingPoolAddress).repay(underlyingAddress, uint256(-_repayOrBorrow), lendingPoolRateMode, address(this));
+          ILendingPool(_lendingPoolAddress).withdraw(underlyingAddress,
+            MarketLibrary.calcWithdrawCollateral(address(this), lendingPoolAddressProvider, underlyingAddress),
+            address(this));
+      }
+      if(_repayOrBorrow > 0) // borrow
+      {
+          ILendingPool(_lendingPoolAddress).deposit(underlyingAddress,
+            MarketLibrary.calcDepositCollateral(uint256(_repayOrBorrow), address(this), lendingPoolAddressProvider, underlyingAddress),
+            address(this), 0);
+          ILendingPool(_lendingPoolAddress).borrow(underlyingAddress, uint256(_repayOrBorrow), lendingPoolRateMode,  0, address(this));
+      }
+    }
+
+    function swapToken(uint256 _amountIn, uint256 _amountOutMinimum, address _tokenIn, address _tokenOut,  uint256 _deadline)
+    internal onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
     {
-        (uint256 _price,) = optionVault.queryPrice();
-
-        uint256 _priceLimit = _price * (swapSlippageAllowance.denominator + swapSlippageAllowance.numerator)/ swapSlippageAllowance.denominator;
-        uint256 _amountInMaximum = (_newStable * optionVault.priceMultiplier() / _priceLimit );
-
         address[] memory path = new address[](2);
-        path[1] = fundingAddress;
-        path[0] = underlyingAddress;
+        path[0] = _tokenIn;
+        path[1] = _tokenOut;
 
-          return uniswapRouter.swapTokensForExactTokens(
-            _newStable,
-            _amountInMaximum,
-            path,
-            address(this),
-            _deadline
-             );
-    }
-
-    function swapToUnderlying(uint256 _unwindStable, uint256 _deadline) public onlyRole(ADMIN_ROLE) returns(uint256[] memory _swappedAmounts)
-    {
-      (uint256 _price,) = optionVault.queryPrice();
-
-      uint256 _priceLimit = _price *(swapSlippageAllowance.denominator + swapSlippageAllowance.numerator)/ swapSlippageAllowance.denominator;
-      uint256 _amountOutMinimum = (_unwindStable * optionVault.priceMultiplier() / _priceLimit);
-
-      address[] memory path = new address[](2);
-      path[0] = fundingAddress;
-      path[1] = underlyingAddress;
-
-      return uniswapRouter.swapExactTokensForTokens(
-        _unwindStable,
-        _amountOutMinimum,
-        path,
-        address(this),
-        _deadline
-         );
-
-    }
-
-    function quoteCapitalCost(uint256 _mpAmount) external view returns(uint256){
-        return MulDiv(_mpAmount, calcCapital(false, true), ethMultiplier);
+        return uniswapRouter.swapExactTokensForTokens(
+          _amountIn,
+          _amountOutMinimum,
+          path,
+          address(this),
+          _deadline
+           );
     }
 
     function addCapital(uint256 _depositAmount) external payable{
         uint256 _averageGrossCapital = calcCapital(false, true);
-        require(_averageGrossCapital>0, "Zero Gross Capital.");
+        require(_averageGrossCapital>0);
 
         uint256 _mintMPTokenAmount = MulDiv(_depositAmount, ethMultiplier, _averageGrossCapital);
 
-        require(underlyingToken.transferFrom(msg.sender, address(this), _depositAmount), "Transfer failed.");
+        require(underlyingToken.transferFrom(msg.sender, address(this), _depositAmount));
 
         _mint(msg.sender, _mintMPTokenAmount);
 
@@ -199,16 +200,14 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
 
         _burn(msg.sender, _burnMPTokenAmount);
 
-        require(underlyingToken.transfer(msg.sender, _withdrawValue), "Withdrawal failed.");
+        require(underlyingToken.transfer(msg.sender, _withdrawValue));
 
         emit capitalWithdrawn(msg.sender, _burnMPTokenAmount, _withdrawValue);
     }
 
     function calcCapital(bool _net, bool _average) public view returns(uint256){
         (uint256 _price,) = optionVault.queryPrice();
-        uint256 _capital = ERC20(fundingAddress).balanceOf(address(this)) * optionVault.priceMultiplier() / _price;
-
-        _capital += underlyingToken.balanceOf(address(this));
+        uint256 _capital = MulDiv(IERC20(fundingAddress).balanceOf(address(this)), optionVault.priceMultiplier() , _price ) + underlyingToken.balanceOf(address(this)) ;
 
         if(_net)
         {
@@ -238,45 +237,12 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
           MulDiv(Math.max(_newCallExposure, _newPutExposure) , ethMultiplier, _grossCapital ));
     }
 
-    /* function calcUtilityAddon(uint256 _amount, OptionLibrary.PayoffType  _poType) external view returns(OptionLibrary.Percent memory){
-        (uint256 _utilityBefore, uint256 _utilityAfter, uint256 _denominator) = calcUtilityRatios(_amount, _poType);
-        require(_utilityBefore < maxCollateralisation.numerator, "Max collateralisation breached.");
-        require(_utilityAfter < maxCollateralisation.numerator, "Max collateralisation breached.");
-
-        uint256 _addonBefore = volPremiumMultiplier.numerator * _utilityBefore / volPremiumMultiplier.denominator;
-        if(_utilityBefore> _denominator)
-        {
-            _addonBefore += volPremiumPenalty.numerator *( _utilityBefore - _denominator)/ volPremiumPenalty.denominator;
-        }
-
-        uint256 _addonAfter = (volPremiumMultiplier.numerator * _utilityAfter/ volPremiumPenalty.denominator);
-        if(_utilityAfter> _denominator)
-        {
-            _addonAfter += (volPremiumPenalty.numerator* ( _utilityAfter - _denominator) / volPremiumPenalty.denominator);
-        }
-
-        return OptionLibrary.Percent((_addonBefore + _addonAfter) / 2, _denominator);
-    } */
-
-    function sweepBalance() external onlyRole(ADMIN_ROLE){
-        require(underlyingToken.transfer(msg.sender, underlyingToken.balanceOf(address(this))), "Withdrawal failed.");
-    }
-
-    /* function resetVolPremiumMultiplier(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
-        volPremiumMultiplier = OptionLibrary.Percent(_multiplier, _denominator);
-    }
-
-    function resetVolPremiumPenalty(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
-        volPremiumPenalty = OptionLibrary.Percent(_multiplier, _denominator);
-    } */
-
-    function resetSwapSlippageAllowance(uint256 _multiplier, uint256 _denominator) external onlyRole(ADMIN_ROLE){
-        swapSlippageAllowance = OptionLibrary.Percent(_multiplier, _denominator);
+    function resetSwapSlippageAllowance(uint256 _multiplier) external onlyRole(ADMIN_ROLE){
+        swapSlp = _multiplier;
     }
 
     function getHoldersOptionCount(address _address) external view returns(uint256){return activeOptionsPerOwner[_address].length();}
     function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory) {return optionVault.getOption(activeOptionsPerOwner[_address].at(_index));}
-    function priceDecimals() external view returns(uint256){ return optionVault.priceDecimals();}
 
     receive() external payable{}
 

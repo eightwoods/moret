@@ -74,29 +74,34 @@ interface IOptionVault{
   function priceDecimals() external view returns(uint256);
 }
 
-/* interface IOptionContract{
-  function descriptionHash() external view returns (bytes32);
-  function containsTenor(uint256 _tenor) external returns (bool);
-  function queryOptionCost(uint256 _tenor, uint256 _strike, PayoffType _poType, uint256 _amount, Percent _fee) external view returns(uint256);
-  function addOption(uint256 _tenor, uint256 _strike, PayoffType _poType, uint256 _amount, Percent _fee) external view returns(uint256);
-  function queryDraftOptionCost(uint256 _id) external view returns(uint256);
-  function queryDraftOptionFee(uint256 _id) external view returns(uint256);
-  function queryDraftOptionCostInVolToken(uint256 _id) external view returns(uint256);
-  function stampActiveOption(uint256 _id) external;
-  function stampExercisedOption(uint256 _id) external ;
-  function stampExpiredOption(uint256 _id)  external;
+
+interface IUniswapV2Router02 {
+  function swapExactTokensForTokens(
+      uint amountIn,
+      uint amountOutMin,
+      address[] calldata path,
+      address to,
+      uint deadline
+  ) external returns (uint[] memory amounts);
+  function swapTokensForExactTokens(
+      uint amountOut,
+      uint amountInMax,
+      address[] calldata path,
+      address to,
+      uint deadline
+  ) external returns (uint[] memory amounts);
+  function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
+      external
+      payable
+      returns (uint[] memory amounts);
+  function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
+      external
+      returns (uint[] memory amounts);
+  function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
+      external
+      returns (uint[] memory amounts);
+  function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
+      external
+      payable
+      returns (uint[] memory amounts);
 }
-
-interface IGovernanceToken{
-
-}
-
-interface IVolatilityToken{
-  function descriptionHash() external view returns (bytes32);
-  function tenor() external view returns (uint256);
-  function recycle(address payable _recipient, uint256 _tokenAmount) external;
-}
-
-interface IMoretMarketMaker{
-
-} */
