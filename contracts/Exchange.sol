@@ -197,15 +197,13 @@ contract Exchange is AccessControl, EOption
           settlementFee = OptionLibrary.Percent(_fee, _denominator);
       }
 
-          function resetVolTransactionFees(uint256 _fee, uint256 _denominator) external onlyRole(ADMIN_ROLE){
-              volTransactionFees = OptionLibrary.Percent(_fee, _denominator);
-          }
+      function resetVolTransactionFees(uint256 _fee, uint256 _denominator) external onlyRole(ADMIN_ROLE){
+          volTransactionFees = OptionLibrary.Percent(_fee, _denominator);
+      }
 
-
-            function resetMaxUtilisation(uint256 _maxUtil) external onlyRole(ADMIN_ROLE){
-                maxUtilisation = _maxUtil;
-            }
-
+      function resetMaxUtilisation(uint256 _maxUtil) external onlyRole(ADMIN_ROLE){
+          maxUtilisation = _maxUtil;
+      }
 
       function calcUtilisation(uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
       public view returns(uint256, uint256){

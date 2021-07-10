@@ -134,7 +134,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       uint256 _swapToFunding = Math.min(ERC20(underlyingAddress).balanceOf(address(this)),
          uint256(-int256(shortPosition)-_targetDelta));
       if(_swapToFunding>0){
-        ERC20(underlyingAddress).approve(swapRouterAddress, _swapToFunding);
+        ERC20(underlyingAddress).increaseAllowance(swapRouterAddress, _swapToFunding);
 
         address[] memory path = new address[](2);
         path[0] = underlyingAddress;
@@ -161,7 +161,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
        MulDiv(Math.min(shortPosition, uint256(_targetDelta + int256(shortPosition))), _price, optionVault.priceMultiplier()));
 
       if(_swapFromFunding>0){
-        ERC20(fundingAddress).approve(swapRouterAddress, _swapFromFunding);
+        ERC20(fundingAddress).increaseAllowance(swapRouterAddress, _swapFromFunding);
 
         address[] memory path = new address[](2);
         path[0] = fundingAddress;
