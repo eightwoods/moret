@@ -16,8 +16,7 @@ contract OptionVault is AccessControl
   using OptionLibrary for OptionLibrary.Option;
 
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-  bytes32 public constant MARKET_MAKER_ROLE = keccak256("MARKET_MAKER_ROLE");
+  bytes32 public constant EXCHANGE_ROLE = keccak256("EXCHANGE_ROLE");
 
   mapping(uint256=> OptionLibrary.Option) internal optionsList;
   uint256 public optionCounter = 0;
@@ -35,7 +34,7 @@ contract OptionVault is AccessControl
       {
           _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
           _setupRole(ADMIN_ROLE, msg.sender);
-          _setupRole(MARKET_MAKER_ROLE, msg.sender);
+          _setupRole(EXCHANGE_ROLE, msg.sender);
 
           volatilityChain = IVolatilityChain(_volChainAddress);
       }
@@ -78,7 +77,7 @@ contract OptionVault is AccessControl
 
     function addOption(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side,
       uint256 _amount, uint256 _premium, uint256 _fee)
-    external onlyRole(MARKET_MAKER_ROLE) returns(uint256)
+    external onlyRole(EXCHANGE_ROLE) returns(uint256)
     {
         require((_poType==OptionLibrary.PayoffType.Call) || (_poType==OptionLibrary.PayoffType.Put), "Use call or put option.");
 
@@ -194,17 +193,17 @@ contract OptionVault is AccessControl
       return (optionsList[_id].status== OptionLibrary.OptionStatus.Draft) && ((optionsList[_id].effectiveTime + optionsList[_id].tenor) <= block.timestamp);
     }
 
-    function stampActiveOption(uint256 _id) external onlyRole(MARKET_MAKER_ROLE) {
+    function stampActiveOption(uint256 _id) external onlyRole(EXCHANGE_ROLE) {
         optionsList[_id].effectiveTime = block.timestamp;
         optionsList[_id].status = OptionLibrary.OptionStatus.Active;
     }
 
-    function stampExercisedOption(uint256 _id) external onlyRole(MARKET_MAKER_ROLE){
+    function stampExercisedOption(uint256 _id) external onlyRole(EXCHANGE_ROLE){
         optionsList[_id].exerciseTime = block.timestamp;
         optionsList[_id].status = OptionLibrary.OptionStatus.Exercised;
     }
 
-    function stampExpiredOption(uint256 _id)  external onlyRole(MARKET_MAKER_ROLE){
+    function stampExpiredOption(uint256 _id)  external onlyRole(EXCHANGE_ROLE){
         optionsList[_id].status = OptionLibrary.OptionStatus.Expired;
     }
 

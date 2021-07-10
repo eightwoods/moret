@@ -125,7 +125,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
        latestBookTime[_tenor] = _timeStamp;
        priceBook[_tenor][_timeStamp].startTime = _timeStamp;
-       priceBook[_tenor][_timeStamp].volatility = volatilityParameters[_tenor].initialVol;
+       priceBook[_tenor][_timeStamp].volatility = priceBook[_tenor][_timeStamp].accentus = volatilityParameters[_tenor].initialVol;
        priceBook[_tenor][_timeStamp].open = priceBook[_tenor][_timeStamp].highest = priceBook[_tenor][_timeStamp].lowest = _updatePrice;
 
    }

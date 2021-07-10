@@ -24,6 +24,7 @@ contract Exchange is AccessControl, EOption
     OptionLibrary.Percent public volTransactionFees = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
     address payable public contractAddress;
 
+    address public marketMakerAddress;
     MoretMarketMaker internal marketMaker;
     OptionVault internal optionVault;
       ERC20 internal underlyingToken;
@@ -42,6 +43,7 @@ contract Exchange is AccessControl, EOption
         _setupRole(ADMIN_ROLE, msg.sender);
 
       optionVault = OptionVault(_optionAddress);
+      marketMakerAddress = _marketMakerAddress;
       marketMaker = MoretMarketMaker(_marketMakerAddress);
       VolatilityToken _volToken = VolatilityToken(_volTokenAddress);
       volTokensList[_volToken.tenor()] = _volToken;
@@ -54,7 +56,7 @@ contract Exchange is AccessControl, EOption
       OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
       public view returns(uint256)
     {
-        (uint256 _utilPrior, uint256 _utilAfter)  = marketMaker.calcUtilisation(_amount, _poType, _side);
+        (uint256 _utilPrior, uint256 _utilAfter)  = calcUtilisation(_amount, _poType, _side);
         require(Math.max(_utilPrior, _utilAfter)<= maxUtilisation, "Max utilisation breached.");
 
         return optionVault.queryOptionCost(_tenor, _strike, _poType, _amount, _utilPrior, _utilAfter );
@@ -72,11 +74,12 @@ contract Exchange is AccessControl, EOption
       require(_payInCost >= optionVault.queryDraftOptionCost(_id, false), "Entered premium incorrect.");
 
       require(underlyingToken.transferFrom(msg.sender, contractAddress, _payInCost), 'Failed payment.');
-      require(underlyingToken.transfer(address(marketMaker), optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
+      require(underlyingToken.transfer(marketMakerAddress, optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
 
       optionVault.stampActiveOption(_id);
 
-      marketMaker.recordOptionPurhcase(msg.sender, _id, optionVault.queryOptionPremium(_id),
+      marketMaker.recordOption(msg.sender, _id, true,
+        optionVault.queryOptionPremium(_id),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
@@ -99,11 +102,12 @@ contract Exchange is AccessControl, EOption
 
       volTokensList[_tenor].approve(volTokensList[_tenor].contractAddress(), _payInCost);
       volTokensList[_tenor].recycleInToken(contractAddress, _payInCost, underlyingToken);
-      require(underlyingToken.transfer(address(marketMaker), optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
+      require(underlyingToken.transfer(marketMakerAddress, optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
 
       optionVault.stampActiveOption(_id);
 
-      marketMaker.recordOptionPurhcase(msg.sender, _id, optionVault.queryOptionPremium(_id),
+      marketMaker.recordOption(msg.sender, _id, true,
+        optionVault.queryOptionPremium(_id),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
         optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
@@ -124,7 +128,8 @@ contract Exchange is AccessControl, EOption
 
         require(underlyingToken.transfer(msg.sender, _payoffValue), "Transfer failed.");
 
-        marketMaker.recordOptionRemoval(msg.sender, _id, optionVault.queryOptionPremium(_id),
+        marketMaker.recordOption(msg.sender, _id, false,
+          optionVault.queryOptionPremium(_id),
           optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
           optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
@@ -142,7 +147,8 @@ contract Exchange is AccessControl, EOption
             address payable _optionHolder = optionVault.getOptionHolder(_id);
             require(underlyingToken.transfer(_optionHolder, _payoffValue), "Transfer failed.");
 
-            marketMaker.recordOptionRemoval(msg.sender, _id, optionVault.queryOptionPremium(_id),
+            marketMaker.recordOption(msg.sender, _id, false,
+              optionVault.queryOptionPremium(_id),
               optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
               optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
         }
@@ -201,11 +207,28 @@ contract Exchange is AccessControl, EOption
             }
 
 
+      function calcUtilisation(uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
+      public view returns(uint256, uint256){
+          uint256 _grossCapital = marketMaker.calcCapital(false, false);
+
+          uint256 _newCallExposure = (_poType==OptionLibrary.PayoffType.Call)?
+            ((_side==OptionLibrary.OptionSide.Buy)? (marketMaker.callExposure() + _amount):
+              (marketMaker.callExposure() - Math.min(marketMaker.callExposure(), _amount)) )
+            : marketMaker.callExposure();
+          uint256 _newPutExposure = (_poType==OptionLibrary.PayoffType.Put)?
+            ((_side==OptionLibrary.OptionSide.Buy)? (marketMaker.putExposure()+_amount):
+              (marketMaker.putExposure() - Math.min(marketMaker.putExposure(), _amount)) )
+            : marketMaker.putExposure();
+
+          return (MulDiv(Math.max(marketMaker.callExposure(), marketMaker.putExposure()), ethMultiplier, _grossCapital ),
+            MulDiv(Math.max(_newCallExposure, _newPutExposure) , ethMultiplier, _grossCapital ));
+      }
+
 
 
           function priceDecimals() external view returns(uint256){ return optionVault.priceDecimals();}
+          function queryPrice() external view returns(uint256, uint256){return optionVault.queryPrice();}
           function queryVol(uint256 _tenor) external view returns(uint256, uint256){return optionVault.queryVol(_tenor);}
 
-          receive() external payable{}
 
 }
