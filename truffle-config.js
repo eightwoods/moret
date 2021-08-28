@@ -17,13 +17,10 @@
  * phrase from a file you've .gitignored so it doesn't accidentally become public.
  *
  */
+require('dotenv').config();
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const Web3 = require('web3');
 
- const HDWalletProvider = require('@truffle/hdwallet-provider');
- const Web3 = require('web3');
- const infuraKey = 'cae287ba774546e6b63df1b6ae4817bf';
-
- const fs = require('fs');
- const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 module.exports = {
   /**
@@ -60,7 +57,7 @@ module.exports = {
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     ropsten: {
-    provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
+    provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`),
     networkCheckTimeout: 1000000000,
     network_id: 3,       // Ropsten's id
     gas: 5500000,        // Ropsten has a lower block limit than mainnet
@@ -69,16 +66,16 @@ module.exports = {
     skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },
     kovan: {
-    provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/${infuraKey}`),
+      provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`),
       networkCheckTimeout: 1000000000,
     network_id: 42,       // Kovan's id
-    gas: 5500000,        // Ropsten has a lower block limit than mainnet
+    gas: 8500000,        // Ropsten has a lower block limit than mainnet
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-    timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
-    skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
+    timeoutBlocks: 1000,  // # of blocks before a deployment times out  (minimum/default: 50)
+    skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
   },
   mumbai: {
-    provider: () => new HDWalletProvider(mnemonic, `https://polygon-mumbai.infura.io/v3/${infuraKey}`),
+    provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_API_KEY}`),
       networkCheckTimeout: 1000000000,
     network_id: 80001,       // Kovan's id
     gas: 5500000,

@@ -1,52 +1,43 @@
 const settings={
-    priceSourceId: '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada',
-    parameterDecimals: 8,
-    tokenName: "MATIC",
-    tenor: 86400,
-    params: [5000000,20000000,0,0,90000000,10000000],
-    underlying: 'MATIC / USD',
-    volName: "MATIC 1d Volatility",
-    volSymbol: "MATIC1"
-    };
+  parameterDecimals: 8,    
+  secondsPer1D: 86400, 
+  params: [5000000,20000000,0,0,90000000,10000000]
+  };
 
 const volChain = artifacts.require("./VolatilityChain");
 const volToken = artifacts.require("./VolatilityToken");
 
-module.exports = (deployer, network, accounts) => deployer
+module.exports = (deployer) => deployer
   .then(()=> deployVolChain(deployer))
-  .then(()=> setVolChain())
   .then(()=> deployVolToken(deployer))
-  .then(()=> displayVolChain());
+  .then(()=> displayDeployed());
 
-function deployVolChain(deployer){
-  return deployer.deploy(
+async function deployVolChain(deployer){
+  await deployer.deploy(
     volChain,
-    settings.priceSourceId,
+    process.env.CHAINLINK_FEED,
     settings.parameterDecimals,
-    settings.tokenName
-  );}
+    process.env.TOKEN_NAME
+  );
+  let varChainInstance = await volChain.deployed();
+  await varChainInstance.resetVolParams(settings.secondsPer1D, settings.params);
+}
 
-
-function deployVolToken(deployer){
-  return deployer.deploy(
+async function deployVolToken(deployer){
+  await deployer.deploy(
     volToken,
-    settings.underlying,
-    settings.tenor,
-    settings.volName,
-    settings.volSymbol
+    process.env.TOKEN_NAME,
+    settings.secondsPer1D,
+    [settings.tokenName, "1D", "Volatility"].join(' '),
+    settings.tokenName + "1"
   );
 }
 
-async function setVolChain(){
-  const varChainInstance = (await volChain.deployed());
-  varChainInstance.resetVolParams(settings.tenor, settings.params);
-}
-
-async function displayVolChain(){
-  const varChainInstance = (await volChain.deployed());
-  const volTokenInstance = (await volToken.deployed());
+async function displayDeployed(){
+  const varChainInstance = await volChain.deployed();
+  const volTokenInstance = await volToken.deployed();
   console.log(`=========
-    Deployed VolChain: ${volChain.address}
-    Deployed VolToken: ${volToken.address}
+    Deployed VolChain: ${varChainInstance.address}
+    Deployed VolToken: ${volTokenInstance.address}
     =========`)
 }
