@@ -5,11 +5,11 @@ const settings={
   };
 
 const volChain = artifacts.require("./VolatilityChain");
-const volToken = artifacts.require("./VolatilityToken");
+// const volToken = artifacts.require("./VolatilityToken");
 
 module.exports = (deployer) => deployer
   .then(()=> deployVolChain(deployer))
-  .then(()=> deployVolToken(deployer))
+  // .then(()=> deployVolToken(deployer))
   .then(()=> displayDeployed());
 
 async function deployVolChain(deployer){
@@ -21,9 +21,11 @@ async function deployVolChain(deployer){
   );
   let varChainInstance = await volChain.deployed();
   await varChainInstance.resetVolParams(settings.secondsPer1D, settings.params);
+  
+  assignRoles(varChainInstance);
 }
 
-async function deployVolToken(deployer){
+/* async function deployVolToken(deployer){
   await deployer.deploy(
     volToken,
     process.env.TOKEN_NAME,
@@ -31,13 +33,16 @@ async function deployVolToken(deployer){
     [settings.tokenName, "1D", "Volatility"].join(' '),
     settings.tokenName + "1"
   );
+} */
+
+async function assignRoles(varChainInstance) {
+  await varChainInstance.grantRole(varChainInstance.UPDATE_ROLE, process.env.RELAY_ACCOUNT);
 }
 
 async function displayDeployed(){
   const varChainInstance = await volChain.deployed();
-  const volTokenInstance = await volToken.deployed();
+  // const volTokenInstance = await volToken.deployed();
   console.log(`=========
     Deployed VolChain: ${varChainInstance.address}
-    Deployed VolToken: ${volTokenInstance.address}
     =========`)
 }

@@ -1,7 +1,7 @@
 
-const exchange = artifacts.require('./MoretExchange');
+const exchange = artifacts.require('./Exchange');
 const marketMaker = artifacts.require('./MoretMarketMaker');
-const volToken = artifacts.require("./VolatilityToken");
+// const volToken = artifacts.require("./VolatilityToken");
 const optionVault = artifacts.require("./OptionVault");
 
 module.exports = (deployer) => deployer
@@ -9,29 +9,28 @@ module.exports = (deployer) => deployer
     .then(() => displayDeployed());
 
 async function deployExchange(deployer) {
-    var volTokenInstance = await volToken.deployed();
+    // var volTokenInstance = await volToken.deployed();
     var marketMakerInstance = await marketMaker.deployed();
     var optionVaultInstance = await optionVault.deployed();
 
     await deployer.deploy(
         exchange,
-        marketMakerInstance.addres,
-        optionVaultInstance.address,
-        volTokenInstance.address
+        marketMakerInstance.address,
+        optionVaultInstance.address
     );
-
-    const exchangeInstance = await exchange.deployed();
-    assignRoles(marketMakerInstance, optionVaultInstance, exchangeInstance);
-}
-
-async function assignRoles(marketMakerInstance, optionVaultInstance, exchangeInstance) {
-    await optionVaultInstance.grantRole(optionVaultInstance.EXCHANGE_ROLE, exchangeInstance.address);
-    await marketMakerInstance.grantRole(marketMakerInstance.EXCHANGE_ROLE, exchangeInstance.address);
 }
 
 async function displayDeployed() {
-    const exchangeInstance = await exchange.deployed();
+    var marketMakerInstance = await marketMaker.deployed();
+    var optionVaultInstance = await optionVault.deployed();
+    var exchangeInstance = await exchange.deployed();
+    var optionRole = await optionVaultInstance.EXCHANGE_ROLE();
+    var marketRole = await marketMakerInstance.EXCHANGE_ROLE();
+
+    await optionVaultInstance.grantRole(optionRole, exchangeInstance.address);
+    await marketMakerInstance.grantRole(marketRole, exchangeInstance.address);
+
     console.log(`=========
     Deployed Exchange: ${exchangeInstance.address}
-    =========`)
+    =========`);
 }

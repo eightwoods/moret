@@ -55,7 +55,7 @@ interface IVolatilityChain{
       uint256 q; // paramter for auto regression
   }
 
-  function getVol(uint256 _tenor) external view returns(uint256, uint256);
+  function getVol(uint256 _tenor) external view returns(uint256);
   function queryPrice() external view returns(uint256, uint256);
   function getPriceDecimals() external view returns (uint256);
   function getPriceMultiplier() external view returns (uint256);
@@ -64,10 +64,11 @@ interface IVolatilityChain{
 
 
 interface IOptionVault{
-  function calculateContractDelta(uint256 _id) external view returns(int256);
+  function calculateContractDelta(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
   function getOption(uint256 _id) external view returns(OptionLibrary.Option memory);
   function getOptionPayoffValue(uint256 _id) external view returns(uint256);
-
+  function queryOptionCapital(uint256 _id, uint256 _capitalRatio) external view returns(uint256);
+  function queryOptionNotional(uint256 _id, bool _ignoreSells) external view returns(uint256);
   function queryVol(uint256 _tenor) external view returns(uint256, uint256);
   function queryPrice() external view returns(uint256, uint256);
   function priceMultiplier() external view returns (uint256);

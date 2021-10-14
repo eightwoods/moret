@@ -4,3 +4,6 @@ node_modules
 app.js
 app
 .env
+*.dot
+trading
+**.json

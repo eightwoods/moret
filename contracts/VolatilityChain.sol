@@ -5,15 +5,13 @@ pragma solidity ^0.8.4;
  * Moret
  * Copyright (C) 2021 Moret
  */
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import "./FullMath.sol";
-import "./MoretInterfaces.sol";
+import {IVolatilityChain} from "./MoretInterfaces.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-// import "https://github.com/smartcontractkit/chainlink/blob/master/evm-contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
  contract VolatilityChain is Ownable, AccessControl, IVolatilityChain
  {
@@ -62,15 +60,27 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
    }
 
-   function getVol(uint256 _tenor) external override view returns(uint256, uint256)
-   {
-       require(tenors.contains(_tenor), "Input option tenor is not allowed.");
-       return (priceBook[_tenor][latestBookTime[_tenor]].volatility, priceBook[_tenor][latestBookTime[_tenor]].accentus);
-    }
+   function getVol(uint256 _tenor) external override view returns(uint256){
+      uint256 _vol = 0;
+      if(tenors.contains(_tenor)){ _vol = priceBook[_tenor][latestBookTime[_tenor]].volatility;}
+      if(!tenors.contains(_tenor)){
+        uint256 _upperTenor = 0;
+        uint256 _lowerTenor = 0;
+        uint256 _upperVol = 0;
+        uint256 _lowerVol = 0;
+        for(uint i = 0;i< tenors.length();i++){
+          uint256 _tenorI = tenors.at(i);
+          if(_tenorI >_tenor && (_tenorI < _upperTenor || _upperTenor == 0) ){ _upperTenor = _tenorI; _upperVol = priceBook[_tenorI][latestBookTime[_tenorI]].volatility; }
+          if(_tenorI <_tenor && (_tenorI > _lowerTenor || _lowerTenor == 0) ){ _lowerTenor = _tenorI; _lowerVol = priceBook[_tenorI][latestBookTime[_tenorI]].volatility; }}
+        if(_upperTenor == 0) { _vol = _lowerVol;}
+        if(_lowerTenor==0) {_vol = _upperVol;}
+        if(_upperTenor >0 && _lowerTenor >0){ _vol = MulDiv(_lowerVol, _upperTenor - _tenor, _upperTenor - _lowerTenor) + MulDiv(_upperVol, _tenor - _lowerTenor, _upperTenor - _lowerTenor);}
+      }
+      return _vol;}
 
-  function queryPrice() external override view returns(uint256, uint256){
+  function queryPrice() external override view returns(uint256, uint256, uint256){
       (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
-      return (uint256(_price), uint256(_timeStamp));
+      return (uint256(_price), uint256(_timeStamp), priceMultiplier);
   }
 
    function update() external onlyRole(UPDATE_ROLE){
