@@ -4,13 +4,13 @@
  * Copyright (C) 2021 Moret
 */
 
-pragma solidity ^0.8.4;
+pragma solidity 0.8.9;
 
 import "./FullMath.sol";
-import "prb-math/contracts/PRBMathSD59x18.sol";
+import "prb-math/contracts/PRBMath.sol";
 
 library OptionLibrary {
-  using PRBMathSD59x18 for int256;
+  using PRBMath for uint256;
   enum PayoffType { Call, Put}
   enum OptionSide{ Buy, Sell}
   enum OptionStatus { Draft, Active, Exercised, Expired}
@@ -39,22 +39,16 @@ library OptionLibrary {
   function calcPayoff(Option storage _option, uint256 _price, uint256 _priceMultiplier) public view returns(uint256){
     return calcIntrinsicValue(_option.strike, _price, _option.amount, _option.poType, _priceMultiplier);}
 
+  function calcNotionalExposure(Option storage _option, uint256 _price, uint256 _priceMultiplier) public view returns(uint256){ return MulDiv(_option.amount, _price, _priceMultiplier);}
+
   function calcDelta(uint256 _price, uint256 _strike, uint256 _priceMultiplier, uint256 _vol) public pure returns(uint256 _delta){
     uint256 _moneyness = MulDiv(_price, _priceMultiplier, _strike);
-    int256 _d = int256(MulDiv(2 , (_moneyness * _priceMultiplier).sqrt(), _vol)) - int256(MulDiv(2,  _priceMultiplier, _vol)) + int256(_vol / 2);
+    int256 _d = int256(MulDiv(2 ,  (_moneyness * _priceMultiplier).sqrt(), _vol)) - int256(MulDiv(2,  _priceMultiplier, _vol)) + int256(_vol / 2);
     _delta = Logistic(_d);}
   
   function calcGamma(uint256 _price, uint256 _strike, uint256 _priceMultiplier, uint256 _vol) public pure returns(uint256 _gamma){
     uint256 _moneyness = MulDiv(_price, _priceMultiplier, _strike);
-    int256 _d = int256(MulDiv(2 , (_moneyness * _priceMultiplier).sqrt(), _vol)) - int256(MulDiv(2,  _priceMultiplier, _vol)) + int256(_vol / 2);
+    int256 _d = int256(MulDiv(2 ,  (_moneyness * _priceMultiplier).sqrt(), _vol)) - int256(MulDiv(2,  _priceMultiplier, _vol)) + int256(_vol / 2);
     _gamma = MulDiv(MulDiv(NormalDensity(_d), _priceMultiplier, _price), _priceMultiplier, _vol);}
-
-  // function getCost(Option storage _option, bool _inVol) public view returns(uint256){
-  //   if(_inVol)
-  //   {
-  //     return (_option.premium + _option.fee)  * _option.spot / _option.volatility;
-  //   }
-  //   return _option.premium + _option.fee;
-  // }
 
 }

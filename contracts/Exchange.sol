@@ -1,119 +1,120 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.8.7;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./MoretInterfaces.sol";
-import "./OptionVault.sol";
 import "./VolatilityToken.sol";
 import "./MoretMarketMaker.sol";
 import "./FullMath.sol";
 
-contract Exchange is AccessControl, EOption
-{
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+contract Exchange is AccessControl, EOption{
+  bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE"); // setting parameters and see the overall positions
+  bytes32 public constant MINER_ROLE = keccak256("MINER_ROLE");
+  // OptionLibrary.Percent public volTransactionFees = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
+  // address public contractAddress;
+  // address public marketMakerAddress;
+  // ERC20 internal underlyingToken; // used to pay premiums (vol token is alternative)
+  // mapping(uint256=>VolatilityToken) public volTokensList;
 
-    OptionLibrary.Percent public settlementFee = OptionLibrary.Percent(10 ** 3, 10 ** 6);
-    OptionLibrary.Percent public volTransactionFees = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
-    address payable public contractAddress;
+  MoretMarketMaker internal marketMaker;
+  IOptionVault internal optionVault;
+  ILendingPoolAddressesProvider internal lendingPoolAddressProvider;
+  address internal swapRouterAddress;
+  address internal aggregatorAddress;
 
-    address public marketMakerAddress;
-    MoretMarketMaker internal marketMaker;
-    OptionVault internal optionVault;
-      ERC20 internal underlyingToken;
-    // mapping(uint256=>VolatilityToken) public volTokensList;
+  uint256 private constant ethMultiplier = 10 ** 18;
+  uint256 public volRiskPremiumMaxRatio = 18 * (10 ** 17);
+  uint256 lendingPoolRateMode = 2;
+  bool internal useAggregator;
+  uint256 public exchangeSlippageMax = 10 ** 16; // 1% max slippage allowed
+  uint256 public exchangeDeadlineLag = 20; // 20s slippage time
+  uint256 public exchangeSlippageUp = 0;
+  uint256 public exchangeSlippageDown = 0;
+  uint256 public loanInterest = 0;
 
-    uint256 private constant ethMultiplier = 10 ** 18;
-    uint256 public maxUtilisation = 10 ** 18;
-    uint256 public volatilityRiskPremiumConstant = 50 * 10 ** 16;
-    uint256 public volatilitySkewConstant = 50 * 10 ** 16;
+  constructor( address _marketMakerAddress,address _optionAddress, address _swapRouterAddress, address _aggregatorAddress, address _lendingPoolAddressProvider){// address payable _volTokenAddress)
+    _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    _setupRole(ADMIN_ROLE, msg.sender);
+    _setupRole(MINER_ROLE, msg.sender);
+    optionVault = IOptionVault(_optionAddress);
+    // marketMakerAddress = _marketMakerAddress;
+    marketMaker = MoretMarketMaker(_marketMakerAddress);
+    // VolatilityToken _volToken = VolatilityToken(_volTokenAddress);
+    // volTokensList[_volToken.tenor()] = _volToken;
+    // contractAddress = payable(address(this));
+    // underlyingToken = ERC20(marketMaker.underlyingAddress());
+    swapRouterAddress = _swapRouterAddress;
+    aggregatorAddress = _aggregatorAddress;
+    lendingPoolAddressProvider = ILendingPoolAddressesProvider(_lendingPoolAddressProvider);
+    useAggregator = false;}
 
-    constructor(
-      address payable _marketMakerAddress,
-      address _optionAddress
-      // address payable _volTokenAddress
-      )
-    {
-       _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, msg.sender);
+  function queryOptionCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256, uint256){
+    uint256 _vol = queryOptionVolatility(_tenor, _strike, _amount, _side);
+    return optionVault.queryOptionCost(_tenor, _strike, _amount, _vol, _poType, _side);}
 
-      optionVault = OptionVault(_optionAddress);
-      marketMakerAddress = _marketMakerAddress;
-      marketMaker = MoretMarketMaker(_marketMakerAddress);
-      // VolatilityToken _volToken = VolatilityToken(_volTokenAddress);
-      // volTokensList[_volToken.tenor()] = _volToken;
-      contractAddress = payable(address(this));
+  function queryOptionVolatility(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.OptionSide _side) public view returns(uint256 _vol){  
+    _vol = optionVault.queryVol(_tenor); // running vol
+    (uint256 _price,, uint256 _priceMultiplier) = optionVault.queryPrice();
+    _vol += calcRiskPremium(_price, _priceMultiplier, _vol, _strike, _amount, _side);}
 
-      underlyingToken = ERC20(marketMaker.underlyingAddress());
-    }
+  function calcRiskPremium(uint256 _price, uint256 _priceMultiplier, uint256 _vol, uint256 _strike, uint256 _amount,OptionLibrary.OptionSide _side) internal view returns(uint256) {
+    uint256 _maxGamma = MulDiv(OptionLibrary.calcGamma(_price, _price, _priceMultiplier, _vol), MulDiv(marketMaker.calcCapital(false, false), _priceMultiplier, _price), ethMultiplier );
+    int256 _currentGamma = marketMaker.getAggregateGamma(false); // include sells.
+    int256 _newGamma = _currentGamma + int256(MulDiv(OptionLibrary.calcGamma(_price, _strike, _priceMultiplier, _vol), _amount, ethMultiplier )) * (_side==OptionLibrary.OptionSide.Sell? -1: int(1));
+    uint256 _K = MulDiv(_vol, volRiskPremiumMaxRatio, ethMultiplier);
+    return (calcRiskPremiumAMM(_maxGamma, _currentGamma,  _K) + calcRiskPremiumAMM(_maxGamma, _newGamma, _K)) / 2;}
 
-    function queryOptionCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256){
-      uint256 _vol = queryOptionVolatility(_tenor, _strike, _amount, _poType, _side);
-      return optionVault.queryOptionCost(_tenor, _strike, _amount, _vol, _poType, _side);}
+  function calcRiskPremiumAMM(uint256 _max, int256 _input, uint256 _constant) internal pure returns(uint256) {
+    int256 _capacity = int256(ethMultiplier); // capacity should be in (0,2)
+    if(_input < 0){_capacity +=  int256(MulDiv(uint256(-_input), ethMultiplier, _max));}
+    if(_input > 0){ _capacity -= int256(MulDiv(uint256(_input) , ethMultiplier, _max));}
+    require(_capacity<=0 || _capacity >= 2,"Capacity limit breached.");
+    return MulDiv(_constant, ethMultiplier, uint256(_capacity)) - _constant;}
 
-    // Vol = running vol + risk premium + skew premium 
-    function queryOptionVolatility(uint256 _tenor, uint256 _strike, uint256 _amount,
-      OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 _vol){
-      _vol = optionVault.queryVol(_tenor); // running vol
-      if(_side == OptionLibrary.OptionSide.Buy){
-        (_price,, _priceMultiplier) = optionVault.queryPrice();
-        _vol += calcRiskPremium(_price, _priceMultiplier, _vol, _strike, _amount) + MulDiv(calcSkewPremium(_price, _priceMultiplier, _vol, _strike, _amount), MulDiv(_price>_strike? _price - _strike: _strike- _price, _priceMultiplier, _price), _priceMultiplier);}}
+  function purchaseOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _payInCost, uint256 _price, uint256 _volatility) external {
+    (uint256 _premium, uint256 _cost) = queryOptionCost(_tenor, _strike, _amount, _poType, _side );      
+    require(_payInCost >= _cost, "Incorrect cost paid.");
+    uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _volatility);
+    require(ERC20(marketMaker.fundingAddress()).transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
+    // emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
+    optionVault.stampActiveOption(_id);
+    marketMaker.recordOptionPurchase(msg.sender, _id);}
 
-    function calcRiskPremium(uint256 _price, uint256 _priceMultiplier, uint256 _vol, uint256 _strike, uint256 _amount) public view returns(uint256) {
-      uint256 _maxGamma = MulDiv(OptionLibrary.calcGamma(_price, _price, _priceMultiplier, _vol), MulDiv(marketMaker.calcCapital(false, false), _priceMultiplier, _price), ethMultiplier );
-      int256 _currentGamma = marketMaker.getAggregateGamma(false); // include sells.
-      int256 _newGamma = _currentGamma + int256(MulDiv(OptionLibrary.calcGamma(_price, _strike, _priceMultiplier, _vol), _amount, ethMultiplier )) * (_side==OptionLibrary.OptionSide.Sell? -1: 1);
-      return (calcRiskPremiumAMM(_maxGamma, _currentGamma < 0 ? 0 : uint256(_currentGamma),  volatilityRiskPremiumConstant) + calcRiskPremiumAMM(_maxGamma, _newGamma < 0 ? 0 : uint256(_newGamma), volatilityRiskPremiumConstant)) / 2;}
+  function executeHedgeTrades() external onlyRole(MINER_ROLE){
+    (uint256 _targetUnderlying, int256 _chgDebt, int256 _chgCollateral) = marketMaker.calcHedgeTrade();
+    if(_chgDebt > 0){ 
+      if(_chgCollateral>0) marketMaker.depositCollateral(uint256(_chgCollateral), lendingPoolAddressProvider.getLendingPool());
+      marketMaker.borrowLoans(uint256(_chgDebt),lendingPoolAddressProvider.getLendingPool(), lendingPoolRateMode);
+      if(_chgCollateral<0) marketMaker.withdrawCollateral(uint256(-_chgCollateral), lendingPoolAddressProvider.getLendingPool());
+      swapToFunding(uint256(_chgDebt));}
+    if(_chgDebt < 0){  
+      swapToUnderlying(uint256(-_chgDebt));
+      marketMaker.repayLoans(uint256(-_chgDebt), lendingPoolAddressProvider.getLendingPool(), lendingPoolRateMode);
+      if(_chgCollateral<0) marketMaker.withdrawCollateral(uint256(-_chgCollateral), lendingPoolAddressProvider.getLendingPool());
+      if(_chgCollateral>0) marketMaker.depositCollateral(uint256(_chgCollateral), lendingPoolAddressProvider.getLendingPool());}
+    uint256 _currentMarketMakerUnderlying = ERC20(marketMaker.underlyingAddress()).balanceOf(address(marketMaker));
+    if( _currentMarketMakerUnderlying > _targetUnderlying){
+      swapToFunding(_currentMarketMakerUnderlying - _targetUnderlying);}
+    if(_currentMarketMakerUnderlying < _targetUnderlying){
+      swapToUnderlying(_targetUnderlying - _currentMarketMakerUnderlying);}}
 
-    function calcSkewPremium(uint256 _price, uint256 _priceMultiplier, uint256 _vol, uint256 _strike, uint256 _amount) public view returns(uint256){
-      uint256 _maxDelta = marketMaker.calcCapital(false, false);
-      int256 _currentDelta = marketMaker.getAggregateDelta(false, true); // include sells.
-      int256 _newDelta = int256(MulDiv(OptionLibrary.calcDelta(_price, _strike, _priceMultiplier, _vol), _amount, ethMultiplier ));
-      if(_strike < _price){_newDelta = _amount - _newDelta;}  
-      if(_side==OptionLibrary.OptionSide.Sell) {_newDelta *= -1;}
-      _newDelta += _currentDelta;
-      return (calcRiskPremiumAMM(_maxDelta, _newDelta < 0 ? 0 : uint256(_newDelta), volatilitySkewConstant ) + calcRiskPremiumAMM(_maxDelta, _newDelta < 0 ? 0 : uint256(_newDelta), volatilitySkewConstant)) / 2;}
+  function swapToUnderlying(uint256 _underlyingAmount) internal  returns(uint256 _paidCost){
+    _paidCost = 0;
+    if(useAggregator) (_paidCost,) = marketMaker.swapToUnderlyingAtAggregator(_underlyingAmount, swapRouterAddress, exchangeSlippageMax);
+    if(!useAggregator) { 
+      uint256[] memory _swappedAmounts = marketMaker.swapToUnderlyingAtVenue(_underlyingAmount, swapRouterAddress, exchangeSlippageMax, exchangeDeadlineLag);
+      _paidCost = _swappedAmounts[0];}}
 
-    function calcRiskPremiumAMM(uint256 _max, uint256 _input, uint256 _constant) internal view returns(uint256) {
-      require(_input<_max,"Capacity limit breached.");
-      uint256 _capacity = ethMultiplier - MulDiv(_input, ethMultiplier, _max);
-      return MulDiv(_constant, ethMultiplier, _capacity) - _constant;}
+  function swapToFunding(uint256 _underlyingAmount) internal  returns(uint256 _returnedFunding){
+    _returnedFunding = 0;
+    if(useAggregator) _returnedFunding = marketMaker.swapToFundingAtAggregator(_underlyingAmount, swapRouterAddress, exchangeSlippageMax);
+    if(!useAggregator) { 
+      uint256[] memory _swappedAmounts =marketMaker.swapToFundingAtVenue(_underlyingAmount, swapRouterAddress, exchangeSlippageMax, exchangeDeadlineLag);
+      _returnedFunding = _swappedAmounts[1];}}
 
-
-    function purchaseOption(uint256 _tenor, uint256 _strike, 
-      OptionLibrary.PayoffType _poType,
-      OptionLibrary.OptionSide _side,
-      uint256 _amount, uint256 _payInCost)
-      external
-      {
-        require(settlementFee.numerator < settlementFee.denominator);
-      uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType, _side );
-      uint256 _fee = 0;//MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
-
-      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, _side, _amount, _premium - _fee, _fee );
-      require(_payInCost >= optionVault.queryDraftOptionCost(_id, false), "Entered premium incorrect.");
-      require(underlyingToken.transferFrom(msg.sender, contractAddress, _payInCost), 'Failed payment.');  
-
-      if(_side == OptionLibrary.OptionSide.Buy){  
-        require(underlyingToken.transfer(marketMakerAddress, optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
-      }
-      
-      if(_side == OptionLibrary.OptionSide.Sell){
-        uint256 _netCapital = marketMaker.calcCapital(true, false);
-        uint256 _premiumCollect = Math.max(_amount, _payInCost)-_payInCost;
-        require(_netCapital > _premiumCollect, "Insufficient capital for options.");
-        marketMaker.payExchange(_premiumCollect, contractAddress);
-      }
-      
-      optionVault.stampActiveOption(_id, marketMaker.updateInterval());
-
-      marketMaker.recordOption(msg.sender, _id, true);
-      
-      emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
-    }
 /* 
     function purchaseOptionInVol(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType,
       uint256 _amount, uint256 _payInCost)
@@ -142,10 +143,7 @@ contract Exchange is AccessControl, EOption
 
     } */
 
-    function getOptionPayoffValue(uint256 _id) external view returns(uint256){
-      (uint256 _payoff,,) = optionVault.getOptionPayoffValue(_id);
-      return _payoff;
-    }
+  // function getOptionPayoffValue(uint256 _id) external view returns(uint256){return optionVault.getContractPayoff(_id);}
 
     /* unction exerciseOption(uint256 _id) external  {
         optionVault.validateOption(_id, msg.sender);
@@ -161,31 +159,31 @@ contract Exchange is AccessControl, EOption
         emit optionExercised(msg.sender, optionVault.getOption(_id), _payoffValue);
     } */
 
-    function expireOption(uint256 _id) internal {
-        if(optionVault.isOptionExpiring(_id, marketMaker.updateInterval()))
-        {
-            (uint256 _payoffValue, uint256 _fromMarketMaker,uint256 _toMarketMaker ) = optionVault.getOptionPayoffValue(_id);
+  // function expireOption(uint256 _id) external {
+  //       if(optionVault.isOptionExpiring(_id, marketMaker.updateInterval()))
+  //       {
+  //           (uint256 _payoffValue, uint256 _fromMarketMaker,uint256 _toMarketMaker ) = optionVault.getOptionPayoffValue(_id);
 
-            if(_fromMarketMaker >0 )
-            {
-              marketMaker.payExchange(_fromMarketMaker, contractAddress);
-            }
+  //           if(_fromMarketMaker >0 )
+  //           {
+  //             marketMaker.payExchange(_fromMarketMaker, contractAddress);
+  //           }
 
-            if(_toMarketMaker >0 )
-            {
-              require(underlyingToken.transfer(marketMakerAddress, _toMarketMaker));
-            }
+  //           if(_toMarketMaker >0 )
+  //           {
+  //             require(underlyingToken.transfer(marketMakerAddress, _toMarketMaker));
+  //           }
 
-            require(_payoffValue < underlyingToken.balanceOf(contractAddress), "Balance insufficient.");
+  //           require(_payoffValue < underlyingToken.balanceOf(contractAddress), "Balance insufficient.");
 
-            optionVault.stampExpiredOption(_id);
+  //           optionVault.stampExpiredOption(_id);
 
-            address _optionHolder = optionVault.getOptionHolder(_id);
-            require(underlyingToken.transfer(_optionHolder, _payoffValue), "Transfer failed.");
+  //           address _optionHolder = optionVault.getOptionHolder(_id);
+  //           require(underlyingToken.transfer(_optionHolder, _payoffValue), "Transfer failed.");
 
-            marketMaker.recordOption(msg.sender, _id, false);
-        }
-    }
+  //           marketMaker.recordOption(msg.sender, _id, false);
+  //       }
+  //   }
 
       // function addVolToken(address payable _tokenAddress) external onlyRole(ADMIN_ROLE)
       // {
@@ -225,43 +223,35 @@ contract Exchange is AccessControl, EOption
       //       require(underlyingToken.transfer(msg.sender, underlyingToken.balanceOf(contractAddress)), "Withdrawal failed.");
       // }
 
-      function resetSettlementFees(uint256 _fee, uint256 _denominator) external onlyRole(ADMIN_ROLE){
-          settlementFee = OptionLibrary.Percent(_fee, _denominator);
-      }
+      // function resetVolTransactionFees(uint256 _fee, uint256 _denominator) external onlyRole(ADMIN_ROLE){
+      //     volTransactionFees = OptionLibrary.Percent(_fee, _denominator);
+      // }
+      
 
-      function resetVolTransactionFees(uint256 _fee, uint256 _denominator) external onlyRole(ADMIN_ROLE){
-          volTransactionFees = OptionLibrary.Percent(_fee, _denominator);
-      }
+      // function calcUtilisation(uint256 _amount, uint256 _strike, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
+      // public view returns(uint256, uint256){
+      //     uint256 _grossCapital = marketMaker.calcCapital(false, false);
+      //     uint256 _netCapital = marketMaker.calcCapital(true, false);
+      //     uint256 _incrementalCapital = optionVault.queryOptionCapitalV2(_amount, _strike, _poType, _side, marketMaker.capitalRatio());
+      //     require((_netCapital+_incrementalCapital)<= _grossCapital, "Insufficient capital.");
 
-      function resetMaxUtilisation(uint256 _maxUtil) external onlyRole(ADMIN_ROLE){
-          maxUtilisation = _maxUtil;
-      }
+      //     return (MulDiv(_grossCapital-_netCapital, ethMultiplier, _grossCapital), 
+      //       MulDiv(_grossCapital-_netCapital-_incrementalCapital, ethMultiplier, _grossCapital));
 
-      function calcUtilisation(uint256 _amount, uint256 _strike, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side)
-      public view returns(uint256, uint256){
-          uint256 _grossCapital = marketMaker.calcCapital(false, false);
-          uint256 _netCapital = marketMaker.calcCapital(true, false);
-          uint256 _incrementalCapital = optionVault.queryOptionCapitalV2(_amount, _strike, _poType, _side, marketMaker.capitalRatio());
-          require((_netCapital+_incrementalCapital)<= _grossCapital, "Insufficient capital.");
+      //     /* uint256 _newCallExposure = (_poType==OptionLibrary.PayoffType.Call)?
+      //       ((_side==OptionLibrary.OptionSide.Buy)? (marketMaker.callExposure() + _amount):
+      //         (marketMaker.callExposure() - Math.min(marketMaker.callExposure(), _amount)) )
+      //       : marketMaker.callExposure();
+      //     uint256 _newPutExposure = (_poType==OptionLibrary.PayoffType.Put)?
+      //       ((_side==OptionLibrary.OptionSide.Buy)? (marketMaker.putExposure()+_amount):
+      //         (marketMaker.putExposure() - Math.min(marketMaker.putExposure(), _amount)) )
+      //       : marketMaker.putExposure();
 
-          return (MulDiv(_grossCapital-_netCapital, ethMultiplier, _grossCapital), 
-            MulDiv(_grossCapital-_netCapital-_incrementalCapital, ethMultiplier, _grossCapital));
+      //     return (MulDiv(Math.max(marketMaker.callExposure(), marketMaker.putExposure()), ethMultiplier, _grossCapital ),
+      //       MulDiv(Math.max(_newCallExposure, _newPutExposure) , ethMultiplier, _grossCapital )); */
+      // }
 
-          /* uint256 _newCallExposure = (_poType==OptionLibrary.PayoffType.Call)?
-            ((_side==OptionLibrary.OptionSide.Buy)? (marketMaker.callExposure() + _amount):
-              (marketMaker.callExposure() - Math.min(marketMaker.callExposure(), _amount)) )
-            : marketMaker.callExposure();
-          uint256 _newPutExposure = (_poType==OptionLibrary.PayoffType.Put)?
-            ((_side==OptionLibrary.OptionSide.Buy)? (marketMaker.putExposure()+_amount):
-              (marketMaker.putExposure() - Math.min(marketMaker.putExposure(), _amount)) )
-            : marketMaker.putExposure();
-
-          return (MulDiv(Math.max(marketMaker.callExposure(), marketMaker.putExposure()), ethMultiplier, _grossCapital ),
-            MulDiv(Math.max(_newCallExposure, _newPutExposure) , ethMultiplier, _grossCapital )); */
-      }
-
-      function priceDecimals() external view returns(uint256){ return optionVault.priceDecimals();}
-      function queryPrice() external view returns(uint256, uint256){return optionVault.queryPrice();}
-      function queryVol(uint256 _tenor) external view returns(uint256, uint256){return optionVault.queryVol(_tenor);}
-
+      function resetRiskPremiumMaxRatio(uint256 _newRatio) external onlyRole(ADMIN_ROLE){ volRiskPremiumMaxRatio=_newRatio;}
+      function queryPrice() external view returns(uint256, uint256, uint256){return optionVault.queryPrice();}
+      function queryVol(uint256 _tenor) external view returns(uint256){return optionVault.queryVol(_tenor);}
 }
