@@ -2,7 +2,9 @@
 const exchange = artifacts.require('./Exchange');
 const marketMaker = artifacts.require('./MoretMarketMaker');
 // const volToken = artifacts.require("./VolatilityToken");
+const marketLib = artifacts.require('./MarketLibrary');
 const optionVault = artifacts.require("./OptionVault");
+const optionLib = artifacts.require('./OptionLibrary');
 
 module.exports = (deployer) => deployer
     .then(() => deployExchange(deployer))
@@ -12,6 +14,8 @@ async function deployExchange(deployer) {
     // var volTokenInstance = await volToken.deployed();
     var marketMakerInstance = await marketMaker.deployed();
     var optionVaultInstance = await optionVault.deployed();
+    await deployer.link(optionLib, exchange);
+    await deployer.link(marketLib, exchange);
 
     await deployer.deploy(
         exchange,

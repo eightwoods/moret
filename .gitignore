@@ -5,6 +5,6 @@ app.js
 app
 .env
 *.dot
-trading
 **.json
 archive
+test

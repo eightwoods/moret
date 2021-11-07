@@ -21,7 +21,6 @@ require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const Web3 = require('web3');
 
-
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -77,8 +76,18 @@ module.exports = {
   mumbai: {
     provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_API_KEY}`),
       networkCheckTimeout: 1000000000,
-    network_id: 80001,       // Kovan's id
-    gas: 5500000,
+    network_id: 80001,       // mumbai's id
+    gas: 15000000,
+    gasPrice: 10e9,
+    confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+    timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+    skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
+  },
+  polygon: {
+    provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`),
+      networkCheckTimeout: 1000000000,
+    network_id: 137,       // polygon mainnet's id
+    gas: 15000000,
     gasPrice: 10e9,
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
     timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
@@ -111,6 +120,8 @@ module.exports = {
       // }
     }
   },
+
+  plugins: [ "truffle-security" ],
 
   // Truffle DB is currently disabled by default; to enable it, change enabled: false to enabled: true
   //

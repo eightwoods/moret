@@ -1,27 +1,28 @@
+const parameterDecimals = 8;   
 const settings={
-  parameterDecimals: 8,    
-  secondsPer1D: 86400, 
-  params: [5000000,20000000,0,0,90000000,10000000]
-  };
+  one: {seconds: 86400,  params: [5000000,20000000,0,0,90000000,10000000]},
+  seven: {seconds: 604800,  params: [13228756, 52915026 ,0,0,90000000,10000000]},
+  thirty: {seconds: 2592000,  params: [27386127, 109544511 ,0,0,90000000,10000000]}};
 
 const volChain = artifacts.require("./VolatilityChain");
 // const volToken = artifacts.require("./VolatilityToken");
 
 module.exports = (deployer) => deployer
-  .then(()=> deployVolChain(deployer))
-  // .then(()=> deployVolToken(deployer))
-  .then(()=> displayDeployed());
+    .then(()=> deployVolChain(deployer))
+    // .then(()=> deployVolToken(deployer))
+    .then(() => displayDeployed());
 
 async function deployVolChain(deployer){
   await deployer.deploy(
     volChain,
     process.env.CHAINLINK_FEED,
-    settings.parameterDecimals,
+    parameterDecimals,
     process.env.TOKEN_NAME
   );
   let varChainInstance = await volChain.deployed();
-  await varChainInstance.resetVolParams(settings.secondsPer1D, settings.params);
-  
+  await varChainInstance.resetVolParams(settings.one.seconds, settings.one.params);
+  await varChainInstance.resetVolParams(settings.seven.seconds, settings.seven.params);
+  await varChainInstance.resetVolParams(settings.thirty.seconds, settings.thirty.params);
   assignRoles(varChainInstance);
 }
 

@@ -1,14 +1,20 @@
+const initialCapital = 10 ** 5; // 6 decials for usdc on polygon 
 
 const marketMaker = artifacts.require('./MoretMarketMaker');
 const marketLib = artifacts.require('./MarketLibrary');
 const optionVault = artifacts.require("./OptionVault");
+const ierc20 = artifacts.require("./IERC20");
+const optionLib = artifacts.require('./OptionLibrary');
 
 module.exports = (deployer) => deployer
     .then(() => deployMarketMaker(deployer))
     .then(() => displayDeployed());
 
-
 async function deployMarketMaker(deployer) {
+    var optionVaultInstance = await optionVault.deployed();
+    await deployer.link(optionLib, marketLib);
+    await deployer.link(optionLib, marketMaker);
+
     await deployer.deploy(marketLib);
     await deployer.link(marketLib, marketMaker);
 
@@ -20,17 +26,18 @@ async function deployMarketMaker(deployer) {
         process.env.TOKEN_ADDRESS,
         process.env.STABLE_COIN_ADDRESS,
         optionVaultInstance.address,
-        process.env.SWAP_ROUTER,
-        process.env.AAVE_ADDRESS_PROVIDER,
-        process.env.AAVE_DATA_PROVIDER
+        process.env.AAVE_ADDRESS_PROVIDER
     );
 }
 
 async function displayDeployed() {
     const marketMakerInstance = await marketMaker.deployed();
-    var role = await marketMakerInstance.ADMIN_ROLE();
-    console.log(role);
-    await marketMakerInstance.grantRole(role, process.env.RELAY_ACCOUNT);
+    let tokenContract = await ierc20.at(process.env.STABLE_COIN_ADDRESS);
+    tokenContract.transfer(marketMakerInstance.address, initialCapital);
+
+    // var role = await marketMakerInstance.ADMIN_ROLE();
+    // console.log(role);
+    // await marketMakerInstance.grantRole(role, process.env.RELAY_ACCOUNT);
     console.log(`=========
     Deployed MarketMaker: ${marketMakerInstance.address}
     =========`);
