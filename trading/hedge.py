@@ -2,15 +2,16 @@ from web3 import Web3
 from eth_account import Account
 from library import read_abi
 import os  , json, requests
-infura_url = r'https://polygon-mumbai.infura.io/v3/' + os.environ['INFURA_API_KEY']
+infura_url = r'https://polygon-mainnet.infura.io/v3/' + os.environ['INFURA_API_KEY']
 oneinch_url = r'https://api.1inch.exchange/v3.0/137/' 
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
 web3.eth.defaultAccount = Account.from_key(os.environ['MNEMONIC']).address
 
 abi = read_abi(r'../build/contracts/MoretMarketMaker.json')
-address = '0x61028e8A7C1Fc21712DDf21104A98caf455b06F1'
+address = '0xE7CAC17029eC86fec53Eb2943B0eDa049bc335c3'
 market = web3.eth.contract(address=address, abi=abi)
+
 underlying_address = market.functions.underlyingAddress().call()
 funding_address = market.functions.fundingAddress().call()
 
@@ -36,13 +37,13 @@ if collateral_amount != 0 or loan_amount != 0:
         lending_pool.functions.withdraw(funding_address, collateral_amount, market.address).transact()
 
 # get address of swap and approve the amount to swap in 1inch
-spender_url = oneinch_url + r'spender'
+spender_url = oneinch_url + r'approve/spender'
 spender_resp = requests.get(spender_url)
-spender_address = json.load(spender_resp)['address']
+spender_address = json.loads(spender_resp.content.decode('utf8'))['address']
 
 underlying_amount, funding_amount = market.functions.calcHedgeTradesForSwaps().call()
 
-slippage = web3.fromWei(market.function.swapSlippage().call(), 'ether') * 100 
+slippage = web3.fromWei(market.functions.swapSlippage().call(), 'ether') * 100 
 
 amounts_ok = True
 from_address = ""
@@ -66,16 +67,25 @@ else:
 
 if amounts_ok:
     print("Swap started")
-    market.functions.approveSpending(from_address, spender_address, sell_amount).transact()
+
+    # quote
     quote_params = {'fromTokenAddress': from_address, 'toTokenAddress': to_address, 'amount': sell_amount}
     quote_resp = requests.get(oneinch_url + r'quote', params=quote_params)
-    quote_toAmount = json.load(quote_resp)['toTokenAmount']
+    quote_toAmount = json.loads(quote_resp.content.decode('utf8'))['toTokenAmount']
     print('Required trading of ' + str(to_amount) + ' vs quoted amount of ' + quote_toAmount)
-    quote_protocols = json.load(quote_resp)['protocols']
+    quote_protocols = json.loads(quote_resp.content.decode('utf8'))['protocols']
 
-    swap_params = {'fromTokenAddress': from_address, 'toTokenAddress': to_address, 'amount': sell_amount, 'fromAddress': market.address,  'slippage': slippage, 'protocols': quote_protocols}
+    # approve spending 
+    nonce = web3.eth.get_transaction_count(web3.eth.default_account) +1 
+    approve_txn = market.functions.approveSpending(from_address, Web3.toChecksumAddress(spender_address), sell_amount).buildTransaction({'gas': 70000, 'from': web3.eth.default_account, 'nonce': nonce})
+    signed_approve_txn = web3.eth.account.signTransaction(approve_txn, private_key=os.environ['MNEMONIC'])
+    web3.eth.sendRawTransaction(signed_approve_txn.rawTransaction)
+    print(web3.toHex(web3.keccak(signed_approve_txn.rawTransaction)))
+
+    # swap
+    swap_params = {'fromTokenAddress': from_address, 'toTokenAddress': to_address, 'amount': sell_amount, 'fromAddress': market.address,  'slippage': slippage}
     swap_resp = requests.get(oneinch_url + r'swap', params=swap_params)
-    swap_resp_parsed = json.load(swap_resp)
+    swap_resp_parsed = json.loads(swap_resp.content.decode('utf8'))
     print('Sold ' + swap_resp_parsed['fromTokenAmount'] + swap_resp_parsed['fromToken']['symbol'] + ' for ' + swap_resp_parsed['toTokenAmount'] + swap_resp_parsed['toToken']['symbol'])
     print(['tx'])
 

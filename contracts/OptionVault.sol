@@ -33,10 +33,10 @@ contract OptionVault is AccessControl{
       require(_notional>= _premium);
       _cost = _notional - _premium;}}
 
-  function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility) external onlyRole(EXCHANGE_ROLE) returns(uint256 _id) {
+  function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility, address _holder) external onlyRole(EXCHANGE_ROLE) returns(uint256 _id) {
     optionCounter++;
     _id = optionCounter;
-    optionsList[_id] = OptionLibrary.Option(_poType, _side, OptionLibrary.OptionStatus.Draft, msg.sender, _id, block.timestamp,  0, _tenor, 0,  0, _amount, _price, _strike, _volatility, _premium, _cost);}
+    optionsList[_id] = OptionLibrary.Option(_poType, _side, OptionLibrary.OptionStatus.Draft, _holder, _id, block.timestamp,  0, _tenor, 0,  0, _amount, _price, _strike, _volatility, _premium, _cost);}
 
   function getOptionHolder(uint256 _id) external view returns(address) { return optionsList[_id].holder;}
   function queryOptionPremium(uint256 _id) external view returns(uint256) {return optionsList[_id].premium;}

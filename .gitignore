@@ -3,6 +3,7 @@ node_modules
 .deps
 app.js
 app
+trading
 .env
 *.dot
 **.json

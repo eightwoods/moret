@@ -79,19 +79,19 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
         break;}}
     if(_expiringId >0) {
       ( , uint256 _payback) = optionVault.getContractPayoff(_expiringId);
-      require(_payback < MarketLibrary.balanceDef(underlyingAddress, address(this)), "Balance insufficient.");
+      require(_payback < MarketLibrary.balanceDef(fundingAddress, address(this)), "Balance insufficient.");
       if(_payback > 0){
         optionVault.stampExpiredOption(_expiringId);
         activeOptionsPerOwner[optionVault.getOptionHolder(_expiringId)].remove(_expiringId);
         activeOptions.remove(_expiringId);
 
-        _payback = MarketLibrary.cvtDecimals(_payback, underlyingAddress);
+        _payback = MarketLibrary.cvtDecimals(_payback, fundingAddress);
         uint256 _settleFeeAmount = MulDiv(_payback, settlementFee, multiplier);
         uint256 _exerciseFeeAmount = MulDiv(_payback, exerciseFee, multiplier);
 
-        require(IERC20(underlyingAddress).transfer(optionVault.getOptionHolder(_expiringId), _payback - _settleFeeAmount - _exerciseFeeAmount));
-        require(IERC20(underlyingAddress).transfer(maintenanceAddress, _settleFeeAmount));
-        require(IERC20(underlyingAddress).transfer(msg.sender, _exerciseFeeAmount));}}}
+        require(IERC20(fundingAddress).transfer(optionVault.getOptionHolder(_expiringId), _payback - _settleFeeAmount - _exerciseFeeAmount));
+        require(IERC20(fundingAddress).transfer(maintenanceAddress, _settleFeeAmount));
+        require(IERC20(fundingAddress).transfer(msg.sender, _exerciseFeeAmount));}}}
 
   function getAggregateNotional() internal view returns(uint256 _notional) {
     _notional= 0;
@@ -124,7 +124,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       emit capitalWithdrawn(msg.sender, _burnMPTokenAmount, _withdrawValue);}
   
   function approveSpending(address _tokenAddress, address _spenderAddress, uint256 _amount) external onlyRole(MINER_ROLE){
-    ERC20(_tokenAddress).increaseAllowance(_spenderAddress, _amount);}
+    ERC20(_tokenAddress).approve(_spenderAddress, _amount);}
 
   function calcHedgeTradesForSwaps() external onlyRole(MINER_ROLE) view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){
     (int256 _aggregateDelta, uint256 _price) = getAggregateDelta(false);
