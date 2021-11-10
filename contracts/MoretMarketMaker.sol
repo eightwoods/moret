@@ -29,7 +29,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
   address internal maintenanceAddress;
   address public aaveAddressProviderAddress;
   uint256 public lendingPoolRateMode = 2;
-  uint256 public swapSlippage = 0;
+  uint256 public swapSlippage = 5 * (10 ** 15);
   
   constructor(string memory _name, string memory _symbol, address _underlyingAddress, address _fundingAddress, address _optionAddress, address _aaveAddressProviderAddress) ERC20(_name, _symbol){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -78,20 +78,21 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
         _expiringId = uint256(activeOptions.at(i));
         break;}}
     if(_expiringId >0) {
-      ( , uint256 _payback) = optionVault.getContractPayoff(_expiringId);
+      ( uint256 _payoff, uint256 _payback) = optionVault.getContractPayoff(_expiringId);
       require(_payback < MarketLibrary.balanceDef(fundingAddress, address(this)), "Balance insufficient.");
       if(_payback > 0){
         optionVault.stampExpiredOption(_expiringId);
         activeOptionsPerOwner[optionVault.getOptionHolder(_expiringId)].remove(_expiringId);
         activeOptions.remove(_expiringId);
 
+        _payoff = MarketLibrary.cvtDecimals(_payoff, fundingAddress);
         _payback = MarketLibrary.cvtDecimals(_payback, fundingAddress);
-        uint256 _settleFeeAmount = MulDiv(_payback, settlementFee, multiplier);
-        uint256 _exerciseFeeAmount = MulDiv(_payback, exerciseFee, multiplier);
+        uint256 _settleFeeAmount = Math.max(MulDiv(_payoff, settlementFee, multiplier), _payback);
+        uint256 _exerciseFeeAmount = Math.max(MulDiv(_payoff, exerciseFee, multiplier), _payback - _settleFeeAmount);
 
         require(IERC20(fundingAddress).transfer(optionVault.getOptionHolder(_expiringId), _payback - _settleFeeAmount - _exerciseFeeAmount));
-        require(IERC20(fundingAddress).transfer(maintenanceAddress, _settleFeeAmount));
-        require(IERC20(fundingAddress).transfer(msg.sender, _exerciseFeeAmount));}}}
+        require(IERC20(fundingAddress).transfer(maintenanceAddress, _exerciseFeeAmount));
+        require(IERC20(fundingAddress).transfer(msg.sender, _settleFeeAmount));}}}
 
   function getAggregateNotional() internal view returns(uint256 _notional) {
     _notional= 0;
@@ -157,33 +158,6 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
   //   ERC20(_debtToken).approve(_lendingPoolAddress, _repayAmount);
   //   ERC20(underlyingAddress).approve(_lendingPoolAddress, _repayAmount);
   //   ILendingPool(_lendingPoolAddress).repay(underlyingAddress, _repayAmount, _lendingPoolRateMode, address(this));}
-
-  // function swapToUnderlyingAtVenue(uint256 _underlyingAmount, address _exchangeAddress, uint256 _maxSlippage, uint256 _deadlineLag) external onlyRole(EXCHANGE_ROLE)  returns(uint256[] memory _swappedAmounts){
-  //   address[] memory _path = new address[](2);
-  //   _path[0] = fundingAddress;
-  //   _path[1] = underlyingAddress; 
-  //   (uint256 _price,, uint256 _priceMultiplier) = optionVault.queryPrice();
-  //   uint256 _maxCost = MulDiv(MulDiv(_underlyingAmount, _price, _priceMultiplier), ethMultiplier + _maxSlippage, ethMultiplier);
-  //   ERC20(fundingAddress).increaseAllowance(_exchangeAddress, _maxCost);
-  //   _swappedAmounts = IUniswapV2Router02(_exchangeAddress).swapTokensForExactTokens(_underlyingAmount, _maxCost, _path, address(this), block.timestamp + _deadlineLag); }
-
-  // function swapToFundingAtVenue(uint256 _underlyingAmount,  address _exchangeAddress, uint256 _maxSlippage, uint256 _deadlineLag) external onlyRole(EXCHANGE_ROLE)   returns(uint256[] memory _swappedAmounts) {
-  //   ERC20(underlyingAddress).increaseAllowance(_exchangeAddress, _underlyingAmount);
-  //   address[] memory _path = new address[](2);
-  //   _path[0] = underlyingAddress;
-  //   _path[1] = fundingAddress;
-  //   (uint256 _price,, uint256 _priceMultiplier) = optionVault.queryPrice();
-  //   uint256 _minReturn = MulDiv(MulDiv(_underlyingAmount, _price, _priceMultiplier), ethMultiplier - _maxSlippage, ethMultiplier);
-  //   _swappedAmounts = IUniswapV2Router02(_exchangeAddress).swapExactTokensForTokens(_underlyingAmount, _minReturn, _path, address(this), block.timestamp + _deadlineLag);}
-
-  // function swapAtAggregator(uint256 _underlyingAmount, address _exchangeAddress, uint256 _maxSlippage, bool _toUnderlying ) external onlyRole(EXCHANGE_ROLE)  returns(uint256 _swappedAmountFrom, uint256 _swappedAmountTo){
-  //   (uint256 _price,, uint256 _priceMultiplier) = optionVault.queryPrice();
-  //   address _swapFrom = _toUnderlying? fundingAddress: underlyingAddress;
-  //   address _swapTo = _toUnderlying? underlyingAddress: fundingAddress;
-  //   _swappedAmountFrom = _toUnderlying? MulDiv(MulDiv(_underlyingAmount, _price, _priceMultiplier), ethMultiplier + _maxSlippage, ethMultiplier):_underlyingAmount;
-  //   (uint256 _returnAmount, uint256[] memory _distribution) = I1InchProtocol(_exchangeAddress).getExpectedReturn( IERC20(_swapFrom) , IERC20(_swapTo) , _swappedAmountFrom, 1, 0);
-  //   ERC20(_swapFrom).increaseAllowance(_exchangeAddress, _swappedAmountFrom);
-  //   _swappedAmountTo = I1InchProtocol(_exchangeAddress).swap( IERC20(_swapFrom), IERC20(_swapTo), _swappedAmountFrom, _returnAmount, _distribution, 0);}
 
   function resetSettlementFee(uint256 _newFee) external onlyRole(ADMIN_ROLE){ require(_newFee < multiplier); settlementFee = _newFee;}
   function resetExerciseFee(uint256 _newFee) external onlyRole(ADMIN_ROLE){ require(_newFee < multiplier); exerciseFee = _newFee;}

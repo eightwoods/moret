@@ -92,38 +92,6 @@ contract Exchange is AccessControl, EOption{
   function getOptionPayoffValue(uint256 _id) external view returns(uint256 _payback){
     (,_payback) = optionVault.getContractPayoff(_id);}
 
-  // function executeHedgeTrades() external onlyRole(MINER_ROLE){
-  //   (uint256 _targetUnderlying, int256 _chgDebt, int256 _chgCollateral) = marketMaker.calcHedgeTrade();
-  //   if(_chgDebt > 0){ 
-  //     if(_chgCollateral>0) marketMaker.depositCollateral(uint256(_chgCollateral), lendingPoolAddressProvider.getLendingPool());
-  //     marketMaker.borrowLoans(uint256(_chgDebt),lendingPoolAddressProvider.getLendingPool(), lendingPoolRateMode);
-  //     if(_chgCollateral<0) marketMaker.withdrawCollateral(uint256(-_chgCollateral), lendingPoolAddressProvider.getLendingPool());
-  //     swapToFunding(uint256(_chgDebt));}
-  //   if(_chgDebt < 0){  
-  //     swapToUnderlying(uint256(-_chgDebt));
-  //     marketMaker.repayLoans(uint256(-_chgDebt), lendingPoolAddressProvider.getLendingPool(), lendingPoolRateMode);
-  //     if(_chgCollateral<0) marketMaker.withdrawCollateral(uint256(-_chgCollateral), lendingPoolAddressProvider.getLendingPool());
-  //     if(_chgCollateral>0) marketMaker.depositCollateral(uint256(_chgCollateral), lendingPoolAddressProvider.getLendingPool());}
-  //   uint256 _currentMarketMakerUnderlying = ERC20(marketMaker.underlyingAddress()).balanceOf(address(marketMaker));
-  //   if( _currentMarketMakerUnderlying > _targetUnderlying){
-  //     swapToFunding(_currentMarketMakerUnderlying - _targetUnderlying);}
-  //   if(_currentMarketMakerUnderlying < _targetUnderlying){
-  //     swapToUnderlying(_targetUnderlying - _currentMarketMakerUnderlying);}}
-
-  // function swapToUnderlying(uint256 _underlyingAmount) internal  returns(uint256 _paidCost){
-  //   _paidCost = 0;
-  //   if(useAggregator) (_paidCost,) = marketMaker.swapAtAggregator(_underlyingAmount, swapRouterAddress, exchangeSlippageMax, true);
-  //   if(!useAggregator) { 
-  //     uint256[] memory _swappedAmounts = marketMaker.swapToUnderlyingAtVenue(_underlyingAmount, swapRouterAddress, exchangeSlippageMax, exchangeDeadlineLag);
-  //     _paidCost = _swappedAmounts[0];}}
-
-  // function swapToFunding(uint256 _underlyingAmount) internal  returns(uint256 _returnedFunding){
-  //   _returnedFunding = 0;
-  //   if(useAggregator) (,_returnedFunding) = marketMaker.swapAtAggregator(_underlyingAmount, swapRouterAddress, exchangeSlippageMax, false);
-  //   if(!useAggregator) { 
-  //     uint256[] memory _swappedAmounts =marketMaker.swapToFundingAtVenue(_underlyingAmount, swapRouterAddress, exchangeSlippageMax, exchangeDeadlineLag);
-  //     _returnedFunding = _swappedAmounts[1];}}
-
 /* 
     function purchaseOptionInVol(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType,
       uint256 _amount, uint256 _payInCost)
