@@ -26,7 +26,7 @@
     "@1inch/limit-order-protocol": "^1.4.0",
     "@aave/protocol-v2": "^1.0.1",
     "@chainlink/contracts": "^0.1.7",
-    "@openzeppelin/contracts": "^4.1.0",
+    "@openzeppelin/contracts": "^4.3.2",
     "@sushiswap/core": "^1.4.2",
     "@truffle/hdwallet-provider": "^1.4.0",
     "@uniswap/v2-periphery": "*",
