@@ -23,6 +23,7 @@ erc20_abi = read_abi(r'../build/contracts/ERC20.json')
 
 # get the amounts to use in loans, adjusting collaterals if needed for Aave
 loan_amount, collateral_amount, loan_address, collateral_address = market.functions.calcHedgeTradesForLoans().call()
+print([loan_amount, collateral_amount, loan_address, collateral_address])
 if collateral_amount != 0 or loan_amount != 0:
     address_abi = read_abi(r'../build/contracts/ILendingPoolAddressesProvider.json')
     address_provider = web3.eth.contract(address=market.functions.aaveAddressProviderAddress().call(),abi=address_abi)

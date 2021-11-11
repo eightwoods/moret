@@ -28,12 +28,18 @@ async function deployMarketMaker(deployer) {
         optionVaultInstance.address,
         process.env.AAVE_ADDRESS_PROVIDER
     );
+
+
 }
 
 async function displayDeployed() {
     const marketMakerInstance = await marketMaker.deployed();
     let tokenContract = await ierc20.at(process.env.STABLE_COIN_ADDRESS);
     tokenContract.transfer(marketMakerInstance.address, initialCapital);
+
+    var optionVaultInstance = await optionVault.deployed();
+    var optionRole = await optionVaultInstance.EXCHANGE_ROLE();
+    await optionVaultInstance.grantRole(optionRole, marketMakerInstance.address);
 
     // var role = await marketMakerInstance.ADMIN_ROLE();
     // console.log(role);
