@@ -11,7 +11,7 @@ import "./MoretMarketMaker.sol";
 import "./FullMath.sol";
 
 contract Exchange is AccessControl, EOption{
-  // bytes32 public constant MINER_ROLE = keccak256("MINER_ROLE");
+  bytes32 public constant MINER_ROLE = keccak256("MINER_ROLE");
   // OptionLibrary.Percent public volTransactionFees = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
   // address public contractAddress;
   address public marketMakerAddress;
@@ -37,7 +37,7 @@ contract Exchange is AccessControl, EOption{
 
   constructor( address _marketMakerAddress,address _optionAddress){// address payable _volTokenAddress)
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    // _setupRole(MINER_ROLE, msg.sender);
+    _setupRole(MINER_ROLE, msg.sender);
     optionVault = IOptionVault(_optionAddress);
     marketMakerAddress = _marketMakerAddress;
     marketMaker = MoretMarketMaker(_marketMakerAddress);
@@ -83,7 +83,7 @@ contract Exchange is AccessControl, EOption{
     require(allowTrading,"Trading stopped!");
     (uint256 _premium, uint256 _cost, uint256 _price, uint256 _vol) = calcOptionCost(_tenor, _strike, _amount, _poType, _side );      
     require(_payInCost >= _cost, "Incorrect cost paid.");
-    uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol);
+    uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
     require(ERC20(marketMaker.fundingAddress()).transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
     // emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
     optionVault.stampActiveOption(_id);
@@ -118,21 +118,6 @@ contract Exchange is AccessControl, EOption{
 
       emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
 
-    } */
-
-  
-    /* unction exerciseOption(uint256 _id) external  {
-        optionVault.validateOption(_id, msg.sender);
-
-        uint256 _payoffValue = optionVault.getOptionPayoffValue(_id);
-
-        optionVault.stampExercisedOption(_id);
-
-        require(underlyingToken.transfer(msg.sender, _payoffValue), "Transfer failed.");
-
-        marketMaker.recordOption(msg.sender, _id, false);
-
-        emit optionExercised(msg.sender, optionVault.getOption(_id), _payoffValue);
     } */
 
 
@@ -170,7 +155,7 @@ contract Exchange is AccessControl, EOption{
       //     emit newVolatilityTokenBought(msg.sender, block.timestamp, _tenor, _volAmount);
       // }
 
-    function resetLoanRate(uint256 _loanInterest) external onlyRole(DEFAULT_ADMIN_ROLE){ loanInterest = _loanInterest;}
+    function resetLoanRate(uint256 _loanInterest) external onlyRole(MINER_ROLE){ loanInterest = _loanInterest;}
     function resetRiskPremiumMaxRatio(uint256 _newRatio) external onlyRole(DEFAULT_ADMIN_ROLE){ volRiskPremiumMaxRatio=_newRatio;}
     function resetTrading(bool _allowTrading) external onlyRole(DEFAULT_ADMIN_ROLE) {allowTrading=_allowTrading;}
     function queryPrice() external view returns(uint256, uint256){return optionVault.queryPrice();}

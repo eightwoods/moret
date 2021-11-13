@@ -106,7 +106,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       require(_capital > MulDiv(_debt_balance, _price, multiplier), "Negative equity.");
       _capital -= MulDiv(_debt_balance, _price, multiplier);
 
-      if(_net){ _capital -= Math.min(getAggregateNotional(), _capital);}
+      if(_net){ _capital -= Math.min(MulDiv(getAggregateNotional(), _price, multiplier), _capital);}
       if(_average){ 
         if(totalSupply() > 0) _capital = MulDiv(_capital , multiplier , totalSupply()); 
         if(totalSupply() == 0 && _capital == 0) _capital = multiplier;}}

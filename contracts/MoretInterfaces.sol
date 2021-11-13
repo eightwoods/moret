@@ -26,7 +26,7 @@ interface IVolatilityChain{
 
 interface IOptionVault{
     function queryOptionCost(uint256 _strike,uint256 _amount, uint256 _vol, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) external view returns(uint256 _premium, uint256 _cost, uint256 _price);
-    function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility) external  returns(uint256 _id);
+    function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility, address _holder) external  returns(uint256 _id);
     function getOptionHolder(uint256 _id) external view returns(address) ;
     function queryOptionPremium(uint256 _id) external view returns(uint256) ;
     function queryOptionNotional(uint256 _id, bool _ignoreSells) external view returns(uint256 _notional);
