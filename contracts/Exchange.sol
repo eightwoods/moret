@@ -67,7 +67,7 @@ contract Exchange is AccessControl, EOption{
 
   function calcRiskPremium(uint256 _price, uint256 _vol, uint256 _strike, uint256 _amount,OptionLibrary.OptionSide _side) internal view returns(uint256) {
     uint256 _maxGamma = MulDiv(OptionLibrary.calcGamma(_price, _price, _vol), marketMaker.calcCapital(false, false), _price);
-    int256 _currentGamma = marketMaker.getAggregateGamma(false); // include sells.
+    int256 _currentGamma = optionVault.calculateAggregateGamma(false); // include sells.
     int256 _newGamma = _currentGamma + int256(MulDiv(OptionLibrary.calcGamma(_price, _strike, _vol), _amount, OptionLibrary.Multiplier() )) * (_side==OptionLibrary.OptionSide.Sell? -1: int(1));
     uint256 _K = MulDiv(_vol, volRiskPremiumMaxRatio, OptionLibrary.Multiplier());
     return (calcRiskPremiumAMM(_maxGamma, _currentGamma,  _K) + calcRiskPremiumAMM(_maxGamma, _newGamma, _K)) / 2;}
@@ -86,39 +86,36 @@ contract Exchange is AccessControl, EOption{
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
     require(ERC20(marketMaker.fundingAddress()).transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
     // emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
-    optionVault.stampActiveOption(_id);
-    marketMaker.recordOptionPurchase(msg.sender, _id);}
+    optionVault.stampActiveOption(_id, msg.sender);}
 
   function getOptionPayoffValue(uint256 _id) external view returns(uint256 _payback){
     (,_payback) = optionVault.getContractPayoff(_id);}
 
-/* 
-    function purchaseOptionInVol(uint256 _tenor, uint256 _strike, OptionLibrary.PayoffType _poType,
-      uint256 _amount, uint256 _payInCost)
-      external
-      {
-      uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType,OptionLibrary.OptionSide.Buy );
-      uint256 _fee = MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
+  /* function purchaseOptionInVol(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _payInCost) external {
+    (uint256 _premium, uint256 _cost, uint256 _price, uint256 _vol) = calcOptionCost(_tenor, _strike, _amount, _poType, _side ); 
 
-      uint256 _id = optionVault.addOption(_tenor, _strike, _poType, OptionLibrary.OptionSide.Buy, _amount, _premium - _fee, _fee );
-      require(_payInCost >= optionVault.queryDraftOptionCost(_id, true), "Entered premium incorrect.");
+    uint256 _premium = queryOptionCost(_tenor, _strike, _amount, _poType,OptionLibrary.OptionSide.Buy );
+    uint256 _fee = MulDiv(_premium, settlementFee.numerator, settlementFee.denominator);
 
-      require(volTokensList[_tenor].transferFrom(msg.sender, contractAddress, _payInCost), 'Failed payment.');
+    uint256 _id = optionVault.addOption(_tenor, _strike, _poType, OptionLibrary.OptionSide.Buy, _amount, _premium - _fee, _fee );
+    require(_payInCost >= optionVault.queryDraftOptionCost(_id, true), "Entered premium incorrect.");
 
-      volTokensList[_tenor].approve(volTokensList[_tenor].contractAddress(), _payInCost);
-      volTokensList[_tenor].recycleInToken(contractAddress, _payInCost, underlyingToken);
-      require(underlyingToken.transfer(marketMakerAddress, optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
+    require(volTokensList[_tenor].transferFrom(msg.sender, contractAddress, _payInCost), 'Failed payment.');
 
-      optionVault.stampActiveOption(_id);
+    volTokensList[_tenor].approve(volTokensList[_tenor].contractAddress(), _payInCost);
+    volTokensList[_tenor].recycleInToken(contractAddress, _payInCost, underlyingToken);
+    require(underlyingToken.transfer(marketMakerAddress, optionVault.queryOptionPremium(_id)), 'Failed premium payment.');
 
-      marketMaker.recordOption(msg.sender, _id, true,
-        optionVault.queryOptionPremium(_id),
-        optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
-        optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
+    optionVault.stampActiveOption(_id);
 
-      emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
+    marketMaker.recordOption(msg.sender, _id, true,
+      optionVault.queryOptionPremium(_id),
+      optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Call),
+      optionVault.queryOptionExposure(_id, OptionLibrary.PayoffType.Put));
 
-    } */
+    emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, true);
+
+  }  */
 
 
       // function addVolToken(address payable _tokenAddress) external onlyRole(ADMIN_ROLE)

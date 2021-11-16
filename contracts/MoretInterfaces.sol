@@ -28,15 +28,23 @@ interface IOptionVault{
     function queryOptionCost(uint256 _strike,uint256 _amount, uint256 _vol, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) external view returns(uint256 _premium, uint256 _cost, uint256 _price);
     function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility, address _holder) external  returns(uint256 _id);
     function getOptionHolder(uint256 _id) external view returns(address) ;
+    function getHoldersOptionCount(address _address) external view returns(uint256);
+    function getAggregateNotional(bool _ignoreSells) external view returns(uint256 _notional);
     function queryOptionPremium(uint256 _id) external view returns(uint256) ;
-    function queryOptionNotional(uint256 _id, bool _ignoreSells) external view returns(uint256 _notional);
+    // function queryOptionNotional(uint256 _id, bool _ignoreSells) external view returns(uint256 _notional);
     function getContractPayoff(uint256 _id) external view returns(uint256 _payoff, uint256 _payback);
-    function calculateContractDelta(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
-    function calculateContractGamma(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
+    // function calculateContractDelta(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
+    // function calculateContractGamma(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
+    
+    function calculateAggregateDelta(bool _ignoreSells) external view returns(int256 _delta, uint256 _price);
+    function calculateAggregateGamma(bool _ignoreSells) external view returns(int256 _gamma);
     function calculateSpotGamma() external view returns(int256 _gamma);
-    function isOptionExpiring(uint256 _id) external view returns (bool);
-    function stampActiveOption(uint256 _id) external ;
+    function anyOptionExpiring() external view returns(bool _isExpiring);
+    function getExpiringOptionId() external view returns(uint256 _id);
+    // function isOptionExpiring(uint256 _id) external view returns (bool);
+    function stampActiveOption(uint256 _id, address _holder) external ;
     function stampExpiredOption(uint256 _id) external;
+    function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory);
     function getOption(uint256 _id) external view returns(OptionLibrary.Option memory);
     function queryVol(uint256 _tenor) external view returns(uint256);
     function queryPrice() external view returns(uint256, uint256);

@@ -88,7 +88,7 @@ module.exports = {
       networkCheckTimeout: 1000000000,
     network_id: 137,       // polygon mainnet's id
     gas: 8000000,
-    gasPrice: 5 * (10e9),
+    gasPrice: 3 * (10e9),
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
     timeoutBlocks: 300,  // # of blocks before a deployment times out  (minimum/default: 50)
     skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
