@@ -19,8 +19,8 @@ library MarketLibrary {
 
   function getLTV(address _protocolDataProviderAddress, address _tokenAddress) public view returns (uint256) {
     IProtocolDataProvider _protocolDataProvider = IProtocolDataProvider(_protocolDataProviderAddress);
-    (uint256 _reserveDecimals, uint256 _ltv, ,,,,,,, ) = _protocolDataProvider.getReserveConfigurationData(_tokenAddress);
-    return OptionLibrary.ToDefaultDecimals(_ltv, _reserveDecimals); }
+    (, uint256 _ltv, ,,,,,,, ) = _protocolDataProvider.getReserveConfigurationData(_tokenAddress);
+    return OptionLibrary.ToDefaultDecimals(_ltv, 4); } 
     
   function getLoanTrade(address _contractAddress, address _protocolDataProviderAddress, int256 _aggregateDelta, address _underlyingAddress, bool _useVariableRate) public view returns(int256 _loanChange, uint256 _targetLoan, address _loanAddress){
     ( , address _stableLoanAddress,  address _variableLoanAddress) = IProtocolDataProvider(_protocolDataProviderAddress).getReserveTokensAddresses(_underlyingAddress);
