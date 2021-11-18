@@ -11,13 +11,8 @@ module.exports = (deployer) => deployer
     .then(() => displayDeployed());
 
 async function deployMarketMaker(deployer) {
-    var optionVaultInstance = await optionVault.deployed();
-    await deployer.link(optionLib, marketLib);
     await deployer.link(optionLib, marketMaker);
-
-    await deployer.deploy(marketLib);
     await deployer.link(marketLib, marketMaker);
-
     var optionVaultInstance = await optionVault.deployed();
     await deployer.deploy(
         marketMaker,
@@ -28,8 +23,6 @@ async function deployMarketMaker(deployer) {
         optionVaultInstance.address,
         process.env.AAVE_ADDRESS_PROVIDER
     );
-
-
 }
 
 async function displayDeployed() {

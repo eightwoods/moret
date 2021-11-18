@@ -77,8 +77,8 @@ module.exports = {
     provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_API_KEY}`),
       networkCheckTimeout: 1000000000,
     network_id: 80001,       // mumbai's id
-    gas: 15000000,
-    gasPrice: 10e9,
+    gas: 15e6,
+    gasPrice: 3e9,
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
     timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
     skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
@@ -87,10 +87,10 @@ module.exports = {
     provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`),
       networkCheckTimeout: 1000000000,
     network_id: 137,       // polygon mainnet's id
-    gas: 8000000,
-    gasPrice: 3 * (10e9),
+    gas: 8e6,
+    gasPrice: 10e9,
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-    timeoutBlocks: 300,  // # of blocks before a deployment times out  (minimum/default: 50)
+    timeoutBlocks: 500,  // # of blocks before a deployment times out  (minimum/default: 50)
     skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
   },
     // Useful for private networks

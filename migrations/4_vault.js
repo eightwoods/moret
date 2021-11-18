@@ -8,9 +8,7 @@ module.exports =(deployer) => deployer
   .then(()=> displayDeployed());
 
 async function deployOptionVault(deployer){
-  await deployer.deploy(optionLib);
   await deployer.link(optionLib, optionVault);
-
   const varChainInstance = await volChain.deployed();
   await deployer.deploy(
     optionVault,
