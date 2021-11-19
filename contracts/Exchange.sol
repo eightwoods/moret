@@ -65,7 +65,7 @@ contract Exchange is AccessControl, EOption{
     (uint256 _price,) = optionVault.queryPrice();
     int256 _riskPremium = calcRiskPremium(_price, _vol, _strike, _amount, _side);
     require((int256(_vol)+_riskPremium) > 0,"Incorrect vol premium");
-    _vol += _riskPremium < 0? uint256(-_riskPremium): uint256(_riskPremium);}
+    _vol = uint256(int256(_vol)+_riskPremium);}
 
   function calcRiskPremium(uint256 _price, uint256 _vol, uint256 _strike, uint256 _amount,OptionLibrary.OptionSide _side) internal view returns(int256) {
     uint256 _maxGamma = MulDiv(OptionLibrary.calcGamma(_price, _price, _vol), marketMaker.calcCapital(false, false), _price);

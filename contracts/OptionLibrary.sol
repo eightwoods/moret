@@ -54,12 +54,12 @@ library OptionLibrary {
 
   function calcDelta(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _delta){
     uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _strike);
-    int256 _d = int256(MulDiv(2 ,  (_moneyness * DefaultMultiplier).sqrt(), _vol)) - int256(MulDiv(2,  DefaultMultiplier, _vol)) + int256(_vol / 2);
+    int256 _d = int256(MulDiv(2 * DefaultMultiplier,  (_moneyness * DefaultMultiplier).sqrt(), _vol)) - int256(MulDiv(2 * DefaultMultiplier,  DefaultMultiplier, _vol)) + int256(_vol/ 2);
     _delta = Logistic(_d);}
   
   function calcGamma(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _gamma){
     uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _strike);
-    int256 _d = int256(MulDiv(2 ,  (_moneyness * DefaultMultiplier).sqrt(), _vol)) - int256(MulDiv(2,  DefaultMultiplier, _vol)) + int256(_vol / 2);
+    int256 _d = int256(MulDiv(2 * DefaultMultiplier,  (_moneyness * DefaultMultiplier).sqrt(), _vol)) - int256(MulDiv(2 * DefaultMultiplier,  DefaultMultiplier, _vol)) + int256(_vol/ 2);
     _gamma = MulDiv(MulDiv(NormalDensity(_d), DefaultMultiplier, _price), DefaultMultiplier, _vol);}
 
   function adjustSlippage(uint256 _amount, bool _adjustUpward, uint256 _slippage, uint256 _loanInterest) public pure returns (uint256 _adjustedAmount){
