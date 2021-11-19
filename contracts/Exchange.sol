@@ -78,7 +78,7 @@ contract Exchange is AccessControl, EOption{
     int256 _capacity = int256(OptionLibrary.Multiplier()); // capacity should be in (0,2)
     if(_input < 0){_capacity +=  int256(MulDiv(uint256(-_input), OptionLibrary.Multiplier(), _max));}
     if(_input > 0){ _capacity -= int256(MulDiv(uint256(_input) , OptionLibrary.Multiplier(), _max));}
-    require(_capacity<=0 || _capacity >= int256(2 * OptionLibrary.Multiplier()),"Capacity limit breached.");
+    require((_capacity>=0) && (_capacity <= int256(2 * OptionLibrary.Multiplier())),"Capacity breached.");
     return int256(MulDiv(_constant, OptionLibrary.Multiplier(), uint256(_capacity))) - int256(_constant);}
 
   function purchaseOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _payInCost) external {
