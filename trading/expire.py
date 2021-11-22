@@ -6,18 +6,16 @@ import os
 from datetime import datetime
 infura_url = r'https://polygon-mainnet.infura.io/v3/' + os.environ['INFURA_API_KEY']
 chain_id = 137
-address = '0x0b93cD5fD4f017E669E6A5b0Fa1ac3c1047a0D34' # for exchange address
+address = '0xAAf68Df273d46aE211aC8626873Dc3F12f68fb5c' # for exchange address
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
 web3.eth.defaultAccount = Account.from_key(os.environ['MNEMONIC']).address
 
-exchange_abi = read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts/Exchange.json'))
-exchange = web3.eth.contract(address=address, abi=exchange_abi)
+exchange = web3.eth.contract(address=address, abi=read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts/Exchange.json')))
+market = web3.eth.contract(address=exchange.functions.marketMakerAddress().call(), abi=read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts/MoretMarketMaker.json')))
+vault = web3.eth.contract(address=exchange.functions.vaultAddress().call(),abi=read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts/OptionVault.json')))
 
-abi = read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts/MoretMarketMaker.json'))
-market = web3.eth.contract(address=exchange.functions.marketMakerAddress().call(), abi=abi)
-
-any_expiring = market.functions.anyOptionExpiring().call()
+any_expiring = vault.functions.anyOptionExpiring().call()
 if any_expiring:
     print('option expiring', datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
     nonce = web3.eth.get_transaction_count(web3.eth.default_account)

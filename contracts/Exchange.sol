@@ -4,22 +4,21 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./MoretInterfaces.sol";
 import "./VolatilityToken.sol";
 import "./MoretMarketMaker.sol";
-import "./FullMath.sol";
 
 contract Exchange is AccessControl, EOption{
   bytes32 public constant MINER_ROLE = keccak256("MINER_ROLE");
   // OptionLibrary.Percent public volTransactionFees = OptionLibrary.Percent(5 * 10 ** 3, 10 ** 6);
   // address public contractAddress;
+  address public vaultAddress;
   address public marketMakerAddress;
   // ERC20 internal underlyingToken; // used to pay premiums (vol token is alternative)
   // mapping(uint256=>VolatilityToken) public volTokensList;
 
   MoretMarketMaker internal marketMaker;
-  IOptionVault internal optionVault;
+  OptionVault internal optionVault;
 
   uint256 public volRiskPremiumMaxRatio= 18 * (10 ** 17);
   uint256 public loanInterest = 0;
@@ -35,10 +34,11 @@ contract Exchange is AccessControl, EOption{
   // uint256 public exchangeSlippageMax = 10 ** 16; // 1% max slippage allowed
   // uint256 public exchangeDeadlineLag = 20; // 20s slippage time
 
-  constructor( address _marketMakerAddress,address _optionAddress){// address payable _volTokenAddress)
+  constructor( address _marketMakerAddress,address _vaultAddress){// address payable _volTokenAddress)
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(MINER_ROLE, msg.sender);
-    optionVault = IOptionVault(_optionAddress);
+    vaultAddress = _vaultAddress;
+    optionVault = OptionVault(_vaultAddress);
     marketMakerAddress = _marketMakerAddress;
     marketMaker = MoretMarketMaker(_marketMakerAddress);
     // VolatilityToken _volToken = VolatilityToken(_volTokenAddress);
@@ -57,8 +57,8 @@ contract Exchange is AccessControl, EOption{
     if((_poType==OptionLibrary.PayoffType.Put && _side == OptionLibrary.OptionSide.Buy) || (_poType==OptionLibrary.PayoffType.Call && _side == OptionLibrary.OptionSide.Sell)){ 
       _adjustedStrike = OptionLibrary.adjustSlippage(_strike,true, marketMaker.swapSlippage(), loanInterest);}
     (_premium, _cost, _price) = optionVault.queryOptionCost(_adjustedStrike, _amount, _vol, _poType, _side);
-    _premium = MarketLibrary.cvtDecimals(_premium, marketMaker.fundingAddress());
-    _cost = MarketLibrary.cvtDecimals(_cost, marketMaker.fundingAddress());}
+    _premium = MarketLibrary.cvtDecimals(_premium, optionVault.funding());
+    _cost = MarketLibrary.cvtDecimals(_cost, optionVault.funding());}
 
   function queryOptionVolatility(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.OptionSide _side) public view returns(uint256 _vol){  
     _vol = optionVault.queryVol(_tenor); // running vol
@@ -86,7 +86,7 @@ contract Exchange is AccessControl, EOption{
     (uint256 _premium, uint256 _cost, uint256 _price, uint256 _vol) = calcOptionCost(_tenor, _strike, _amount, _poType, _side );      
     require(_payInCost >= _cost, "Incorrect cost paid.");
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
-    require(ERC20(marketMaker.fundingAddress()).transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
+    require(ERC20(optionVault.funding()).transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
     // emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
     optionVault.stampActiveOption(_id, msg.sender);}
 

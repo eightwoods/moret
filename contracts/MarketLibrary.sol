@@ -5,6 +5,7 @@ import "./MoretInterfaces.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./FullMath.sol";
+import "./OptionLibrary.sol";
 
 library MarketLibrary {
   
@@ -27,7 +28,7 @@ library MarketLibrary {
     _loanAddress = _useVariableRate? _variableLoanAddress: _stableLoanAddress;
     uint256 _debtBalance = balanceDef(_loanAddress, _contractAddress);
     _targetLoan = _aggregateDelta >=0 ? 0: uint256(-_aggregateDelta);
-    _loanChange = cvtDecimalsInt(int256(_targetLoan) -int256(_debtBalance), _loanAddress);}
+    _loanChange = int256(_targetLoan) - int256(_debtBalance);}
   
   function getCollateralTrade(address _contractAddress, address _protocolDataProviderAddress, uint256 _targetLoan, uint256 _price, address _fundingAddress, address _underlyingAddress) public view returns(int256 _collateralChange, address _collateralAddress) {
     (_collateralAddress, , ) = IProtocolDataProvider(_protocolDataProviderAddress).getReserveTokensAddresses(_fundingAddress);
@@ -55,4 +56,17 @@ library MarketLibrary {
     if(_amount > 0) _newAmount = int256(cvtDecimals(uint256(_amount), _tokenAddress));
     if(_amount < 0) _newAmount = -int256(cvtDecimals(uint256(-_amount), _tokenAddress));}
   
+  function cleanTradeAmounts(int256 _underlyingAmt, int256 _fundingAmt, address _underlyingAddress, address _fundingAddress) public pure returns(uint256 _fromAmount, uint256 _toAmount, address _fromAddress, address _toAddress){
+    _fromAmount = 0;
+    _toAmount = 0;
+    _fromAddress = _fundingAddress;
+    _toAddress = _underlyingAddress;
+    if(_underlyingAmt > 0 && _fundingAmt < 0){
+      _fromAmount = uint256(-_fundingAmt);
+      _toAmount = uint256(_underlyingAmt);}
+    if(_underlyingAmt < 0 && _fundingAmt> 0){
+      _fromAmount = uint256(-_underlyingAmt);
+      _fromAddress = _underlyingAddress;
+      _toAmount = uint256(_fundingAmt);
+      _toAddress = _fundingAddress;}}
 }

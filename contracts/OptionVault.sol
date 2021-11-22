@@ -6,10 +6,8 @@
 
 pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./MoretInterfaces.sol";
-import "./FullMath.sol";
+import "./MarketLibrary.sol";
 
 contract OptionVault is AccessControl{
   using OptionLibrary for OptionLibrary.Option;
@@ -23,10 +21,17 @@ contract OptionVault is AccessControl{
   EnumerableSet.UintSet internal activeOptions;
   IVolatilityChain internal volatilityChain;
 
-  constructor( address _volChainAddress ){
+  address public aaveAddress;
+  address public underlying;
+  address public funding;
+
+  constructor( address _volChainAddress, address _underlying, address _funding, address _aaveAddress){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(EXCHANGE_ROLE, msg.sender);
-    volatilityChain = IVolatilityChain(_volChainAddress); }
+    volatilityChain = IVolatilityChain(_volChainAddress); 
+    funding = _funding;
+    underlying = _underlying;
+    aaveAddress = _aaveAddress;}
   
   function descriptionHash() external view returns (bytes32)  { return keccak256(abi.encodePacked(volatilityChain.getDecription()));}
 
@@ -77,7 +82,7 @@ contract OptionVault is AccessControl{
       if(optionsList[_id].poType==OptionLibrary.PayoffType.Put) {_delta = -int256(optionsList[_id].amount) + _delta; }
       if(optionsList[_id].side==OptionLibrary.OptionSide.Sell){ _delta = -_delta;}}}
     
-  function calculateAggregateDelta(bool _ignoreSells) external view returns(int256 _delta, uint256 _price){
+  function calculateAggregateDelta(bool _ignoreSells) public view returns(int256 _delta, uint256 _price){
     (_price,) = volatilityChain.queryPrice();
     _delta= 0;
     for(uint256 i=0;i<activeOptions.length();i++){
@@ -139,8 +144,27 @@ contract OptionVault is AccessControl{
     activeOptionsPerOwner[optionsList[_id].holder].remove(_id);
     activeOptions.remove(_id);}
 
+  function calcHedgeTradesForSwaps(uint256 _swapSlippage) external view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){
+    (int256 _aggregateDelta, uint256 _price) = calculateAggregateDelta(false);
+    _tradeUnderlyingAmount = (_aggregateDelta >= 0? _aggregateDelta: int256(0)) - int256(MarketLibrary.balanceDef(underlying, address(this)));
+    _tradeFundingAmount = MarketLibrary.cvtDecimalsInt(OptionLibrary.getOpposeTrade(_tradeUnderlyingAmount, _price, _swapSlippage), funding);
+    _tradeUnderlyingAmount = MarketLibrary.cvtDecimalsInt(_tradeUnderlyingAmount, underlying);}
   
+  function getBalances(address _address) external view returns(uint256 _underlyingBalance, uint256 _fundingBalance, uint256 _collateralBalance, uint256 _debtBalance){
+    address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");//bytes32(uint256(1)));
+    ( _underlyingBalance, ,  _debtBalance) = MarketLibrary.getTokenBalances(_address, _protocolAds, underlying);
+    ( _fundingBalance,  _collateralBalance,) = MarketLibrary.getTokenBalances(_address, _protocolAds, funding); }
+
+  function calcLoanRepayment(address _address, uint256 _lendingPoolRateMode) external view returns(uint256 _repayAmount, uint256 _repaySwapValue){
+    (int256 _aggregateDelta, uint256 _price ) = calculateAggregateDelta(false);
+    (int256 _loanTradeAmount, , ) = MarketLibrary.getLoanTrade(_address, ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1"), _aggregateDelta, underlying, _lendingPoolRateMode == 2);
+    _repayAmount = 0;
+    _repaySwapValue = 0;
+    if(_loanTradeAmount < 0){
+      _repayAmount = uint256(-_loanTradeAmount) - Math.min(uint256(-_loanTradeAmount), ERC20(underlying).balanceOf(address(this)));
+      _repaySwapValue = MarketLibrary.cvtDecimals(MulDiv(_repayAmount, _price, OptionLibrary.Multiplier()), funding);
+      _repayAmount = MarketLibrary.cvtDecimals(_repayAmount, underlying);}}
+
   function queryVol(uint256 _tenor) external view returns(uint256){return volatilityChain.getVol(_tenor);}
   function queryPrice() external view returns(uint256, uint256){return volatilityChain.queryPrice();}
-  // function priceDecimals() external view returns(uint256) {return volatilityChain.getPriceDecimals();}
 }

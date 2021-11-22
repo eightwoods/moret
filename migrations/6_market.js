@@ -18,10 +18,7 @@ async function deployMarketMaker(deployer) {
         marketMaker,
         ['Moret', process.env.TOKEN_NAME, 'Market Pool'].join(' '),
         process.env.TOKEN_NAME + 'mp',
-        process.env.TOKEN_ADDRESS,
-        process.env.STABLE_COIN_ADDRESS,
-        optionVaultInstance.address,
-        process.env.AAVE_ADDRESS_PROVIDER
+        optionVaultInstance.address
     );
 }
 

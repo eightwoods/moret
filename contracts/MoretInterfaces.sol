@@ -24,48 +24,51 @@ interface IVolatilityChain{
     // function getPriceMultiplier() external view returns (uint256);
     function getDecription() external view returns (string memory);}
 
-interface IOptionVault{
-    function queryOptionCost(uint256 _strike,uint256 _amount, uint256 _vol, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) external view returns(uint256 _premium, uint256 _cost, uint256 _price);
-    function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility, address _holder) external  returns(uint256 _id);
-    function getOptionHolder(uint256 _id) external view returns(address) ;
-    function getHoldersOptionCount(address _address) external view returns(uint256);
-    function getAggregateNotional(bool _ignoreSells) external view returns(uint256 _notional);
-    function queryOptionPremium(uint256 _id) external view returns(uint256) ;
-    // function queryOptionNotional(uint256 _id, bool _ignoreSells) external view returns(uint256 _notional);
-    function getContractPayoff(uint256 _id) external view returns(uint256 _payoff, uint256 _payback);
-    // function calculateContractDelta(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
-    // function calculateContractGamma(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
+// interface IOptionVault{
+//     function funding() external view returns(address);
+//     function underlying() external view returns(address);
+//     function aaveAddress() external view returns(address);
+//     function queryOptionCost(uint256 _strike,uint256 _amount, uint256 _vol, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) external view returns(uint256 _premium, uint256 _cost, uint256 _price);
+//     function addOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _premium, uint256 _cost, uint256 _price, uint256 _volatility, address _holder) external  returns(uint256 _id);
+//     function getOptionHolder(uint256 _id) external view returns(address) ;
+//     function getHoldersOptionCount(address _address) external view returns(uint256);
+//     function getAggregateNotional(bool _ignoreSells) external view returns(uint256 _notional);
+//     function queryOptionPremium(uint256 _id) external view returns(uint256) ;
+//     // function queryOptionNotional(uint256 _id, bool _ignoreSells) external view returns(uint256 _notional);
+//     function getContractPayoff(uint256 _id) external view returns(uint256 _payoff, uint256 _payback);
+//     // function calculateContractDelta(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
+//     // function calculateContractGamma(uint256 _id, uint256 _price, bool _ignoreSells) external view returns(int256);
     
-    function calculateAggregateDelta(bool _ignoreSells) external view returns(int256 _delta, uint256 _price);
-    function calculateAggregateGamma(bool _ignoreSells) external view returns(int256 _gamma);
-    function calculateSpotGamma() external view returns(int256 _gamma);
-    function anyOptionExpiring() external view returns(bool _isExpiring);
-    function getExpiringOptionId() external view returns(uint256 _id);
-    // function isOptionExpiring(uint256 _id) external view returns (bool);
-    function stampActiveOption(uint256 _id, address _holder) external ;
-    function stampExpiredOption(uint256 _id) external;
-    function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory);
-    function getOption(uint256 _id) external view returns(OptionLibrary.Option memory);
-    function queryVol(uint256 _tenor) external view returns(uint256);
-    function queryPrice() external view returns(uint256, uint256);
-    function priceMultiplier() external view returns (uint256);
-    function priceDecimals() external view returns(uint256); }
+//     function calculateAggregateDelta(bool _ignoreSells) external view returns(int256 _delta, uint256 _price);
+//     function calculateAggregateGamma(bool _ignoreSells) external view returns(int256 _gamma);
+//     function calculateSpotGamma() external view returns(int256 _gamma);
+//     function anyOptionExpiring() external view returns(bool _isExpiring);
+//     function getExpiringOptionId() external view returns(uint256 _id);
+//     // function isOptionExpiring(uint256 _id) external view returns (bool);
+//     function stampActiveOption(uint256 _id, address _holder) external ;
+//     function stampExpiredOption(uint256 _id) external;
+//     function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory);
+//     function getOption(uint256 _id) external view returns(OptionLibrary.Option memory);
+//     function queryVol(uint256 _tenor) external view returns(uint256);
+//     function queryPrice() external view returns(uint256, uint256);
+//     function priceMultiplier() external view returns (uint256);
+//     function priceDecimals() external view returns(uint256); }
 
-// interface IUniswapV2Router02 {
-//   function swapExactTokensForTokens( uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts);
-//   function swapTokensForExactTokens( uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts);
-//   function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts);
-//   function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts);
-//   function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts);
-//   function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts); }
+interface IUniswapV2Router02 {
+  function swapExactTokensForTokens( uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts);
+  function swapTokensForExactTokens( uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts);
+  function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts);
+  function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts);
+  function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts);
+  function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts); }
 
-// interface I1InchProtocol{
-//     function getExpectedReturn( IERC20 fromToken, IERC20 destToken, uint256 amount, uint256 parts, uint256 flags) external view returns( uint256 returnAmount, uint256[] memory distribution);
-//     function getExpectedReturnWithGas(IERC20 fromToken,IERC20 destToken,uint256 amount,uint256 parts,uint256 flags,uint256 destTokenEthPriceTimesGasPrice) external view returns(uint256 returnAmount, uint256 estimateGasAmount, uint256[] memory  distribution);
-//     function getExpectedReturnWithGasMulti( IERC20[] memory tokens, uint256 amount, uint256[] memory parts, uint256[] memory flags, uint256[] memory destTokenEthPriceTimesGasPrices ) external view returns( uint256[] memory returnAmounts, uint256 estimateGasAmount,  uint256[] memory distribution );
-//     function swap( IERC20 fromToken, IERC20 destToken, uint256 amount, uint256 minReturn, uint256[] memory distribution, uint256 flags ) external payable returns(uint256);
-//     function swapMulti( IERC20[] memory tokens, uint256 amount, uint256 minReturn, uint256[] memory distribution, uint256[] memory flags ) external payable returns(uint256);
-//     function makeGasDiscount( uint256 gasSpent, uint256 returnAmount, bytes calldata msgSenderCalldata ) external;}
+interface I1InchProtocol{
+    function getExpectedReturn( IERC20 fromToken, IERC20 destToken, uint256 amount, uint256 parts, uint256 flags) external view returns( uint256 returnAmount, uint256[] memory distribution);
+    function getExpectedReturnWithGas(IERC20 fromToken,IERC20 destToken,uint256 amount,uint256 parts,uint256 flags,uint256 destTokenEthPriceTimesGasPrice) external view returns(uint256 returnAmount, uint256 estimateGasAmount, uint256[] memory  distribution);
+    function getExpectedReturnWithGasMulti( IERC20[] memory tokens, uint256 amount, uint256[] memory parts, uint256[] memory flags, uint256[] memory destTokenEthPriceTimesGasPrices ) external view returns( uint256[] memory returnAmounts, uint256 estimateGasAmount,  uint256[] memory distribution );
+    function swap( IERC20 fromToken, IERC20 destToken, uint256 amount, uint256 minReturn, uint256[] memory distribution, uint256 flags ) external payable returns(uint256);
+    function swapMulti( IERC20[] memory tokens, uint256 amount, uint256 minReturn, uint256[] memory distribution, uint256[] memory flags ) external payable returns(uint256);
+    function makeGasDiscount( uint256 gasSpent, uint256 returnAmount, bytes calldata msgSenderCalldata ) external;}
 
 interface IProtocolDataProvider {
   function getReserveConfigurationData(address asset) external view returns (uint256 decimals, uint256 ltv, uint256 liquidationThreshold, uint256 liquidationBonus, uint256 reserveFactor, bool usageAsCollateralEnabled, bool borrowingEnabled, bool stableBorrowRateEnabled, bool isActive, bool isFrozen);
