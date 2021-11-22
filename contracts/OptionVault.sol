@@ -172,7 +172,6 @@ contract OptionVault is AccessControl{
     (_loanTradeAmount, _targetLoan, _loanAddress) = MarketLibrary.getLoanTrade(_address, _protocolAds, _aggregateDelta, underlying, _lendingPoolRateMode == 2);
     (_collateralChange, _collateralAddress) = MarketLibrary.getCollateralTrade(_address, _protocolAds, _targetLoan, _price, funding, underlying);}
 
-
   function queryVol(uint256 _tenor) external view returns(uint256){return volatilityChain.getVol(_tenor);}
   function queryPrice() external view returns(uint256, uint256){return volatilityChain.queryPrice();}
 }
