@@ -98,20 +98,12 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
     (uint256 returnAmount, uint256[] memory distribution) =  I1InchProtocol(_aggregator).getExpectedReturn( IERC20(_fromAddress), IERC20(_toAddress), _fromAmt, _parts, 0);
     I1InchProtocol(_aggregator).swap(IERC20(_fromAddress), IERC20(_toAddress), _fromAmt, Math.min(returnAmount, _toAmt), distribution, 0);}
 
-  // function calcHedgeTradesForLoans() external onlyRole(MINER_ROLE) view returns(int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress){
-  //   (int256 _aggregateDelta, uint256 _price) = optionVault.calculateAggregateDelta(false);
-  //   address _protocolAds = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getAddress("0x1");
-  //   uint256 _targetLoan = 0;
-  //   (_loanTradeAmount, _targetLoan, _loanAddress) = MarketLibrary.getLoanTrade(address(this), _protocolAds, _aggregateDelta, underlying, lendingPoolRateMode == 2);
-  //   (_collateralChange, _collateralAddress) = MarketLibrary.getCollateralTrade(address(this), _protocolAds, _targetLoan, _price, funding, underlying);}
-
   function hedgeTradesForLoans() external onlyRole(MINER_ROLE) {
-    (int256 _aggregateDelta, uint256 _price) = optionVault.calculateAggregateDelta(false);
-    address _protocolAds = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getAddress("0x1");address _lendingPoolAddress = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getLendingPool();
-    (int256 _loanTradeAmount,uint256 _targetLoan,address _loanAddress) = MarketLibrary.getLoanTrade(address(this), _protocolAds, _aggregateDelta, underlying, lendingPoolRateMode == 2);
+    (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcHedgeTradesForLoans(address(this), lendingPoolRateMode);
     _loanTradeAmount = MarketLibrary.cvtDecimalsInt(_loanTradeAmount, _loanAddress);
-    (int256 _collateralChange, address _collateralAddress) = MarketLibrary.getCollateralTrade(address(this), _protocolAds, _targetLoan, _price, funding, underlying);
-    
+    _collateralChange = MarketLibrary.cvtDecimalsInt(_collateralChange, _collateralAddress);
+    address _lendingPoolAddress = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getLendingPool();
+
     if(_collateralChange > 0){
       ERC20(funding).increaseAllowance(_lendingPoolAddress, uint256(_collateralChange));
       ILendingPool(_lendingPoolAddress).deposit(funding, uint256(_collateralChange), address(this), 0);}

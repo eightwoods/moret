@@ -37,7 +37,7 @@ library MarketLibrary {
     uint256 _requiredCollateral = MulDiv(_targetLoan, _price , _ltv);
     uint256 _fundingBalance = balanceDef(_fundingAddress, _contractAddress);
     require(_requiredCollateral<= (_fundingBalance + _collateralBalance), "Insufficient collateral;");
-    _collateralChange =  cvtDecimalsInt(int256(_requiredCollateral) - int256(_collateralBalance), _collateralAddress) ;}
+    _collateralChange =  int256(_requiredCollateral) - int256(_collateralBalance);}
 
   function getSwapTrade(address _contractAddress, int256 _aggregateDelta, address _underlyingAddress) public view returns (int256 _underlyingChange){
     _underlyingChange = (_aggregateDelta >=0 ? _aggregateDelta: int256(0)) - int256(IERC20(_underlyingAddress).balanceOf(_contractAddress));}
