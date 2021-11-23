@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 infura_url = r'https://polygon-mainnet.infura.io/v3/' + os.environ['INFURA_API_KEY']
 chain_id = 137
-address = '0x335f866ec115D9e542898ea2BE3A31CA92EDf34a' # for exchange address
+address = '0x31BA7C171065022425156AB5Ce48d42930C5Af8a' # for exchange address
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
 web3.eth.defaultAccount = Account.from_key(os.environ['MNEMONIC']).address

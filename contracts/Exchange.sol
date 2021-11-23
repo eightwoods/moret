@@ -63,6 +63,7 @@ contract Exchange is AccessControl, EOption{
   function queryOptionVolatility(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.OptionSide _side) public view returns(uint256 _vol){  
     _vol = optionVault.queryVol(_tenor); // running vol
     (uint256 _price,) = optionVault.queryPrice();
+    require(MulDiv(_amount, _price, OptionLibrary.Multiplier())<=marketMaker.calcCapital(true,false),'insufficient capital');
     int256 _riskPremium = calcRiskPremium(_price, _vol, _strike, _amount, _side);
     require((int256(_vol)+_riskPremium) > 0,"Incorrect vol premium");
     _vol = uint256(int256(_vol)+_riskPremium);}
