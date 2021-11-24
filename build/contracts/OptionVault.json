@@ -57632,15 +57632,15 @@
         }
       },
       "links": {
-        "OptionLibrary": "0x6d35B97fdb32e6Dce8cc86AB9e98ae2a8EDe8209",
-        "MarketLibrary": "0xD4476AE617b71eF6df18aF206D2b218A5460eEf4"
+        "OptionLibrary": "0x7403Df1B107515Aaa8503d98EE930393e03CB299",
+        "MarketLibrary": "0x6C1A3e5cAEA69978763BDF0Eaf246B4d65654B9B"
       },
-      "address": "0xA94aB993fC2f75240dA86C779621B4Bc8E16121A",
-      "transactionHash": "0xb8b263bb7f7139979e742ce0ef557818d7d784a92a8d24e152572b7358d8042a"
+      "address": "0x3239D7DF42C917c29c4Ce16d98702da49B515281",
+      "transactionHash": "0xb03fb60733d63b6b198870eb3395f6dd70147c642879d32e075db54d67dcb70e"
     }
   },
   "schemaVersion": "3.4.3",
-  "updatedAt": "2021-11-23T23:52:37.125Z",
+  "updatedAt": "2021-11-24T19:45:48.481Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

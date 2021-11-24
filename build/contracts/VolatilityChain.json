@@ -43313,8 +43313,8 @@
         }
       },
       "links": {},
-      "address": "0xaaD2f717D1c87Ba8528607983c933872E218f142",
-      "transactionHash": "0x615b7a083743c72d875f6a7ef8dea8bc9a9b71a0c351866cebf9fcfb76c0efb7"
+      "address": "0xB26cd6da92d5276E3b9D46F5D9D411325fb33dF0",
+      "transactionHash": "0x0f3686a52e60ac8adeb97d64d00b38bc24889b4677bdbf1382cb63a959f515bc"
     },
     "80001": {
       "events": {
@@ -43486,7 +43486,7 @@
     }
   },
   "schemaVersion": "3.4.3",
-  "updatedAt": "2021-11-23T23:51:38.967Z",
+  "updatedAt": "2021-11-24T19:44:59.708Z",
   "devdoc": {
     "kind": "dev",
     "methods": {
