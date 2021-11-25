@@ -91,7 +91,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
     address[] memory _path = new address[](2);
     _path[0]=_fromAddress;
     _path[1] = _toAddress;
-    IUniswapV2Router02(_router).swapTokensForExactTokens(_fromAmt, _toAmt, _path, address(this), block.timestamp + _deadline );}
+    IUniswapV2Router02(_router).swapTokensForExactTokens(_toAmt, _fromAmt, _path, address(this), block.timestamp + _deadline );}
 
   function swapByAggregator(address _fromAddress, address _toAddress, address _aggregator, uint256 _fromAmt, uint256 _toAmt, uint256 _parts) internal {
     ERC20(_fromAddress).approve(_aggregator, _fromAmt);
