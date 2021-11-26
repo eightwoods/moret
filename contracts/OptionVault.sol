@@ -21,6 +21,7 @@ contract OptionVault is AccessControl{
   EnumerableSet.UintSet internal activeOptions;
   IVolatilityChain internal volatilityChain;
 
+  address public volChainAddress;
   address public aaveAddress;
   address public underlying;
   address public funding;
@@ -28,6 +29,7 @@ contract OptionVault is AccessControl{
   constructor( address _volChainAddress, address _underlying, address _funding, address _aaveAddress){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(EXCHANGE_ROLE, msg.sender);
+    volChainAddress = _volChainAddress;
     volatilityChain = IVolatilityChain(_volChainAddress); 
     funding = _funding;
     underlying = _underlying;
@@ -144,17 +146,20 @@ contract OptionVault is AccessControl{
     activeOptionsPerOwner[optionsList[_id].holder].remove(_id);
     activeOptions.remove(_id);}
 
-  function calcHedgeTradesForSwaps(uint256 _swapSlippage) external view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){
+  // this function emits values in token decimals.
+  function calcHedgeTradesForSwaps(address _address, uint256 _swapSlippage) external view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){
     (int256 _aggregateDelta, uint256 _price) = calculateAggregateDelta(false);
-    _tradeUnderlyingAmount = (_aggregateDelta >= 0? _aggregateDelta: int256(0)) - int256(MarketLibrary.balanceDef(underlying, address(this)));
+    _tradeUnderlyingAmount = (_aggregateDelta >= 0? _aggregateDelta: int256(0)) - int256(MarketLibrary.balanceDef(underlying, _address));
     _tradeFundingAmount = MarketLibrary.cvtDecimalsInt(OptionLibrary.getOpposeTrade(_tradeUnderlyingAmount, _price, _swapSlippage), funding);
     _tradeUnderlyingAmount = MarketLibrary.cvtDecimalsInt(_tradeUnderlyingAmount, underlying);}
   
+  // this function emits values in DEFAULT decimals.
   function getBalances(address _address) external view returns(uint256 _underlyingBalance, uint256 _fundingBalance, uint256 _collateralBalance, uint256 _debtBalance){
     address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");//bytes32(uint256(1)));
     ( _underlyingBalance, ,  _debtBalance) = MarketLibrary.getTokenBalances(_address, _protocolAds, underlying);
     ( _fundingBalance,  _collateralBalance,) = MarketLibrary.getTokenBalances(_address, _protocolAds, funding); }
 
+  // this function emits values in token decimals.
   function calcLoanRepayment(address _address, uint256 _lendingPoolRateMode) external view returns(uint256 _repayAmount, uint256 _repaySwapValue){
     (int256 _aggregateDelta, uint256 _price ) = calculateAggregateDelta(false);
     (int256 _loanTradeAmount, , ) = MarketLibrary.getLoanTrade(_address, ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1"), _aggregateDelta, underlying, _lendingPoolRateMode == 2);
@@ -165,6 +170,7 @@ contract OptionVault is AccessControl{
       _repaySwapValue = MarketLibrary.cvtDecimals(MulDiv(_repayAmount, _price, OptionLibrary.Multiplier()), funding);
       _repayAmount = MarketLibrary.cvtDecimals(_repayAmount, underlying);}}
 
+  // this function emits values in DEFAULT decimals.
   function calcHedgeTradesForLoans(address _address, uint256 _lendingPoolRateMode) external view returns(int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress){
     (int256 _aggregateDelta, uint256 _price) = calculateAggregateDelta(false);
     address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");

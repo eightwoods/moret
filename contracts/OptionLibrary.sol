@@ -68,6 +68,6 @@ library OptionLibrary {
     if(!_adjustUpward) _adjustedAmount = MulDiv(_amount, DefaultMultiplier, DefaultMultiplier + _slippage+ _loanInterest);}
 
   function getOpposeTrade(int256 _amount, uint256 _price, uint256 _slippage) external pure returns (int256 _oppositeAmount){
-    _oppositeAmount = int256(MulDiv(adjustSlippage(_amount >=0 ? uint256(_amount): uint256(-_amount), _amount<0, _slippage, 0), _price, DefaultMultiplier)) * (_amount >=0? int256(-1): int256(1));}
+    _oppositeAmount = int256(MulDiv(adjustSlippage(_amount >=0 ? uint256(_amount): uint256(-_amount), _amount>0, _slippage, 0), _price, DefaultMultiplier)) * (_amount >=0? int256(-1): int256(1));}
 
 }

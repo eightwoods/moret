@@ -31,6 +31,9 @@ async function displayDeployed() {
     var optionRole = await optionVaultInstance.EXCHANGE_ROLE();
     await optionVaultInstance.grantRole(optionRole, marketMakerInstance.address);
 
+    var minerRole = await marketMakerInstance.MINER_ROLE();
+    await marketMakerInstance.grantRole(minerRole, process.env.MINER_ADDRESS);
+
     // var role = await marketMakerInstance.ADMIN_ROLE();
     // console.log(role);
     // await marketMakerInstance.grantRole(role, process.env.RELAY_ACCOUNT);

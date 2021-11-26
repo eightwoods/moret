@@ -88,7 +88,7 @@ contract Exchange is AccessControl, EOption{
     require(_payInCost >= _cost, "Incorrect cost paid.");
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
     require(ERC20(optionVault.funding()).transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
-    // emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
+    emit newOptionBought(msg.sender, optionVault.getOption(_id), _payInCost, false);
     optionVault.stampActiveOption(_id, msg.sender);}
 
   function getOptionPayoffValue(uint256 _id) external view returns(uint256 _payback){
