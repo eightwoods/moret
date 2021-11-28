@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import "./MoretInterfaces.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";

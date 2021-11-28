@@ -1,10 +1,5 @@
-pragma solidity 0.8.9;
-
-/**
- * SPDX-License-Identifier: GPL-3.0-or-later
- * Moret
- * Copyright (C) 2021 Moret
- */
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.10;
 
 /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
 /// @param a The multiplicand

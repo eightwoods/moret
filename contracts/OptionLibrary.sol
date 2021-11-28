@@ -4,7 +4,7 @@
  * Copyright (C) 2021 Moret
 */
 
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import "./FullMath.sol";
 import "prb-math/contracts/PRBMath.sol";
@@ -47,6 +47,14 @@ library OptionLibrary {
       uint256 _timeValue = MulDiv(calcTimeValue(_strike, _price, _volatility, _amount), _price, DefaultMultiplier);
       return _intrinsicValue + _timeValue;}
 
+  function calcOptionCost(uint256 _price, uint256 _strike, uint256 _amount, uint256 _vol, PayoffType _poType, OptionSide _side) external pure returns(uint256 _premium, uint256 _cost) {
+    _premium = calcPremium(_price, _vol, _strike, _poType, _amount);
+    _cost = _premium;
+    if(_side == OptionSide.Sell){
+      uint256 _notional = MulDiv(_amount, _price, DefaultMultiplier);
+      require(_notional>= _premium);
+      _cost = _notional - _premium;}}
+
   function calcPayoff(Option storage _option, uint256 _price) public view returns(uint256){
     return calcIntrinsicValue(_option.strike, _price, _option.amount, _option.poType);}
 
@@ -61,6 +69,12 @@ library OptionLibrary {
     uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _strike);
     int256 _d = int256(MulDiv(2 * DefaultMultiplier,  (_moneyness * DefaultMultiplier).sqrt(), _vol)) - int256(MulDiv(2 * DefaultMultiplier,  DefaultMultiplier, _vol)) + int256(_vol/ 2);
     _gamma = MulDiv(MulDiv(NormalDensity(_d), DefaultMultiplier, _price), DefaultMultiplier, _vol);}
+
+  function adjustStrike(uint256 _strike, PayoffType _poType, OptionSide _side, uint256 _slippage, uint256 _loanInterest) external pure returns(uint256 _adjustedStrike){
+    _adjustedStrike = adjustSlippage(_strike, false, _slippage, 0); // downward
+    if((_poType==PayoffType.Put && _side == OptionSide.Buy) || (_poType==PayoffType.Call && _side == OptionSide.Sell)){ 
+      _adjustedStrike = adjustSlippage(_strike,true, _slippage, _loanInterest);} //upward
+  }
 
   function adjustSlippage(uint256 _amount, bool _adjustUpward, uint256 _slippage, uint256 _loanInterest) public pure returns (uint256 _adjustedAmount){
     _adjustedAmount = _amount;

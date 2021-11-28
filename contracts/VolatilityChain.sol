@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -115,6 +115,5 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     require(tenors.contains(_tenor), "Input option tenor is not allowed.");
     return priceBook[_tenor][latestBookTime[_tenor]];}
 
-  // function getPriceMultiplier() external override view returns (uint256){return priceMultiplier;}
-  // function getPriceDecimals() external override view returns (uint256) {return priceDecimals;}
+  function getTokenHash() external override view returns(bytes32){return tokenHash;}
   function getDecription() external override view returns (string memory) {return description;}}

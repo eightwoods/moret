@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -10,7 +10,6 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
 {
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   bytes32 public constant EXCHANGE_ROLE = keccak256("EXCHANGE_ROLE");
-  bytes32 public constant MINER_ROLE = keccak256("MINER_ROLE");
 
   uint256 private multiplier;
   uint256 public settlementFee= 5 * (10 ** 15);
@@ -27,7 +26,6 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(ADMIN_ROLE, msg.sender);
     _setupRole(EXCHANGE_ROLE, msg.sender);
-    _setupRole(MINER_ROLE, msg.sender);
     maintenanceAddress = msg.sender;
     optionVault = OptionVault(_optionAddress);
     multiplier = OptionLibrary.Multiplier();
@@ -54,16 +52,11 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       _expiringId = optionVault.getExpiringOptionId();}}
 
   function calcCapital(bool _net, bool _average) public view returns(uint256 _capital){
-      (uint256 _price, ) = optionVault.queryPrice();
-      (uint256 _underlying_balance, uint256 _funding_balance, uint256 _collateral_balance, uint256 _debt_balance) = optionVault.getBalances(address(this));
-      _capital = _funding_balance + _collateral_balance + MulDiv(_underlying_balance, _price, multiplier);
-      require(_capital > MulDiv(_debt_balance, _price, multiplier), "Negative equity.");
-      _capital -= MulDiv(_debt_balance, _price, multiplier);
-
-      if(_net){ _capital -= Math.min(MulDiv(optionVault.getAggregateNotional(false), _price, multiplier), _capital);}
-      if(_average){ 
-        if(totalSupply() > 0) _capital = MulDiv(_capital , multiplier , totalSupply()); 
-        if(totalSupply() == 0 && _capital == 0) _capital = multiplier;}}
+    _capital = optionVault.getGrossCapital(address(this));
+    if(_net){ _capital -= Math.min(optionVault.getMaxHedge(), _capital);}
+    if(_average){ 
+      if(totalSupply() > 0) _capital = MulDiv(_capital , multiplier , totalSupply()); 
+      if(totalSupply() == 0 && _capital == 0) _capital = multiplier;}}
     
   function addCapital(uint256 _depositAmount) external {
       uint256 _mintMPTokenAmount = MulDiv(MarketLibrary.cvtDef(_depositAmount, funding), multiplier, calcCapital(false, true));
@@ -78,10 +71,10 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       require(ERC20(funding).transfer(msg.sender, _withdrawValue));
       emit capitalWithdrawn(msg.sender, _burnMPTokenAmount, _withdrawValue);}
   
-  function approveSpending(address _tokenAddress, address _spenderAddress, uint256 _amount) external onlyRole(MINER_ROLE){
+  function approveSpending(address _tokenAddress, address _spenderAddress, uint256 _amount) external onlyRole(EXCHANGE_ROLE){
     ERC20(_tokenAddress).approve(_spenderAddress, _amount);}
 
-  function tradesSwaps(int256 _underlyingAmt, int256 _fundingAmt, address _router, uint256 _parameter, bool _useAggregator) external onlyRole(MINER_ROLE) {
+  function tradesSwaps(int256 _underlyingAmt, int256 _fundingAmt, address _router, uint256 _parameter, bool _useAggregator) external onlyRole(EXCHANGE_ROLE) {
     (uint256 _fromAmt, uint256 _toAmt, address _fromAddress, address _toAddress) = MarketLibrary.cleanTradeAmounts(_underlyingAmt, _fundingAmt, optionVault.underlying(), optionVault.funding());
     if(_useAggregator) swapByAggregator(_fromAddress, _toAddress, _router, _fromAmt, _toAmt, _parameter);
     if(!_useAggregator) swapByRouter(_fromAddress, _toAddress, _router, _fromAmt, _toAmt, _parameter);}
@@ -98,8 +91,8 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
     (uint256 returnAmount, uint256[] memory distribution) =  I1InchProtocol(_aggregator).getExpectedReturn( IERC20(_fromAddress), IERC20(_toAddress), _fromAmt, _parts, 0);
     I1InchProtocol(_aggregator).swap(IERC20(_fromAddress), IERC20(_toAddress), _fromAmt, Math.min(returnAmount, _toAmt), distribution, 0);}
 
-  function hedgeTradesForLoans() external onlyRole(MINER_ROLE) {
-    (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcHedgeTradesForLoans(address(this), lendingPoolRateMode);
+  function hedgeTradesForLoans() external onlyRole(EXCHANGE_ROLE) {
+    (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcLoanTrades(address(this), lendingPoolRateMode);
     _loanTradeAmount = MarketLibrary.cvtDecimalsInt(_loanTradeAmount, _loanAddress);
     _collateralChange = MarketLibrary.cvtDecimalsInt(_collateralChange, _collateralAddress);
     address _lendingPoolAddress = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getLendingPool();
