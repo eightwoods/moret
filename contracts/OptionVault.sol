@@ -61,31 +61,40 @@ contract OptionVault is AccessControl{
 
   function getMaxHedge() external view returns (uint256){
     (uint256 _price,) = volatilityChain.queryPrice();
-    int256 _deltaZero = calculateAggregateDelta(_price / 1e5);
-    int256 _deltaMax = calculateAggregateDelta(_price * 1e5);
+    int256 _deltaZero = calculateAggregateDelta(_price / 1e5, true);
+    int256 _deltaMax = calculateAggregateDelta(_price * 1e5, true);
     return MulDiv(Math.max(_deltaZero>=0?uint256(_deltaZero):uint256(-_deltaZero), _deltaMax>=0?uint256(_deltaMax):uint256(-_deltaMax) ), _price, OptionLibrary.Multiplier());}
+
+  function getSellPutCollateral() external view returns (uint256 _collateral){
+    _collateral= 0;
+    for(uint256 i=0;i<activeOptions.length();i++){
+      uint256 _id = uint256(activeOptions.at(i));
+      if(optionsList[_id].status== OptionLibrary.OptionStatus.Active && optionsList[_id].side == OptionLibrary.OptionSide.Sell && optionsList[_id].poType==OptionLibrary.PayoffType.Put){
+      _collateral +=  optionsList[_id].calcNotionalExposure(optionsList[_id].strike);}}}
 
   function getContractPayoff(uint256 _id) external view returns(uint256 _payoff, uint256 _payback){
     (uint256 _price,) = volatilityChain.queryPrice();
     _payoff = optionsList[_id].calcPayoff(_price);
     _payback = _payoff;
-    if(optionsList[_id].side == OptionLibrary.OptionSide.Sell){ 
-      uint256 _notional = optionsList[_id].calcNotionalExposure(_price);
-      require(_notional >= _payoff, "Payoff incorrect.");
-      _payback = _notional - _payoff;}}
+    if(optionsList[_id].side == OptionLibrary.OptionSide.Sell && optionsList[_id].poType==OptionLibrary.PayoffType.Call){
+      _payback =  optionsList[_id].calcNotionalExposure(_price) - _payoff;}
+    if(optionsList[_id].side == OptionLibrary.OptionSide.Sell && optionsList[_id].poType==OptionLibrary.PayoffType.Put){
+      _payback =  optionsList[_id].calcNotionalExposure(optionsList[_id].strike) - _payoff;}}
 
-  function calculateContractDelta(uint256 _id, uint256 _price) public view returns(int256 _delta){
+  function calculateContractDelta(uint256 _id, uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
     _delta = 0;
-    if(optionsList[_id].status== OptionLibrary.OptionStatus.Active && (optionsList[_id].maturity > block.timestamp)){
-      uint256 _vol = volatilityChain.getVol(optionsList[_id].maturity - Math.min(optionsList[_id].maturity, block.timestamp));
-      _delta = int256(MulDiv(OptionLibrary.calcDelta(_price, optionsList[_id].strike, _vol), optionsList[_id].amount, OptionLibrary.Multiplier() ));
-      if(optionsList[_id].poType==OptionLibrary.PayoffType.Put) {_delta = -int256(optionsList[_id].amount) + _delta; }
-      if(optionsList[_id].side==OptionLibrary.OptionSide.Sell){ _delta = -_delta;}}}
+    if(optionsList[_id].status== OptionLibrary.OptionStatus.Active && (_includeExpiring || (optionsList[_id].maturity > block.timestamp))){
+      if(optionsList[_id].side==OptionLibrary.OptionSide.Buy){
+        uint256 _vol = volatilityChain.getVol(optionsList[_id].maturity - Math.min(optionsList[_id].maturity, block.timestamp));
+        _delta = int256(MulDiv(OptionLibrary.calcDelta(_price, optionsList[_id].strike, _vol), optionsList[_id].amount, OptionLibrary.Multiplier() ));
+        if(optionsList[_id].poType==OptionLibrary.PayoffType.Put) {_delta = -int256(optionsList[_id].amount) + _delta; }}
+      if(optionsList[_id].side==OptionLibrary.OptionSide.Sell && optionsList[_id].poType==OptionLibrary.PayoffType.Call){ 
+        _delta = int256(optionsList[_id].amount);}}} // collateral for sell call options. zero for sell put options
     
-  function calculateAggregateDelta(uint256 _price) public view returns(int256 _delta){
+  function calculateAggregateDelta(uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
     _delta= 0;
     for(uint256 i=0;i<activeOptions.length();i++){
-      _delta += calculateContractDelta(uint256(activeOptions.at(i)),_price);}}
+      _delta += calculateContractDelta(uint256(activeOptions.at(i)),_price, _includeExpiring);}}
 
   function calculateContractGamma(uint256 _id, uint256 _price) public view returns(int256 _gamma){
     _gamma = 0;
@@ -146,7 +155,7 @@ contract OptionVault is AccessControl{
   // this function emits values in token decimals.
   function calcSwapTradesInTok(address _address, uint256 _swapSlippage) external view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){
     (uint256 _price,) = volatilityChain.queryPrice();
-    int256 _aggregateDelta = calculateAggregateDelta(_price);
+    int256 _aggregateDelta = calculateAggregateDelta(_price, false);
     _tradeUnderlyingAmount = (_aggregateDelta >= 0? _aggregateDelta: int256(0)) - int256(MarketLibrary.balanceDef(underlying, _address));
     _tradeFundingAmount = MarketLibrary.cvtDecimalsInt(OptionLibrary.getOpposeTrade(_tradeUnderlyingAmount, _price, _swapSlippage), funding);
     _tradeUnderlyingAmount = MarketLibrary.cvtDecimalsInt(_tradeUnderlyingAmount, underlying);}
@@ -160,7 +169,7 @@ contract OptionVault is AccessControl{
   // this function emits values in token decimals.
   function calcLoanRepaymentInTok(address _address, uint256 _lendingPoolRateMode) external view returns(uint256 _repayAmount, uint256 _repaySwapValue){
     (uint256 _price,) = volatilityChain.queryPrice();
-    int256 _aggregateDelta = calculateAggregateDelta(_price);
+    int256 _aggregateDelta = calculateAggregateDelta(_price, false);
     (int256 _loanTradeAmount, , ) = MarketLibrary.getLoanTrade(_address, ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1"), _aggregateDelta, underlying, _lendingPoolRateMode == 2);
     _repayAmount = 0;
     _repaySwapValue = 0;
@@ -172,7 +181,7 @@ contract OptionVault is AccessControl{
   // this function emits values in DEFAULT decimals.
   function calcLoanTrades(address _address, uint256 _lendingPoolRateMode) external view returns(int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress){
     (uint256 _price,) = volatilityChain.queryPrice();
-    int256 _aggregateDelta = calculateAggregateDelta(_price);
+    int256 _aggregateDelta = calculateAggregateDelta(_price, false);
     address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");
     uint256 _targetLoan = 0;
     (_loanTradeAmount, _targetLoan, _loanAddress) = MarketLibrary.getLoanTrade(_address, _protocolAds, _aggregateDelta, underlying, _lendingPoolRateMode == 2);

@@ -50,15 +50,14 @@ library OptionLibrary {
   function calcOptionCost(uint256 _price, uint256 _strike, uint256 _amount, uint256 _vol, PayoffType _poType, OptionSide _side) external pure returns(uint256 _premium, uint256 _cost) {
     _premium = calcPremium(_price, _vol, _strike, _poType, _amount);
     _cost = _premium;
-    if(_side == OptionSide.Sell){
-      uint256 _notional = MulDiv(_amount, _price, DefaultMultiplier);
-      require(_notional>= _premium);
-      _cost = _notional - _premium;}}
+    if(_side == OptionSide.Sell && _poType == PayoffType.Put){ _cost = MulDiv(_amount, _strike, DefaultMultiplier) - _cost;}
+    if(_side == OptionSide.Sell && _poType == PayoffType.Call){ _cost = MulDiv(_amount, _price, DefaultMultiplier) - _cost;}}
 
   function calcPayoff(Option storage _option, uint256 _price) public view returns(uint256){
     return calcIntrinsicValue(_option.strike, _price, _option.amount, _option.poType);}
 
-  function calcNotionalExposure(Option storage _option, uint256 _price) public view returns(uint256){ return MulDiv(_option.amount, _price, DefaultMultiplier);}
+  function calcNotionalExposure(Option storage _option, uint256 _price) public view returns(uint256){ 
+    return MulDiv(_option.amount, _price, DefaultMultiplier);}
 
   function calcDelta(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _delta){
     uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _strike);

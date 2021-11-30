@@ -20,7 +20,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
   address internal funding;
   address public maintenanceAddress;
   uint256 public lendingPoolRateMode = 2;
-  uint256 public swapSlippage = 5 * (10 ** 15);
+  uint256 public swapSlippage = 5 * (10 ** 14);
   
   constructor(string memory _name, string memory _symbol, address _optionAddress) ERC20(_name, _symbol){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -53,7 +53,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
 
   function calcCapital(bool _net, bool _average) public view returns(uint256 _capital){
     _capital = optionVault.getGrossCapital(address(this));
-    if(_net){ _capital -= Math.min(optionVault.getMaxHedge(), _capital);}
+    if(_net){ _capital -= Math.min(optionVault.getMaxHedge() + optionVault.getSellPutCollateral(), _capital);}
     if(_average){ 
       if(totalSupply() > 0) _capital = MulDiv(_capital , multiplier , totalSupply()); 
       if(totalSupply() == 0 && _capital == 0) _capital = multiplier;}}
@@ -118,7 +118,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
   function resetExerciseFee(uint256 _newFee) external onlyRole(ADMIN_ROLE){ require(_newFee < multiplier); exerciseFee = _newFee;}
   function resetMaintenance(address _newAddress) external onlyRole(ADMIN_ROLE){ maintenanceAddress = _newAddress;}
   function resetSlippage(uint256 _slippage) external onlyRole(ADMIN_ROLE){ swapSlippage = _slippage;}
-  // function resetLendingPoolRateMode(uint256 _newRateMode) external onlyRole(ADMIN_ROLE) {
-  //   require(_newRateMode == 1 || _newRateMode == 2);
-  //   lendingPoolRateMode = _newRateMode;}
+  function resetLendingPoolRateMode(uint256 _newRateMode) external onlyRole(ADMIN_ROLE) {
+    require(_newRateMode == 1 || _newRateMode == 2);
+    lendingPoolRateMode = _newRateMode;}
 }

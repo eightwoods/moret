@@ -29,10 +29,14 @@ contract Exchange is AccessControl, EOption{
     marketMakerAddress = _marketMakerAddress;
     marketMaker = MoretMarketMaker(_marketMakerAddress);}
 
-  function calcCost(uint256 _tenor, uint256 _price, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 _premium, uint256 _cost, uint256 _vol){
+  function calcCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 , uint256 , uint256 ){
+    (uint256 _price,) = optionVault.queryPrice();
+    return calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side);}
+
+  function calcOptionCost(uint256 _tenor, uint256 _price, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 _premium, uint256 _cost, uint256 _vol){
     _vol = queryOptionVolatility(_tenor, _strike, _amount, _side);
-    uint256 _adjustedStrike = OptionLibrary.adjustStrike(_strike, _poType, _side, marketMaker.swapSlippage(), loanInterest); 
-    (_premium, _cost) = OptionLibrary.calcOptionCost(_price, _adjustedStrike, _amount, _vol, _poType, _side);
+    // uint256 _adjustedStrike = OptionLibrary.adjustStrike(_strike, _poType, _side, marketMaker.swapSlippage(), loanInterest); 
+    (_premium, _cost) = OptionLibrary.calcOptionCost(_price, _strike, _amount, _vol, _poType, _side);
     _premium = MarketLibrary.cvtDecimals(_premium, optionVault.funding());
     _cost = MarketLibrary.cvtDecimals(_cost, optionVault.funding());}
 
@@ -61,7 +65,7 @@ contract Exchange is AccessControl, EOption{
   function purchaseOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _payInCost) external {
     require(allowTrading,"Trading stopped!");
     (uint256 _price, ) = optionVault.queryPrice();
-    (uint256 _premium, uint256 _cost, uint256 _vol) = calcCost(_tenor, _price, _strike, _amount, _poType, _side );      
+    (uint256 _premium, uint256 _cost, uint256 _vol) = calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side );      
     require(_payInCost >= _cost, "Incorrect cost paid.");
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
     require(ERC20(optionVault.funding()).transferFrom(msg.sender, marketMakerAddress, _payInCost), 'Failed payment.');  
@@ -74,7 +78,7 @@ contract Exchange is AccessControl, EOption{
   function calcVolAmount(uint256 _tenor, uint256 _amount, OptionLibrary.OptionSide _side) public view returns(uint256 _volAmount, uint256 _vol, uint256 _premium, uint256 _cost, uint256 _price){
     require(volTokenAddressList[_tenor]!=address(0), "Tenor is not set");
     (_price, ) = optionVault.queryPrice();
-    (_premium, _cost, _vol) = calcCost(_tenor, _price, _price, _amount, OptionLibrary.PayoffType.Call, _side); 
+    (_premium, _cost, _vol) = calcOptionCost(_tenor, _price, _price, _amount, OptionLibrary.PayoffType.Call, _side); 
     _volAmount = MarketLibrary.cvtDecimals(MulDiv(_premium, OptionLibrary.Multiplier(), _vol), volTokenAddressList[_tenor]);}
 
   function buyVol(uint256 _tenor, uint256 _amount, uint256 _payInCost) external {
