@@ -142,15 +142,17 @@ contract OptionVault is AccessControl{
     activeOptionsPerOwner[_holder].add(_id);
     activeOptions.add(_id);}
 
-  // function stampExercisedOption(uint256 _id) external onlyRole(EXCHANGE_ROLE){
-  //     optionsList[_id].exerciseTime = block.timestamp;
-  //     optionsList[_id].status = OptionLibrary.OptionStatus.Exercised;}
+  function stampExercisedOption(uint256 _id) external onlyRole(EXCHANGE_ROLE){
+    activeOptionsPerOwner[optionsList[_id].holder].remove(_id);
+    activeOptions.remove(_id);
+    optionsList[_id].status = OptionLibrary.OptionStatus.Exercised;
+    optionsList[_id].exerciseTime = block.timestamp;}
 
   function stampExpiredOption(uint256 _id)  external onlyRole(EXCHANGE_ROLE){
-    optionsList[_id].exerciseTime = block.timestamp;
-    optionsList[_id].status = OptionLibrary.OptionStatus.Expired;
     activeOptionsPerOwner[optionsList[_id].holder].remove(_id);
-    activeOptions.remove(_id);}
+    activeOptions.remove(_id);
+    optionsList[_id].status = OptionLibrary.OptionStatus.Expired;
+    optionsList[_id].exerciseTime = block.timestamp;}
 
   // this function emits values in token decimals.
   function calcSwapTradesInTok(address _address, uint256 _swapSlippage) external view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){

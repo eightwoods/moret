@@ -70,26 +70,20 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       _burn(msg.sender, _burnMPTokenAmount);
       require(ERC20(funding).transfer(msg.sender, _withdrawValue));
       emit capitalWithdrawn(msg.sender, _burnMPTokenAmount, _withdrawValue);}
-  
-  function approveSpending(address _tokenAddress, address _spenderAddress, uint256 _amount) external onlyRole(EXCHANGE_ROLE){
-    ERC20(_tokenAddress).approve(_spenderAddress, _amount);}
 
-  function tradesSwaps(int256 _underlyingAmt, int256 _fundingAmt, address _router, uint256 _parameter, bool _useAggregator) external onlyRole(EXCHANGE_ROLE) {
+  function tradeSwapAggregate(int256 _underlyingAmt, int256 _fundingAmt, address _spender, bytes calldata _calldata) external onlyRole(EXCHANGE_ROLE){
+    (uint256 _fromAmt, , address _fromAddress, ) = MarketLibrary.cleanTradeAmounts(_underlyingAmt, _fundingAmt, optionVault.underlying(), optionVault.funding());
+    ERC20(_fromAddress).approve(_spender, _fromAmt);
+    (bool success, bytes memory data) = _spender.call(_calldata);
+    emit Response(success, data);}
+
+  function tradeSwaps(int256 _underlyingAmt, int256 _fundingAmt, address _router, uint256 _deadline) external onlyRole(EXCHANGE_ROLE) {
     (uint256 _fromAmt, uint256 _toAmt, address _fromAddress, address _toAddress) = MarketLibrary.cleanTradeAmounts(_underlyingAmt, _fundingAmt, optionVault.underlying(), optionVault.funding());
-    if(_useAggregator) swapByAggregator(_fromAddress, _toAddress, _router, _fromAmt, _toAmt, _parameter);
-    if(!_useAggregator) swapByRouter(_fromAddress, _toAddress, _router, _fromAmt, _toAmt, _parameter);}
-  
-  function swapByRouter(address _fromAddress, address _toAddress, address _router, uint256 _fromAmt, uint256 _toAmt, uint256 _deadline) internal {
     ERC20(_fromAddress).approve(_router, _fromAmt);
     address[] memory _path = new address[](2);
     _path[0]=_fromAddress;
     _path[1] = _toAddress;
     IUniswapV2Router02(_router).swapTokensForExactTokens(_toAmt, _fromAmt, _path, address(this), block.timestamp + _deadline );}
-
-  function swapByAggregator(address _fromAddress, address _toAddress, address _aggregator, uint256 _fromAmt, uint256 _toAmt, uint256 _parts) internal {
-    ERC20(_fromAddress).approve(_aggregator, _fromAmt);
-    (uint256 returnAmount, uint256[] memory distribution) =  I1InchProtocol(_aggregator).getExpectedReturn( IERC20(_fromAddress), IERC20(_toAddress), _fromAmt, _parts, 0);
-    I1InchProtocol(_aggregator).swap(IERC20(_fromAddress), IERC20(_toAddress), _fromAmt, Math.min(returnAmount, _toAmt), distribution, 0);}
 
   function hedgeTradesForLoans() external onlyRole(EXCHANGE_ROLE) {
     (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcLoanTrades(address(this), lendingPoolRateMode);

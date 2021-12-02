@@ -10,7 +10,8 @@ interface EOption{
     event capitalAdded(address _recipient, uint256 _mintMPTokenAmount, uint256 _addedValue);
     event capitalWithdrawn(address _recipient, uint256 _burnMPTokenAmount, uint256 _withdrawValue);
     event volatilityTokenBought(address _purchaser, uint256 _time, uint256 _tenor, uint256 _amount, uint256 _cost);
-    event volatilityTokenSold(address _seller, uint256 _time, uint256 _tenor, uint256 _amount, uint256 _cost);}
+    event volatilityTokenSold(address _seller, uint256 _time, uint256 _tenor, uint256 _amount, uint256 _cost);
+  event Response(bool success, bytes data);}
 
 interface IVolatilityChain{
     event volatilityChainBlockAdded(uint256 indexed _tenor, uint256 _timeStamp, PriceStamp _book);
