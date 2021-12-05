@@ -71,10 +71,10 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
       require(ERC20(funding).transfer(msg.sender, _withdrawValue));
       emit capitalWithdrawn(msg.sender, _burnMPTokenAmount, _withdrawValue);}
 
-  function tradeSwapAggregate(int256 _underlyingAmt, int256 _fundingAmt, address _spender, bytes calldata _calldata) external onlyRole(EXCHANGE_ROLE){
+  function tradeSwapAggregate(int256 _underlyingAmt, int256 _fundingAmt, address payable _spender, bytes calldata _calldata, uint256 _gas) external onlyRole(EXCHANGE_ROLE){
     (uint256 _fromAmt, , address _fromAddress, ) = MarketLibrary.cleanTradeAmounts(_underlyingAmt, _fundingAmt, optionVault.underlying(), optionVault.funding());
     ERC20(_fromAddress).approve(_spender, _fromAmt);
-    (bool success, bytes memory data) = _spender.call(_calldata);
+    (bool success, bytes memory data) = _spender.call{gas: _gas}(_calldata);
     emit Response(success, data);}
 
   function tradeSwaps(int256 _underlyingAmt, int256 _fundingAmt, address _router, uint256 _deadline) external onlyRole(EXCHANGE_ROLE) {

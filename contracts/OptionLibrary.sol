@@ -83,4 +83,11 @@ library OptionLibrary {
   function getOpposeTrade(int256 _amount, uint256 _price, uint256 _slippage) external pure returns (int256 _oppositeAmount){
     _oppositeAmount = int256(MulDiv(adjustSlippage(_amount >=0 ? uint256(_amount): uint256(-_amount), _amount>0, _slippage, 0), _price, DefaultMultiplier)) * (_amount >=0? int256(-1): int256(1));}
 
+  function calcRiskPremiumAMM(uint256 _max, int256 _input, uint256 _constant, uint256 _volCapacityFactor) external pure returns(int256) {
+    int256 _capacity = int256(DefaultMultiplier); // capacity should be in (0,2)
+    if(_input < 0){_capacity +=  int256(MulDiv(uint256(-_input), _volCapacityFactor, _max));}
+    if(_input > 0){ _capacity -= int256(MulDiv(uint256(_input) , _volCapacityFactor, _max));}
+    require(_capacity>=0,"Capacity breached.");
+    return int256(MulDiv(_constant, DefaultMultiplier, uint256(_capacity))) - int256(_constant);}
+
 }

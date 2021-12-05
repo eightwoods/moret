@@ -6,14 +6,15 @@ import os
 from datetime import datetime
 infura_url = r'https://polygon-mainnet.infura.io/v3/' + os.environ['INFURA_API_KEY']
 chain_id = 137
-addresses = ['0x0489315248be9c369E3E22493a246C805aCd1BFb',
+addresses = ['0x52ea476C538165F0eaE93A2FB1a4FB6D2B8EdFd8',
              '0x4980D84ca1E4Eee41cf8685bE38359F659d37B89']  # for exchange address
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
 web3.eth.defaultAccount = Account.from_key(os.environ['MNEMONIC']).address
 
 def contract(ad, filename):
-    return web3.eth.contract(address=ad, abi=read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts', filename)))
+    #return web3.eth.contract(address=ad, abi=read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts', filename)))
+    return web3.eth.contract(address=ad, abi=read_abi(os.path.join(r'../build/contracts', filename)))
 
 for address in addresses:
     exchange = contract(address, 'Exchange.json')

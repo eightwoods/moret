@@ -9894,7 +9894,7 @@
         6114
       ],
       "OptionLibrary": [
-        8671
+        8675
       ],
       "PRBMath": [
         4023
@@ -10062,7 +10062,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 6618,
-        "sourceUnit": 8672,
+        "sourceUnit": 8676,
         "src": "224:29:16",
         "symbolAliases": [],
         "unitAlias": ""
@@ -11340,10 +11340,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "1426:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -11354,7 +11354,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8045,
+                      "referencedDeclaration": 8049,
                       "src": "1426:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -14266,10 +14266,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "3463:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -14280,7 +14280,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8045,
+                      "referencedDeclaration": 8049,
                       "src": "3463:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -14539,10 +14539,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "3679:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -14553,7 +14553,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8045,
+                      "referencedDeclaration": 8049,
                       "src": "3679:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -14811,10 +14811,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "3860:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -14825,7 +14825,7 @@
                       "lValueRequested": false,
                       "memberName": "ToCustomDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8071,
+                      "referencedDeclaration": 8075,
                       "src": "3860:30:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -16827,7 +16827,7 @@
         6114
       ],
       "OptionLibrary": [
-        8671
+        8675
       ],
       "PRBMath": [
         4023
@@ -16995,7 +16995,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 6618,
-        "sourceUnit": 8672,
+        "sourceUnit": 8676,
         "src": "224:29:16",
         "symbolAliases": [],
         "unitAlias": ""
@@ -18273,10 +18273,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "1426:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -18287,7 +18287,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8045,
+                      "referencedDeclaration": 8049,
                       "src": "1426:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -21199,10 +21199,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "3463:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -21213,7 +21213,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8045,
+                      "referencedDeclaration": 8049,
                       "src": "3463:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -21472,10 +21472,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "3679:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -21486,7 +21486,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8045,
+                      "referencedDeclaration": 8049,
                       "src": "3679:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -21744,10 +21744,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8671,
+                        "referencedDeclaration": 8675,
                         "src": "3860:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8671_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8675_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -21758,7 +21758,7 @@
                       "lValueRequested": false,
                       "memberName": "ToCustomDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 8071,
+                      "referencedDeclaration": 8075,
                       "src": "3860:30:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -23731,7 +23731,8 @@
     }
   },
   "schemaVersion": "3.4.3",
-  "updatedAt": "2021-12-02T21:24:46.707Z",
+  "updatedAt": "2021-12-02T23:33:24.401Z",
+  "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
     "methods": {},

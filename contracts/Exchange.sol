@@ -17,7 +17,7 @@ contract Exchange is AccessControl, EOption{
   MoretMarketMaker internal marketMaker;
   OptionVault internal optionVault;
 
-  uint256 public volRiskPremiumMaxRatio= 18 * (10 ** 17);
+  uint256 public volCapacityFactor = 5 * (10 ** 17);
   uint256 public loanInterest = 0;
   bool public allowTrading = true;
 
@@ -48,19 +48,11 @@ contract Exchange is AccessControl, EOption{
     require((int256(_vol)+_riskPremium) > 0,"Incorrect vol premium");
     _vol = uint256(int256(_vol)+_riskPremium);}
 
-  function calcRiskPremium(uint256 _price, uint256 _vol, uint256 _strike, uint256 _amount,OptionLibrary.OptionSide _side) internal view returns(int256) {
+  function calcRiskPremium(uint256 _price, uint256 _vol, uint256 _strike, uint256 _amount, OptionLibrary.OptionSide _side) internal view returns(int256) {
     uint256 _maxGamma = MulDiv(OptionLibrary.calcGamma(_price, _price, _vol), marketMaker.calcCapital(false, false), _price);
     int256 _currentGamma = optionVault.calculateAggregateGamma(); // include sells.
     int256 _newGamma = _currentGamma + int256(MulDiv(OptionLibrary.calcGamma(_price, _strike, _vol), _amount, OptionLibrary.Multiplier() )) * (_side==OptionLibrary.OptionSide.Sell? -1: int(1));
-    uint256 _K = MulDiv(_vol, volRiskPremiumMaxRatio, OptionLibrary.Multiplier());
-    return (calcRiskPremiumAMM(_maxGamma, _currentGamma,  _K) + calcRiskPremiumAMM(_maxGamma, _newGamma, _K)) / 2;}
-
-  function calcRiskPremiumAMM(uint256 _max, int256 _input, uint256 _constant) internal pure returns(int256) {
-    int256 _capacity = int256(OptionLibrary.Multiplier()); // capacity should be in (0,2)
-    if(_input < 0){_capacity +=  int256(MulDiv(uint256(-_input), OptionLibrary.Multiplier(), _max));}
-    if(_input > 0){ _capacity -= int256(MulDiv(uint256(_input) , OptionLibrary.Multiplier(), _max));}
-    require((_capacity>=0) && (_capacity <= int256(2 * OptionLibrary.Multiplier())),"Capacity breached.");
-    return int256(MulDiv(_constant, OptionLibrary.Multiplier(), uint256(_capacity))) - int256(_constant);}
+    return (OptionLibrary.calcRiskPremiumAMM(_maxGamma, _currentGamma,  _vol, volCapacityFactor) + OptionLibrary.calcRiskPremiumAMM(_maxGamma, _newGamma, _vol, volCapacityFactor)) / 2;}
 
   function purchaseOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _payInCost) external {
     require(allowTrading,"Trading stopped!");
@@ -130,6 +122,6 @@ contract Exchange is AccessControl, EOption{
   function removeVolToken(uint256 _tenor) external onlyRole(ADMIN_ROLE){ volTokenAddressList[_tenor] = address(0);}
   
   function resetLoanRate(uint256 _loanInterest) external onlyRole(ADMIN_ROLE){ loanInterest = _loanInterest;}
-  function resetRiskPremiumMaxRatio(uint256 _newRatio) external onlyRole(ADMIN_ROLE){ volRiskPremiumMaxRatio=_newRatio;}
+  function resetVolCapacityFactor(uint256 _newFactor) external onlyRole(ADMIN_ROLE){ volCapacityFactor =_newFactor;}
   function resetTrading(bool _allowTrading) external onlyRole(DEFAULT_ADMIN_ROLE) {allowTrading=_allowTrading;}
 }
