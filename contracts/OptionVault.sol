@@ -26,6 +26,8 @@ contract OptionVault is AccessControl{
   address public underlying;
   address public funding;
 
+  uint256 public overCollateral = 10 ** 17;
+
   constructor( address _volChainAddress, address _underlying, address _funding, address _aaveAddress){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(EXCHANGE_ROLE, msg.sender);
@@ -180,16 +182,19 @@ contract OptionVault is AccessControl{
       _repaySwapValue = MarketLibrary.cvtDecimals(MulDiv(_repayAmount, _price, OptionLibrary.Multiplier()), funding);
       _repayAmount = MarketLibrary.cvtDecimals(_repayAmount, underlying);}}
 
-  // this function emits values in DEFAULT decimals.
-  function calcLoanTrades(address _address, uint256 _lendingPoolRateMode) external view returns(int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress){
+  // this function emits values in token decimals.
+  function calcLoanTradesInTok(address _address, uint256 _lendingPoolRateMode) external view returns(int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress){
     (uint256 _price,) = volatilityChain.queryPrice();
     int256 _aggregateDelta = calculateAggregateDelta(_price, false);
     address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");
     uint256 _targetLoan = 0;
     (_loanTradeAmount, _targetLoan, _loanAddress) = MarketLibrary.getLoanTrade(_address, _protocolAds, _aggregateDelta, underlying, _lendingPoolRateMode == 2);
-    (_collateralChange, _collateralAddress) = MarketLibrary.getCollateralTrade(_address, _protocolAds, _targetLoan, _price, funding, underlying);}
+    (_collateralChange, _collateralAddress) = MarketLibrary.getCollateralTrade(_address, _protocolAds, _targetLoan, _price, funding, underlying, overCollateral);
+    _loanTradeAmount = MarketLibrary.cvtDecimalsInt(_loanTradeAmount, _loanAddress);
+    _collateralChange =MarketLibrary.cvtDecimalsInt(_collateralChange, _collateralAddress);}
 
   function queryVol(uint256 _tenor) external view returns(uint256){return volatilityChain.getVol(_tenor);}
   function queryPrice() external view returns(uint256, uint256){return volatilityChain.queryPrice();}
   function tokenHash() external view returns (bytes32) {return volatilityChain.getTokenHash();}
+  function resetOverCollateral(uint256 _overCollateral) external onlyRole(DEFAULT_ADMIN_ROLE) { overCollateral= _overCollateral;}
 }

@@ -86,9 +86,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
     IUniswapV2Router02(_router).swapTokensForExactTokens(_toAmt, _fromAmt, _path, address(this), block.timestamp + _deadline );}
 
   function hedgeTradesForLoans() external onlyRole(EXCHANGE_ROLE) {
-    (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcLoanTrades(address(this), lendingPoolRateMode);
-    _loanTradeAmount = MarketLibrary.cvtDecimalsInt(_loanTradeAmount, _loanAddress);
-    _collateralChange = MarketLibrary.cvtDecimalsInt(_collateralChange, _collateralAddress);
+    (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcLoanTradesInTok(address(this), lendingPoolRateMode);
     address _lendingPoolAddress = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getLendingPool();
 
     if(_collateralChange > 0){

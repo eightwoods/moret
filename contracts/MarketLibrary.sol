@@ -30,11 +30,11 @@ library MarketLibrary {
     _targetLoan = _aggregateDelta >=0 ? 0: uint256(-_aggregateDelta);
     _loanChange = int256(_targetLoan) - int256(_debtBalance);}
   
-  function getCollateralTrade(address _contractAddress, address _protocolDataProviderAddress, uint256 _targetLoan, uint256 _price, address _fundingAddress, address _underlyingAddress) public view returns(int256 _collateralChange, address _collateralAddress) {
+  function getCollateralTrade(address _contractAddress, address _protocolDataProviderAddress, uint256 _targetLoan, uint256 _price, address _fundingAddress, address _underlyingAddress, uint256 _overCollateral) public view returns(int256 _collateralChange, address _collateralAddress) {
     (_collateralAddress, , ) = IProtocolDataProvider(_protocolDataProviderAddress).getReserveTokensAddresses(_fundingAddress);
     uint256 _ltv = getLTV(_protocolDataProviderAddress, _underlyingAddress);
     uint256 _collateralBalance = balanceDef(_collateralAddress, _contractAddress);
-    uint256 _requiredCollateral = MulDiv(_targetLoan, _price , _ltv);
+    uint256 _requiredCollateral = MulDiv(MulDiv(_targetLoan, _price , _ltv), _overCollateral + OptionLibrary.Multiplier(), OptionLibrary.Multiplier());
     uint256 _fundingBalance = balanceDef(_fundingAddress, _contractAddress);
     require(_requiredCollateral<= (_fundingBalance + _collateralBalance), "Insufficient collateral;");
     _collateralChange =  int256(_requiredCollateral) - int256(_collateralBalance);}
