@@ -86,7 +86,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
     IUniswapV2Router02(_router).swapTokensForExactTokens(_toAmt, _fromAmt, _path, address(this), block.timestamp + _deadline );}
 
   function hedgeTradesForLoans() external onlyRole(EXCHANGE_ROLE) {
-    (int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress) = optionVault.calcLoanTradesInTok(address(this), lendingPoolRateMode);
+    (int256 _loanTradeAmount, int256 _collateralChange,,) = optionVault.calcLoanTradesInTok(address(this), lendingPoolRateMode);
     address _lendingPoolAddress = ILendingPoolAddressesProvider(optionVault.aaveAddress()).getLendingPool();
 
     if(_collateralChange > 0){
@@ -98,12 +98,10 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption
 
     if(_loanTradeAmount < 0){
       require(ERC20(underlying).balanceOf(address(this))>= uint256(-_loanTradeAmount), "not enough token to repay loans");
-      ERC20(_loanAddress).approve(_lendingPoolAddress, uint256(-_loanTradeAmount));
       ERC20(underlying).approve(_lendingPoolAddress, uint256(-_loanTradeAmount));
       ILendingPool(_lendingPoolAddress).repay(underlying, uint256(-_loanTradeAmount), lendingPoolRateMode, address(this));}
 
     if(_collateralChange < 0){
-      ERC20(_collateralAddress).increaseAllowance(_lendingPoolAddress, uint256(-_collateralChange));
       ILendingPool(_lendingPoolAddress).withdraw(funding, uint256(-_collateralChange), address(this));}}
 
   function resetSettlementFee(uint256 _newFee) external onlyRole(ADMIN_ROLE){ require(_newFee < multiplier); settlementFee = _newFee;}

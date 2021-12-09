@@ -33,8 +33,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -73,8 +72,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -98,8 +96,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -148,8 +145,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -203,8 +199,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -233,8 +228,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -258,8 +252,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -283,8 +276,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -308,8 +300,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -333,8 +324,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -383,8 +373,7 @@
         }
       ],
       "stateMutability": "pure",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.10+commit.fc410830\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_accountAddress\",\"type\":\"address\"}],\"name\":\"balanceDef\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int256\",\"name\":\"_underlyingAmt\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"_fundingAmt\",\"type\":\"int256\"},{\"internalType\":\"address\",\"name\":\"_underlyingAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_fundingAddress\",\"type\":\"address\"}],\"name\":\"cleanTradeAmounts\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"_fromAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_toAmount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_fromAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_toAddress\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"cvtDecimals\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int256\",\"name\":\"_amount\",\"type\":\"int256\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"cvtDecimalsInt\",\"outputs\":[{\"internalType\":\"int256\",\"name\":\"_newAmount\",\"type\":\"int256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"cvtDef\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_contractAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_protocolDataProviderAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_targetLoan\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_price\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_fundingAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_underlyingAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_overCollateral\",\"type\":\"uint256\"}],\"name\":\"getCollateralTrade\",\"outputs\":[{\"internalType\":\"int256\",\"name\":\"_collateralChange\",\"type\":\"int256\"},{\"internalType\":\"address\",\"name\":\"_collateralAddress\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_protocolDataProviderAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"getLTV\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_protocolDataProviderAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"getLendingTokenAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_contractAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_protocolDataProviderAddress\",\"type\":\"address\"},{\"internalType\":\"int256\",\"name\":\"_aggregateDelta\",\"type\":\"int256\"},{\"internalType\":\"address\",\"name\":\"_underlyingAddress\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_useVariableRate\",\"type\":\"bool\"}],\"name\":\"getLoanTrade\",\"outputs\":[{\"internalType\":\"int256\",\"name\":\"_loanChange\",\"type\":\"int256\"},{\"internalType\":\"uint256\",\"name\":\"_targetLoan\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_loanAddress\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_contractAddress\",\"type\":\"address\"},{\"internalType\":\"int256\",\"name\":\"_aggregateDelta\",\"type\":\"int256\"},{\"internalType\":\"address\",\"name\":\"_underlyingAddress\",\"type\":\"address\"}],\"name\":\"getSwapTrade\",\"outputs\":[{\"internalType\":\"int256\",\"name\":\"_underlyingChange\",\"type\":\"int256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_contractAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_protocolDataProviderAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"getTokenBalances\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/MarketLibrary.sol\":\"MarketLibrary\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0x53a0bb51b8a505e04aaf065de27c0e31cadf38194f8a9a6ec92b7bcd3c5826e6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7d7019db0d8c1256995eb44b2aabf1189120c0bd01efa653e0eabdbc8cf4742\",\"dweb:/ipfs/QmZRiFEksts7Z2r1xnHb9Jqu4udHyTM6tQVTCyFosMXQAy\"]},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0xc1452b054778f1926419196ef12ae200758a4ee728df69ae1cd13e5c16ca7df7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4cb252ec7657ba7a91be688cbd263090aa5379e504f488a62d06198e0d630322\",\"dweb:/ipfs/QmW56fDiDirhWfWiKrycXE5UY6tTNtFrYx39ipnSs8mkYb\"]},\"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol\":{\"keccak256\":\"0x842c66d5965ed0bf77f274732c2a93a7e2223d53171ec9cccc473bde75104ead\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8cc9f9a6d9c1e2ca9cd191840c0e6017d22bf99d88b368137e43c67f63d17d1c\",\"dweb:/ipfs/Qmd3vUSxY4fRi4AUFMkerjrMFEKRLGVJUGFmxazR1wnPXP\"]},\"@openzeppelin/contracts/utils/Context.sol\":{\"keccak256\":\"0x7736c187e6f1358c1ea9350a2a21aa8528dec1c2f43b374a9067465a3a51f5d3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4fd625dca17657403af518cc6c8ab5c54c58898cf6e912ca2e1b0f3194ad0405\",\"dweb:/ipfs/QmQVv7YeeKmaS11bg7YDTeeGDk6i7sV8LMMfohaLM4SiRu\"]},\"@openzeppelin/contracts/utils/math/Math.sol\":{\"keccak256\":\"0xe936fc79332de2ca7b1c06a70f81345aa2466958aab00f463e312ca0585e85cf\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1308706a315fce707f34bb974e08c8e8f8a5674123890d5c67f495be4e539081\",\"dweb:/ipfs/QmTk2mgRyHkq238Qm75Uc3EF3s76yG3kSsxdgTJWgLjitE\"]},\"prb-math/contracts/PRBMath.sol\":{\"keccak256\":\"0x62cbabae4910e168e99b9c2c3e3b5c9c7ad5e7abd961dcc63b7ea3d83d8ea87e\",\"license\":\"Unlicense\",\"urls\":[\"bzz-raw://4b964fe2e49911c7b4b3c2ce230f606fd0ce8b7edc9dc7d0145ba2fb76bf2e71\",\"dweb:/ipfs/QmcEfVW9EfV3JCYavF1L3LxtqivHXWFTtWpkwNEsgzxG1r\"]},\"project:/contracts/FullMath.sol\":{\"keccak256\":\"0xdff7b8a92094a8978dbc9f36e1d818e9fa406b0bf6014854dad196eb20f0f81b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e35c7cea2201eb9ad7d2cc4658a4d8d371ff9f2911230aa6bb878e0c8c9cfa6\",\"dweb:/ipfs/QmXa9gtz7DEdbtq2FYAMUTcvg5yYTcuH9v8G95guyvMhKt\"]},\"project:/contracts/MarketLibrary.sol\":{\"keccak256\":\"0xe8e6660b44806311e94ba406676719420b35d168a0a25d10dc77dcdee84228b1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://24b9354db89f19b5831b6adf00c5fa9473433ef6a39cb0efb897b2949a685628\",\"dweb:/ipfs/QmQUAGGk559xhPfhXZSTLCtZzdW3xQy2rrkgP7UA7Kyr2U\"]},\"project:/contracts/MoretInterfaces.sol\":{\"keccak256\":\"0xb95b803aaad17b54c810064a68e6961c1e070239a36425b5e2cd1e6d4335d5ec\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a29e3b94d31c2e99fb4fba8c60775137ef2ecab4bca82e446cf436f2209385c7\",\"dweb:/ipfs/QmejEHT7JrcHu5o6us6RCN8Qsd6vrGvL8W2q5LxmE7SejE\"]},\"project:/contracts/OptionLibrary.sol\":{\"keccak256\":\"0x9549435b7d66c3ed4fb661aad7d1ee354be7074184594fc096d48f4f6fa7993b\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://9f64900191ea64737090d22916307aae9ae76dcc283bb2b9b710ffda98cf7a86\",\"dweb:/ipfs/QmfAG5xKgBcJP6XhzHAsuQyQT8PzjWhhaW6yCtoVoKDwka\"]}},\"version\":1}",
@@ -9989,7 +9978,7 @@
         6005
       ],
       "OptionLibrary": [
-        8646
+        8618
       ],
       "PRBMath": [
         4023
@@ -10157,7 +10146,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 6521,
-        "sourceUnit": 8647,
+        "sourceUnit": 8619,
         "src": "224:29:16",
         "symbolAliases": [],
         "unitAlias": ""
@@ -11435,10 +11424,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "1426:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -11449,7 +11438,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7936,
+                      "referencedDeclaration": 7908,
                       "src": "1426:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -13037,10 +13026,10 @@
                               "name": "OptionLibrary",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 8646,
+                              "referencedDeclaration": 8618,
                               "src": "2844:13:16",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                                "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                                 "typeString": "type(library OptionLibrary)"
                               }
                             },
@@ -13051,7 +13040,7 @@
                             "lValueRequested": false,
                             "memberName": "Multiplier",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 7902,
+                            "referencedDeclaration": 7874,
                             "src": "2844:24:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_delegatecall_pure$__$returns$_t_uint256_$",
@@ -13088,10 +13077,10 @@
                             "name": "OptionLibrary",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 8646,
+                            "referencedDeclaration": 8618,
                             "src": "2872:13:16",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                              "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                               "typeString": "type(library OptionLibrary)"
                             }
                           },
@@ -13102,7 +13091,7 @@
                           "lValueRequested": false,
                           "memberName": "Multiplier",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 7902,
+                          "referencedDeclaration": 7874,
                           "src": "2872:24:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_delegatecall_pure$__$returns$_t_uint256_$",
@@ -14552,10 +14541,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "3570:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -14566,7 +14555,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7936,
+                      "referencedDeclaration": 7908,
                       "src": "3570:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -14825,10 +14814,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "3786:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -14839,7 +14828,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7936,
+                      "referencedDeclaration": 7908,
                       "src": "3786:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -15097,10 +15086,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "3967:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -15111,7 +15100,7 @@
                       "lValueRequested": false,
                       "memberName": "ToCustomDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7962,
+                      "referencedDeclaration": 7934,
                       "src": "3967:30:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -17113,7 +17102,7 @@
         6005
       ],
       "OptionLibrary": [
-        8646
+        8618
       ],
       "PRBMath": [
         4023
@@ -17281,7 +17270,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 6521,
-        "sourceUnit": 8647,
+        "sourceUnit": 8619,
         "src": "224:29:16",
         "symbolAliases": [],
         "unitAlias": ""
@@ -18559,10 +18548,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "1426:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -18573,7 +18562,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7936,
+                      "referencedDeclaration": 7908,
                       "src": "1426:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -20161,10 +20150,10 @@
                               "name": "OptionLibrary",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 8646,
+                              "referencedDeclaration": 8618,
                               "src": "2844:13:16",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                                "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                                 "typeString": "type(library OptionLibrary)"
                               }
                             },
@@ -20175,7 +20164,7 @@
                             "lValueRequested": false,
                             "memberName": "Multiplier",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 7902,
+                            "referencedDeclaration": 7874,
                             "src": "2844:24:16",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_delegatecall_pure$__$returns$_t_uint256_$",
@@ -20212,10 +20201,10 @@
                             "name": "OptionLibrary",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 8646,
+                            "referencedDeclaration": 8618,
                             "src": "2872:13:16",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                              "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                               "typeString": "type(library OptionLibrary)"
                             }
                           },
@@ -20226,7 +20215,7 @@
                           "lValueRequested": false,
                           "memberName": "Multiplier",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 7902,
+                          "referencedDeclaration": 7874,
                           "src": "2872:24:16",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_delegatecall_pure$__$returns$_t_uint256_$",
@@ -21676,10 +21665,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "3570:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -21690,7 +21679,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7936,
+                      "referencedDeclaration": 7908,
                       "src": "3570:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -21949,10 +21938,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "3786:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -21963,7 +21952,7 @@
                       "lValueRequested": false,
                       "memberName": "ToDefaultDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7936,
+                      "referencedDeclaration": 7908,
                       "src": "3786:31:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -22221,10 +22210,10 @@
                         "name": "OptionLibrary",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 8646,
+                        "referencedDeclaration": 8618,
                         "src": "3967:13:16",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8646_$",
+                          "typeIdentifier": "t_type$_t_contract$_OptionLibrary_$8618_$",
                           "typeString": "type(library OptionLibrary)"
                         }
                       },
@@ -22235,7 +22224,7 @@
                       "lValueRequested": false,
                       "memberName": "ToCustomDecimals",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 7962,
+                      "referencedDeclaration": 7934,
                       "src": "3967:30:16",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$",
@@ -24208,7 +24197,7 @@
     }
   },
   "schemaVersion": "3.4.3",
-  "updatedAt": "2021-12-08T08:06:29.149Z",
+  "updatedAt": "2021-12-08T23:52:57.584Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
