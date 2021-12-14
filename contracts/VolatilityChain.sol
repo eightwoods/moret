@@ -56,8 +56,8 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
         uint256 _tenorI = tenors.at(i);
         if(_tenorI >_tenor && (_tenorI < _upperTenor || _upperTenor == 0) ){ _upperTenor = _tenorI; _upperVol = priceBook[_tenorI][latestBookTime[_tenorI]].volatility; }
         if(_tenorI <_tenor && (_tenorI > _lowerTenor || _lowerTenor == 0) ){ _lowerTenor = _tenorI; _lowerVol = priceBook[_tenorI][latestBookTime[_tenorI]].volatility; }}
-      if(_upperTenor == 0) { _vol = _lowerVol;}
-      if(_lowerTenor==0) {_vol = _upperVol;}
+      if(_upperTenor == 0 && _lowerTenor > 0) { _vol = MulDiv(_lowerVol , Sqrt(_tenor) , Sqrt(_lowerTenor));}
+      if(_lowerTenor==0 && _upperTenor > 0) {_vol = MulDiv(_upperVol , Sqrt(_tenor) , Sqrt(_upperTenor));}
       if(_upperTenor >0 && _lowerTenor >0){ _vol = MulDiv(_lowerVol, _upperTenor - _tenor, _upperTenor - _lowerTenor) + MulDiv(_upperVol, _tenor - _lowerTenor, _upperTenor - _lowerTenor);}}
       _vol *= quoteAdjustment;}
 

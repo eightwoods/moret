@@ -18,6 +18,7 @@ library OptionLibrary {
   struct Percent{ uint256 numerator; uint256 denominator;}
   uint256 public constant DefaultMultiplier  = 10 ** 18;
   uint256 public constant DefaultDecimals = 18;
+  uint256 public constant AnnualSeconds = 31536000; // 365 * 24 * 60 * 60
 
   function Multiplier() public pure returns (uint256){return DefaultMultiplier;}
   function Decimals() public pure returns (uint256) {return DefaultDecimals;}
@@ -34,21 +35,25 @@ library OptionLibrary {
       if((_poType == PayoffType.Put) && (_price<_strike)){ _intrinsicValue = _strike - _price;}
       return MulDiv(_intrinsicValue, _amount, DefaultMultiplier); }
 
-  function calcTimeValue(uint256 _strike, uint256 _price, uint256 _volatility, uint256 _amount) private pure returns (uint256){
-    if(_volatility == 0) return _volatility;
+  function calcTimeValue(uint256 _price, uint256 _vol, uint256 _strike, uint256 _atmPremium) private pure returns (uint256){
+    if(_vol == 0) return _vol;
     uint256 _moneyness = _strike > _price? (_price * DefaultMultiplier / _strike) : (_strike * DefaultMultiplier / _price); // always in (0,1]
-    uint256 _midPoint = DefaultMultiplier - (_volatility > DefaultMultiplier? DefaultMultiplier: _volatility) / 2 ; // always in [0.5, 1]
+    uint256 _midPoint = DefaultMultiplier - (_vol > DefaultMultiplier? DefaultMultiplier: _vol) / 2 ; // always in [0.5, 1]
     uint256 _a = 2 * DefaultMultiplier - _midPoint; // always in [1, 1.5]
     uint256 _b = DefaultMultiplier - _midPoint; // always in [0, 0.5]
-    return MulDiv(_amount * 4, MulDiv(_b,  _volatility, _a - _moneyness), 10 * DefaultMultiplier);}
+    // return MulDiv(_amount * 4, MulDiv(_b,  _vol, _a - _moneyness), 10 * DefaultMultiplier);}
+    return MulDiv(_atmPremium, _b, _a - _moneyness);}
 
-  function calcPremium(uint256 _price, uint256 _volatility, uint256 _strike, PayoffType _poType, uint256 _amount) public pure returns(uint256){
-      uint256 _intrinsicValue = calcIntrinsicValue(_strike, _price, _amount, _poType);
-      uint256 _timeValue = MulDiv(calcTimeValue(_strike, _price, _volatility, _amount), _price, DefaultMultiplier);
-      return _intrinsicValue + _timeValue;}
+  function calcPremium(uint256 _price, uint256 _vol, uint256 _strike, PayoffType _poType, uint256 _amount, uint256 _interest) public pure returns(uint256){
+    int256 _d = int256(MulDiv(2 * DefaultMultiplier, DefaultMultiplier, _vol)) - int256(MulDiv(2 * DefaultMultiplier,  DefaultMultiplier, _vol)) + int256(_vol/ 2);
+    uint256 _discount = MulDiv(Logistic(_d - int256(_vol)), DefaultMultiplier, DefaultMultiplier + _interest);
+    uint256 _atmPremium = MulDiv(_price, Logistic(_d) - _discount, DefaultMultiplier);
+    uint256 _timeValue = MulDiv(_amount, calcTimeValue(_price, _vol, _strike, _atmPremium), DefaultMultiplier);
+    uint256 _intrinsicValue = calcIntrinsicValue(_strike, _price, _amount, _poType);
+    return _intrinsicValue + _timeValue;}
 
-  function calcOptionCost(uint256 _price, uint256 _strike, uint256 _amount, uint256 _vol, PayoffType _poType, OptionSide _side) external pure returns(uint256 _premium, uint256 _cost) {
-    _premium = calcPremium(_price, _vol, _strike, _poType, _amount);
+  function calcOptionCost(uint256 _price, uint256 _strike, uint256 _amount, uint256 _vol, PayoffType _poType, OptionSide _side, uint256 _interest) external pure returns(uint256 _premium, uint256 _cost) {
+    _premium = calcPremium(_price, _vol, _strike, _poType, _amount, _interest);
     _cost = _premium;
     if(_side == OptionSide.Sell && _poType == PayoffType.Put){ _cost = MulDiv(_amount, _strike, DefaultMultiplier) - _cost;}
     if(_side == OptionSide.Sell && _poType == PayoffType.Call){ _cost = MulDiv(_amount, _price, DefaultMultiplier) - _cost;}}
@@ -59,10 +64,10 @@ library OptionLibrary {
   function calcNotionalExposure(Option storage _option, uint256 _price) public view returns(uint256){ 
     return MulDiv(_option.amount, _price, DefaultMultiplier);}
 
-  function calcDelta(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _delta){
-    uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _strike);
+  function calcDelta(Option storage _option, uint256 _price, uint256 _vol) public view returns(uint256 _delta){
+    uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _option.strike);
     int256 _d = int256(MulDiv(2 * DefaultMultiplier,  (_moneyness * DefaultMultiplier).sqrt(), _vol)) - int256(MulDiv(2 * DefaultMultiplier,  DefaultMultiplier, _vol)) + int256(_vol/ 2);
-    _delta = Logistic(_d);}
+    _delta = MulDiv(Logistic(_d), _option.amount, DefaultMultiplier);}
   
   function calcGamma(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _gamma){
     uint256 _moneyness = MulDiv(_price, DefaultMultiplier, _strike);

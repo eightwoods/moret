@@ -1,6 +1,8 @@
-import json
+import json, os
 
-def read_abi(fname):
+def contract(web3, address, filename):
+    #fname = os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts', filename)
+    fname = os.path.join(r'../build/contracts', filename)
     with open(fname) as f:
         data = json.load(f) 
-        return data['abi']
+        return web3.eth.contract(address=address, abi=data['abi'])

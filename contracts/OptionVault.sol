@@ -65,7 +65,9 @@ contract OptionVault is AccessControl{
     (uint256 _price,) = volatilityChain.queryPrice();
     int256 _deltaZero = calculateAggregateDelta(_price / 1e5, true);
     int256 _deltaMax = calculateAggregateDelta(_price * 1e5, true);
-    return MulDiv(Math.max(_deltaZero>=0?uint256(_deltaZero):uint256(-_deltaZero), _deltaMax>=0?uint256(_deltaMax):uint256(-_deltaMax) ), _price, OptionLibrary.Multiplier());}
+    uint256 _deltaZeroU = _deltaZero>=0?uint256(_deltaZero):uint256(-_deltaZero);
+    uint256 _deltaMaxU = _deltaMax>=0?uint256(_deltaMax):uint256(-_deltaMax);
+    return MulDiv(Math.min(_deltaZeroU, _deltaMaxU), _price, OptionLibrary.Multiplier());}
 
   function getSellPutCollateral() external view returns (uint256 _collateral){
     _collateral= 0;
@@ -88,7 +90,7 @@ contract OptionVault is AccessControl{
     if(optionsList[_id].status== OptionLibrary.OptionStatus.Active && (_includeExpiring || (optionsList[_id].maturity > block.timestamp))){
       if(optionsList[_id].side==OptionLibrary.OptionSide.Buy){
         uint256 _vol = volatilityChain.getVol(optionsList[_id].maturity - Math.min(optionsList[_id].maturity, block.timestamp));
-        _delta = int256(MulDiv(OptionLibrary.calcDelta(_price, optionsList[_id].strike, _vol), optionsList[_id].amount, OptionLibrary.Multiplier() ));
+        _delta = int256(optionsList[_id].calcDelta(_price, _vol));
         if(optionsList[_id].poType==OptionLibrary.PayoffType.Put) {_delta = -int256(optionsList[_id].amount) + _delta; }}
       if(optionsList[_id].side==OptionLibrary.OptionSide.Sell && optionsList[_id].poType==OptionLibrary.PayoffType.Call){ 
         _delta = int256(optionsList[_id].amount);}}} // collateral for sell call options. zero for sell put options

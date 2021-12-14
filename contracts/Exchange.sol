@@ -18,7 +18,7 @@ contract Exchange is AccessControl, EOption{
   OptionVault internal optionVault;
 
   uint256 public volCapacityFactor = 5 * (10 ** 17);
-  uint256 public loanInterest = 0;
+  uint256 public loanInterest = 0; // Annualised interest rate in 1e18
   bool public allowTrading = true;
 
   constructor( address _marketMakerAddress,address _vaultAddress){
@@ -36,7 +36,8 @@ contract Exchange is AccessControl, EOption{
   function calcOptionCost(uint256 _tenor, uint256 _price, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 _premium, uint256 _cost, uint256 _vol){
     _vol = queryOptionVolatility(_tenor, _strike, _amount, _side);
     // uint256 _adjustedStrike = OptionLibrary.adjustStrike(_strike, _poType, _side, marketMaker.swapSlippage(), loanInterest); 
-    (_premium, _cost) = OptionLibrary.calcOptionCost(_price, _strike, _amount, _vol, _poType, _side);
+    uint256 _interest = MulDiv(loanInterest, _tenor, OptionLibrary.AnnualSeconds);
+    (_premium, _cost) = OptionLibrary.calcOptionCost(_price, _strike, _amount, _vol, _poType, _side, _interest);
     _premium = MarketLibrary.cvtDecimals(_premium, optionVault.funding());
     _cost = MarketLibrary.cvtDecimals(_cost, optionVault.funding());}
 

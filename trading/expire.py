@@ -1,25 +1,21 @@
 #!/Users/apple/.pyenv/shims/python
 from web3 import Web3
 from eth_account import Account
-from library import read_abi
+from library import contract
 import os 
 from datetime import datetime
 infura_url = r'https://polygon-mainnet.infura.io/v3/' + os.environ['INFURA_API_KEY']
 chain_id = 137
-addresses = ['0xFC6210087541eF7cd69d32Ee20EC6b3C21918F2F',
-             '0x4980D84ca1E4Eee41cf8685bE38359F659d37B89']  # for exchange address
+addresses = ['0x14013FdEf58B691328E87Ef0C929B5831c65Fe49',
+             '0xfEaeead6441B4C9328EF1a5B9C917Ba86c7ed024']  # for exchange address
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
 web3.eth.defaultAccount = Account.from_key(os.environ['MNEMONIC']).address
 
-def contract(ad, filename):
-    return web3.eth.contract(address=ad, abi=read_abi(os.path.join(os.getcwd(), r'Documents/GitHub/moret/build/contracts', filename)))
-    #return web3.eth.contract(address=ad, abi=read_abi(os.path.join(r'../build/contracts', filename)))
-
 for address in addresses:
-    exchange = contract(address, 'Exchange.json')
-    market = contract(exchange.functions.marketMakerAddress().call(), 'MoretMarketMaker.json')
-    vault = contract(exchange.functions.vaultAddress().call(), 'OptionVault.json')
+    exchange = contract(web3, address, 'Exchange.json')
+    market = contract(web3, exchange.functions.marketMakerAddress().call(), 'MoretMarketMaker.json')
+    vault = contract(web3, exchange.functions.vaultAddress().call(), 'OptionVault.json')
 
     any_expiring = vault.functions.anyOptionExpiring().call()
     if any_expiring:
