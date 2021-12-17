@@ -67,7 +67,7 @@ contract OptionVault is AccessControl{
     int256 _deltaMax = calculateAggregateDelta(_price * 1e5, true);
     uint256 _deltaZeroU = _deltaZero>=0?uint256(_deltaZero):uint256(-_deltaZero);
     uint256 _deltaMaxU = _deltaMax>=0?uint256(_deltaMax):uint256(-_deltaMax);
-    return MulDiv(Math.min(_deltaZeroU, _deltaMaxU), _price, OptionLibrary.Multiplier());}
+    return MulDiv(Math.max(_deltaZeroU, _deltaMaxU), _price, OptionLibrary.Multiplier());}
 
   function getSellPutCollateral() external view returns (uint256 _collateral){
     _collateral= 0;

@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 infura_url = r'https://polygon-mainnet.infura.io/v3/' + os.environ['INFURA_API_KEY']
 chain_id = 137
-addresses = ['0x14013FdEf58B691328E87Ef0C929B5831c65Fe49',
+addresses = ['0x98124B9002c76184878eee776277C31754C8C3bc',
              '0xfEaeead6441B4C9328EF1a5B9C917Ba86c7ed024']  # for exchange address
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
