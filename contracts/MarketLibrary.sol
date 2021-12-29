@@ -1,60 +1,65 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity ^0.8.0;
 
-import "./MoretInterfaces.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./interfaces/IProtocolDataProvider.sol";
 import "./FullMath.sol";
 import "./OptionLibrary.sol";
 
 library MarketLibrary {
-  
-  function getLendingTokenAddresses(address _protocolDataProviderAddress, address _tokenAddress)
-  public view returns (address, address, address){
-    IProtocolDataProvider _protocolDataProvider = IProtocolDataProvider(_protocolDataProviderAddress);
-    return  _protocolDataProvider.getReserveTokensAddresses(_tokenAddress);}
+  using FullMath for uint256;
+  uint256 public constant LTV_DECIMALS = 4;
+  uint256 public constant DECIMALS = 18;
 
-  function getTokenBalances(address _contractAddress, address _protocolDataProviderAddress, address _tokenAddress) public view returns(uint256, uint256, uint256) {
-    (address _aToken, address _stableLoan, address _variableLoan) = getLendingTokenAddresses(_protocolDataProviderAddress, _tokenAddress);
+  // Returns balances of ERC20 token (as for _tokenAddress), its corresponding aToken (i.e. collaterals posted), and its debt tokens (including both variable and fixed loans)
+  function getTokenBalances(address _contractAddress, IProtocolDataProvider _protocolDataProvider, address _tokenAddress) public view returns(uint256, uint256, uint256) {
+    (address _aToken, address _stableLoan, address _variableLoan) = _protocolDataProvider.getReserveTokensAddresses(_tokenAddress);
     return (balanceDef(_tokenAddress, _contractAddress), balanceDef(_aToken, _contractAddress),balanceDef(_stableLoan, _contractAddress) + balanceDef(_variableLoan, _contractAddress)); }
 
-  function getLTV(address _protocolDataProviderAddress, address _tokenAddress) public view returns (uint256) {
-    IProtocolDataProvider _protocolDataProvider = IProtocolDataProvider(_protocolDataProviderAddress);
+  function getLTV(IProtocolDataProvider _protocolDataProvider, address _tokenAddress) public view returns (uint256) {
     (, uint256 _ltv, ,,,,,,, ) = _protocolDataProvider.getReserveConfigurationData(_tokenAddress);
-    return OptionLibrary.ToDefaultDecimals(_ltv, 4); } 
+    return toWei(_ltv, LTV_DECIMALS); } 
     
-  function getLoanTrade(address _contractAddress, address _protocolDataProviderAddress, int256 _aggregateDelta, address _underlyingAddress, bool _useVariableRate) public view returns(int256 _loanChange, uint256 _targetLoan, address _loanAddress){
-    ( , address _stableLoanAddress,  address _variableLoanAddress) = IProtocolDataProvider(_protocolDataProviderAddress).getReserveTokensAddresses(_underlyingAddress);
+  function getLoanTrade(address _contractAddress, IProtocolDataProvider _protocolDataProvider, int256 _aggregateDelta, address _underlyingAddress, bool _useVariableRate) public view returns(int256 _loanChange, uint256 _targetLoan, address _loanAddress){
+    ( , address _stableLoanAddress,  address _variableLoanAddress) = _protocolDataProvider.getReserveTokensAddresses(_underlyingAddress);
     _loanAddress = _useVariableRate? _variableLoanAddress: _stableLoanAddress;
     uint256 _debtBalance = balanceDef(_loanAddress, _contractAddress);
     _targetLoan = _aggregateDelta >=0 ? 0: uint256(-_aggregateDelta);
-    _loanChange = int256(_targetLoan) - int256(_debtBalance);}
+    _loanChange = SafeCast.toInt256(_targetLoan) - SafeCast.toInt256(_debtBalance);}
   
-  function getCollateralTrade(address _contractAddress, address _protocolDataProviderAddress, uint256 _targetLoan, uint256 _price, address _fundingAddress, address _underlyingAddress, uint256 _overCollateral) public view returns(int256 _collateralChange, address _collateralAddress) {
-    (_collateralAddress, , ) = IProtocolDataProvider(_protocolDataProviderAddress).getReserveTokensAddresses(_fundingAddress);
-    uint256 _ltv = getLTV(_protocolDataProviderAddress, _underlyingAddress);
+  function getCollateralTrade(address _contractAddress, IProtocolDataProvider _protocolDataProvider, uint256 _targetLoan, uint256 _price, address _fundingAddress, address _underlyingAddress, uint256 _overCollateral) public view returns(int256 _collateralChange, address _collateralAddress) {
+    (_collateralAddress, , ) = _protocolDataProvider.getReserveTokensAddresses(_fundingAddress);
+    uint256 _ltv = getLTV(_protocolDataProvider, _underlyingAddress);
     uint256 _collateralBalance = balanceDef(_collateralAddress, _contractAddress);
-    uint256 _requiredCollateral = MulDiv(MulDiv(_targetLoan, _price , _ltv), _overCollateral + OptionLibrary.Multiplier(), OptionLibrary.Multiplier());
+    uint256 _requiredCollateral = _targetLoan.muldiv(_price , _ltv).accrue(_overCollateral);
     uint256 _fundingBalance = balanceDef(_fundingAddress, _contractAddress);
     require(_requiredCollateral<= (_fundingBalance + _collateralBalance), "Insufficient collateral;");
-    _collateralChange =  int256(_requiredCollateral) - int256(_collateralBalance);}
-
-  function getSwapTrade(address _contractAddress, int256 _aggregateDelta, address _underlyingAddress) public view returns (int256 _underlyingChange){
-    _underlyingChange = (_aggregateDelta >=0 ? _aggregateDelta: int256(0)) - int256(IERC20(_underlyingAddress).balanceOf(_contractAddress));}
+    _collateralChange =  SafeCast.toInt256(_requiredCollateral) - SafeCast.toInt256(_collateralBalance);}
 
   function balanceDef(address _tokenAddress, address _accountAddress) public view returns(uint256){
-    return OptionLibrary.ToDefaultDecimals(ERC20(_tokenAddress).balanceOf(_accountAddress), ERC20(_tokenAddress).decimals());}
+    return toWei(ERC20(_tokenAddress).balanceOf(_accountAddress), ERC20(_tokenAddress).DECIMALS());}
 
-  function cvtDef(uint256 _amount, address _tokenAddress) public view returns(uint256){
-    return OptionLibrary.ToDefaultDecimals(_amount, ERC20(_tokenAddress).decimals());}
+  function toWei(uint256 _rawData, uint256 _rawDataDecimals) public pure returns(uint256 _data){
+    _data = _rawData;
+    if(DECIMALS > _rawDataDecimals){
+      _data = _rawData * (10** (DECIMALS - _rawDataDecimals));}
+    if(DECIMALS < _rawDataDecimals){
+      _data = _rawData / (10** (_rawDataDecimals - DECIMALS));}}
 
-  function cvtDecimals(uint256 _amount, address _tokenAddress) public view returns(uint256){
-    return OptionLibrary.ToCustomDecimals(_amount, ERC20(_tokenAddress).decimals());}
+  function toDecimals(uint256 _rawData, uint256 _rawDataDecimals) public pure returns(uint256 _data){
+    _data = _rawData;
+    if(DECIMALS > _rawDataDecimals){
+      _data = _rawData / (10 ** (DECIMALS - _rawDataDecimals));}
+    else if(DECIMALS < _rawDataDecimals){
+      _data = _rawData * (10 ** (_rawDataDecimals - DECIMALS));}}
 
-  function cvtDecimalsInt(int256 _amount, address _tokenAddress) public view returns(int256 _newAmount){
+  function toDecimalsInt(int256 _amount, address _tokenDecimals) public view returns(int256 _newAmount){
     _newAmount = _amount;
-    if(_amount > 0) _newAmount = int256(cvtDecimals(uint256(_amount), _tokenAddress));
-    if(_amount < 0) _newAmount = -int256(cvtDecimals(uint256(-_amount), _tokenAddress));}
+    if(_amount > 0) {
+      _newAmount = SafeCast.toInt256(toDecimals(uint256(_amount), _tokenDecimals));}
+    else if(_amount < 0) {
+      _newAmount = -SafeCast.toInt256(toDecimals(uint256(-_amount), _tokenDecimals));}}
   
   function cleanTradeAmounts(int256 _underlyingAmt, int256 _fundingAmt, address _underlyingAddress, address _fundingAddress) public pure returns(uint256 _fromAmount, uint256 _toAmount, address _fromAddress, address _toAddress){
     _fromAmount = 0;
@@ -64,7 +69,7 @@ library MarketLibrary {
     if(_underlyingAmt > 0 && _fundingAmt < 0){
       _fromAmount = uint256(-_fundingAmt);
       _toAmount = uint256(_underlyingAmt);}
-    if(_underlyingAmt < 0 && _fundingAmt> 0){
+    else if(_underlyingAmt < 0 && _fundingAmt> 0){
       _fromAmount = uint256(-_underlyingAmt);
       _fromAddress = _underlyingAddress;
       _toAmount = uint256(_fundingAmt);

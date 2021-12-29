@@ -4,10 +4,13 @@
  * Copyright (C) 2021 Moret
 */
 
-pragma solidity 0.8.10;
+pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./MarketLibrary.sol";
+import "./interfaces/IVolatilityChain.sol";
+import "./interfaces/IProtocolDataProvider.sol";
+import "./interfaces/ILendingPoolAddressesProvider.sol";
 
 contract OptionVault is AccessControl{
   using OptionLibrary for OptionLibrary.Option;
@@ -15,6 +18,7 @@ contract OptionVault is AccessControl{
   // using EnumerableSet for EnumerableSet.AddressSet;
 
   bytes32 public constant EXCHANGE_ROLE = keccak256("EXCHANGE_ROLE");
+
   mapping(uint256=> OptionLibrary.Option) internal optionsList;
   uint256 public optionCounter = 0;
   mapping(address=> EnumerableSet.UintSet) internal activeOptionsPerOwner;
@@ -25,8 +29,11 @@ contract OptionVault is AccessControl{
   address public aaveAddress;
   address public underlying;
   address public funding;
+  uint256 internal fundingDecimals;
+  uint256 internal underlyingDecimals;
 
-  uint256 public overCollateral = 10 ** 17;
+  uint256 internal constant multiplier = 1e18;
+  uint256 public overCollateral = 1e17;
 
   constructor( address _volChainAddress, address _underlying, address _funding, address _aaveAddress){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -35,7 +42,9 @@ contract OptionVault is AccessControl{
     volatilityChain = IVolatilityChain(_volChainAddress); 
     funding = _funding;
     underlying = _underlying;
-    aaveAddress = _aaveAddress;}
+    aaveAddress = _aaveAddress;
+    fundingDecimals = ERC20(_funding).decimals();
+    underlyingDecimals = ERC20(_underlying).decimals();}
   
   function descriptionHash() external view returns (bytes32)  { return keccak256(abi.encodePacked(volatilityChain.getDecription()));}
 
@@ -90,10 +99,10 @@ contract OptionVault is AccessControl{
     if(optionsList[_id].status== OptionLibrary.OptionStatus.Active && (_includeExpiring || (optionsList[_id].maturity > block.timestamp))){
       if(optionsList[_id].side==OptionLibrary.OptionSide.Buy){
         uint256 _vol = volatilityChain.getVol(optionsList[_id].maturity - Math.min(optionsList[_id].maturity, block.timestamp));
-        _delta = int256(optionsList[_id].calcDelta(_price, _vol));
-        if(optionsList[_id].poType==OptionLibrary.PayoffType.Put) {_delta = -int256(optionsList[_id].amount) + _delta; }}
+        _delta = SafeCast.toInt256(optionsList[_id].calcDelta(_price, _vol));
+        if(optionsList[_id].poType==OptionLibrary.PayoffType.Put) {_delta = -SafeCast.toInt256(optionsList[_id].amount) + _delta; }}
       if(optionsList[_id].side==OptionLibrary.OptionSide.Sell && optionsList[_id].poType==OptionLibrary.PayoffType.Call){ 
-        _delta = int256(optionsList[_id].amount);}}} // collateral for sell call options. zero for sell put options
+        _delta = SafeCast.toInt256(optionsList[_id].amount);}}} // collateral for sell call options. zero for sell put options
     
   function calculateAggregateDelta(uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
     _delta= 0;
@@ -104,7 +113,7 @@ contract OptionVault is AccessControl{
     _gamma = 0;
     if(optionsList[_id].status== OptionLibrary.OptionStatus.Active  && (optionsList[_id].maturity > block.timestamp)){
       uint256 _vol = volatilityChain.getVol(optionsList[_id].maturity - block.timestamp);
-      _gamma = int256(MulDiv(OptionLibrary.calcGamma(_price, optionsList[_id].strike, _vol), optionsList[_id].amount, OptionLibrary.Multiplier() ));
+      _gamma = SafeCast.toInt256(MulDiv(OptionLibrary.calcGamma(_price, optionsList[_id].strike, _vol), optionsList[_id].amount, OptionLibrary.Multiplier() ));
       if(optionsList[_id].side==OptionLibrary.OptionSide.Sell){ _gamma = -_gamma;}}}
       
   function calculateAggregateGamma() external view returns(int256 _gamma){
@@ -115,7 +124,7 @@ contract OptionVault is AccessControl{
 
   function calculateSpotGamma() external view returns(int256 _gamma){
     uint256 _vol = volatilityChain.getVol(86400);
-    _gamma = int256(OptionLibrary.calcGamma(OptionLibrary.Multiplier(), OptionLibrary.Multiplier(), _vol));}
+    _gamma = SafeCast.toInt256(OptionLibrary.calcGamma(OptionLibrary.Multiplier(), OptionLibrary.Multiplier(), _vol));}
     
   // function validateOption(uint256 _id, address _holder) external view {
   //   require(optionsList[_id].holder== _holder, "Not the owner.");
@@ -162,27 +171,28 @@ contract OptionVault is AccessControl{
   function calcSwapTradesInTok(address _address, uint256 _swapSlippage) external view returns(int256 _tradeUnderlyingAmount, int256 _tradeFundingAmount){
     (uint256 _price,) = volatilityChain.queryPrice();
     int256 _aggregateDelta = calculateAggregateDelta(_price, false);
-    _tradeUnderlyingAmount = (_aggregateDelta >= 0? _aggregateDelta: int256(0)) - int256(MarketLibrary.balanceDef(underlying, _address));
-    _tradeFundingAmount = MarketLibrary.cvtDecimalsInt(OptionLibrary.getOpposeTrade(_tradeUnderlyingAmount, _price, _swapSlippage), funding);
-    _tradeUnderlyingAmount = MarketLibrary.cvtDecimalsInt(_tradeUnderlyingAmount, underlying);}
+    _tradeUnderlyingAmount = (_aggregateDelta >= 0? _aggregateDelta: SafeCast.toInt256(0)) - SafeCast.toInt256(MarketLibrary.balanceDef(underlying, _address));
+    _tradeFundingAmount = MarketLibrary.toDecimalsInt(OptionLibrary.getOpposeTrade(_tradeUnderlyingAmount, _price, _swapSlippage), funding);
+    _tradeUnderlyingAmount = MarketLibrary.toDecimalsInt(_tradeUnderlyingAmount, underlying);}
   
   // this function emits values in DEFAULT decimals.
   function getBalances(address _address) public view returns(uint256 _underlyingBalance, uint256 _fundingBalance, uint256 _collateralBalance, uint256 _debtBalance){
     address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");//bytes32(uint256(1)));
-    ( _underlyingBalance, ,  _debtBalance) = MarketLibrary.getTokenBalances(_address, _protocolAds, underlying);
-    ( _fundingBalance,  _collateralBalance,) = MarketLibrary.getTokenBalances(_address, _protocolAds, funding); }
+    IProtocolDataProvider _protocolDataProvider = IProtocolDataProvider(_protocolAds);
+    ( _underlyingBalance, ,  _debtBalance) = MarketLibrary.getTokenBalances(_address, _protocolDataProvider, underlying);
+    ( _fundingBalance,  _collateralBalance,) = MarketLibrary.getTokenBalances(_address, _protocolDataProvider, funding); }
 
   // this function emits values in token decimals.
   function calcLoanRepaymentInTok(address _address, uint256 _lendingPoolRateMode) external view returns(uint256 _repayAmount, uint256 _repaySwapValue){
     (uint256 _price,) = volatilityChain.queryPrice();
     int256 _aggregateDelta = calculateAggregateDelta(_price, false);
-    (int256 _loanTradeAmount, , ) = MarketLibrary.getLoanTrade(_address, ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1"), _aggregateDelta, underlying, _lendingPoolRateMode == 2);
+    (int256 _loanTradeAmount, , ) = MarketLibrary.getLoanTrade(_address, IProtocolDataProvider(ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1")), _aggregateDelta, underlying, _lendingPoolRateMode == 2);
     _repayAmount = 0;
     _repaySwapValue = 0;
     if(_loanTradeAmount < 0){
       _repayAmount = uint256(-_loanTradeAmount) - Math.min(uint256(-_loanTradeAmount), ERC20(underlying).balanceOf(address(this)));
-      _repaySwapValue = MarketLibrary.cvtDecimals(MulDiv(_repayAmount, _price, OptionLibrary.Multiplier()), funding);
-      _repayAmount = MarketLibrary.cvtDecimals(_repayAmount, underlying);}}
+      _repaySwapValue = MarketLibrary.toDecimals(MulDiv(_repayAmount, _price, OptionLibrary.Multiplier()), fundingDecimals);
+      _repayAmount = MarketLibrary.toDecimals(_repayAmount, underlyingDecimals);}}
 
   // this function emits values in token decimals.
   function calcLoanTradesInTok(address _address, uint256 _lendingPoolRateMode) external view returns(int256 _loanTradeAmount, int256 _collateralChange, address _loanAddress, address _collateralAddress){
@@ -190,10 +200,11 @@ contract OptionVault is AccessControl{
     int256 _aggregateDelta = calculateAggregateDelta(_price, false);
     address _protocolAds = ILendingPoolAddressesProvider(aaveAddress).getAddress("0x1");
     uint256 _targetLoan = 0;
-    (_loanTradeAmount, _targetLoan, _loanAddress) = MarketLibrary.getLoanTrade(_address, _protocolAds, _aggregateDelta, underlying, _lendingPoolRateMode == 2);
-    (_collateralChange, _collateralAddress) = MarketLibrary.getCollateralTrade(_address, _protocolAds, _targetLoan, _price, funding, underlying, overCollateral);
-    _loanTradeAmount = MarketLibrary.cvtDecimalsInt(_loanTradeAmount, _loanAddress);
-    _collateralChange =MarketLibrary.cvtDecimalsInt(_collateralChange, _collateralAddress);}
+    IProtocolDataProvider _protocolProvider = IProtocolDataProvider(_protocolAds);
+    (_loanTradeAmount, _targetLoan, _loanAddress) = MarketLibrary.getLoanTrade(_address, _protocolProvider , _aggregateDelta, underlying, _lendingPoolRateMode == 2);
+    (_collateralChange, _collateralAddress) = MarketLibrary.getCollateralTrade(_address, _protocolProvider, _targetLoan, _price, funding, underlying, overCollateral);
+    _loanTradeAmount = MarketLibrary.toDecimalsInt(_loanTradeAmount, _loanAddress);
+    _collateralChange =MarketLibrary.toDecimalsInt(_collateralChange, _collateralAddress);}
 
   function queryVol(uint256 _tenor) external view returns(uint256){return volatilityChain.getVol(_tenor);}
   function queryPrice() external view returns(uint256, uint256){return volatilityChain.queryPrice();}
