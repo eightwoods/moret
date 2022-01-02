@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 interface IVolatilityChain{
     // tenors, timestamp when volchain block is added and the information on the price stamp 
     event NewVolatilityChainBlock(uint256 indexed _tenor, uint256 _timeStamp, PriceStamp _book);
+    event ResetParameter(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
+    event RemovedTenor(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
 
     // price stamp includes information like: 
     // start time stamp of price observation, 
@@ -23,10 +25,4 @@ interface IVolatilityChain{
     // p: weight to moving average
     // q: weight to auto regression
     struct VolParam{ uint256 initialVol; uint256 ltVol; uint256 ltVolWeighted; uint256 w; uint256 p; uint256 q; }
-
-    // Return interpolated volatility
-    function getVol(uint256 _tenor) external view returns(uint256);
-    // Return price and timestamp
-    function queryPrice() external view returns(uint256, uint256);
-    // Return token hash
-    function getTokenHash() external view returns(bytes32);}
+    }

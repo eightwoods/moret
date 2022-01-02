@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./MoretInterfaces.sol";
 import "./VolatilityToken.sol";
 import "./MoretMarketMaker.sol";
 import "./interfaces/EOption.sol";
@@ -25,11 +24,12 @@ contract Exchange is AccessControl, EOption{
   uint256 internal constant SECONDS_1Y = 31536000; // 365 * 24 * 60 * 60
 
   uint256 public volCapacityFactor = 0.5e18;
+  uint256 public minTradeAmount = 1e18;
   uint256 public loanInterest = 0; // Annualised interest rate in 1e18
   uint256 public hedgingSlippage = 3e15; // 0.3% for hedging slippage (similar to DEX tx fees)
   bool public allowTrading = true;
 
-  constructor( MoretMarketMaker _marketMaker,OptionVault _vault){
+  constructor(MoretMarketMaker _marketMaker, OptionVault _vault){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     _setupRole(ADMIN_ROLE, msg.sender);
     optionVault = _vault;
@@ -67,11 +67,12 @@ contract Exchange is AccessControl, EOption{
 
   function purchaseOption(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, uint256 _payInCost) external {
     require(allowTrading,"Trading stopped!");
+    require(minTradeAmount<= _amount, "Trade amount below minimum.");
     (uint256 _price, ) = optionVault.queryPrice();
     (uint256 _premium, uint256 _cost, uint256 _vol) = calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side );      
     require(_payInCost >= _cost, "Incorrect cost paid.");
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
-    require(fundingToken.transferFrom(msg.sender, marketMakerAddress, _payInCost), 'Failed payment.');  
+    require(fundingToken.transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
     optionVault.stampActiveOption(_id, msg.sender);
     emit NewOption(msg.sender, optionVault.getOption(_id), _payInCost, false);}
 
@@ -106,7 +107,7 @@ contract Exchange is AccessControl, EOption{
 
     volTokenAddressList[_tenor].burn(msg.sender, _volAmount);
     uint256 _id = optionVault.addOption(_tenor, _price, _amount, _poType, OptionLibrary.OptionSide.Buy, _premium, _cost, _price, _vol, msg.sender);
-    require(fundingToken.transfer(marketMakerAddress, _premium), 'payment error');  
+    require(fundingToken.transfer(address(marketMaker), _premium), 'payment error');  
     optionVault.stampActiveOption(_id, msg.sender);
     emit NewOption(msg.sender, optionVault.getOption(_id), _volAmount, true);}
 
@@ -116,7 +117,7 @@ contract Exchange is AccessControl, EOption{
     uint256 _totalCost = _premium + _cost;
     require(_payInCost >= _totalCost, "Cost incorrect");
 
-    require(fundingToken.transferFrom(msg.sender, marketMakerAddress, _cost), 'payment error'); 
+    require(fundingToken.transferFrom(msg.sender, address(marketMaker), _cost), 'payment error'); 
     require(fundingToken.transferFrom(msg.sender, address(this), _premium), 'payment error');  
     uint256 _id = optionVault.addOption(_tenor, _price, _amount, _poType, OptionLibrary.OptionSide.Sell, _premium, _cost, _price, _vol, msg.sender);
     volTokenAddressList[_tenor].mint(msg.sender, _volAmount);
@@ -132,8 +133,8 @@ contract Exchange is AccessControl, EOption{
     volTokenAddressList[_tenor] = VolatilityToken(address(0));
     emit VolTokenRemoved(_tenor);}
 
-  function vaultAddress() external returns(address){return address(optionVault);}
-  function marketMakerAddress() external returns(address) {return address(marketMaker);}
+  function vaultAddress() external view returns(address){return address(optionVault);}
+  function marketMakerAddress() external view returns(address) {return address(marketMaker);}
 
   function resetLoanRate(uint256 _loanInterest) external onlyRole(ADMIN_ROLE){ 
     loanInterest = _loanInterest;
@@ -142,6 +143,11 @@ contract Exchange is AccessControl, EOption{
   function resetVolCapacityFactor(uint256 _newFactor) external onlyRole(ADMIN_ROLE){ 
     volCapacityFactor =_newFactor;
     emit ResetParameter(101, _newFactor);}
+
+  function resetMinAmount(uint256 _newAmount) external onlyRole(ADMIN_ROLE){
+    minTradeAmount = _newAmount;
+    emit ResetParameter(102, _newAmount);
+  }
 
   function resetTrading(bool _allowTrading) external onlyRole(DEFAULT_ADMIN_ROLE) {
     allowTrading=_allowTrading;

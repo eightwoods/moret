@@ -20,8 +20,8 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption{
 
   uint256 internal immutable fundingDecimals;
   OptionVault internal immutable optionVault;
-  IERC20 internal immutable underlying;
-  IERC20 internal immutable funding;
+  ERC20 internal immutable underlying;
+  ERC20 internal immutable funding;
 
   uint256 public settlementFee= 0.005e18;
   uint256 public exerciseFee= 0.005e18;
@@ -35,9 +35,9 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption{
     _setupRole(EXCHANGE_ROLE, msg.sender);
     maintenanceAddress = msg.sender;
     optionVault = _optionVault;
-    underlying = IERC20(_optionVault.underlying());
-    funding = IERC20(_optionVault.funding());
-    fundingDecimals = IERC20(_optionVault.funding()).decimals();
+    underlying = _optionVault.underlying();
+    funding = _optionVault.funding();
+    fundingDecimals = _optionVault.funding().decimals();
     _mint(msg.sender, BASE);}
 
   function expireOptions(address _exerciseFeeRecipient, uint256 _maxContracts) external {
@@ -57,9 +57,9 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption{
       if(_optionSide == OptionLibrary.OptionSide.Buy){
         _payback = _payback - Math.min(_payback, _settleFeeAmount + _exerciseFeeAmount);
         if(_payback > 0){
-          require(funding.transfer(optionVault.getOptionHolder(_expiringId), _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}}
+          require(funding.transfer(optionVault.getOption(_expiringId).holder, _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}}
       else if(_optionSide == OptionLibrary.OptionSide.Sell && _payback > 0){
-        require(funding.transfer(optionVault.getOptionHolder(_expiringId), _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}}
+        require(funding.transfer(optionVault.getOption(_expiringId).holder, _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}
 
       if(_settleFeeAmount > 0){
         require(funding.transfer(maintenanceAddress, _settleFeeAmount.toDecimals(fundingDecimals)), "Failed payment to maintenance");}
@@ -67,12 +67,12 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption{
       if(_exerciseFeeAmount > 0){
         require(funding.transfer(_exerciseFeeRecipient, _exerciseFeeAmount.toDecimals(fundingDecimals)), "Failed payment to exerciser.");}
       
-      emit Exercise(_option.holder, _option, _payback);
+      emit Expire(_option.holder, _option, _payback);
       _expiringId = optionVault.getExpiringOptionId();}}
 
   function calcCapital(bool _net, bool _average) public view returns(uint256 _capital){
     _capital = optionVault.getGrossCapital(address(this));
-    if(_net){ _capital -= Math.min(optionVault.getMaxHedge() + optionVault.getSellPutCollateral(), _capital);}
+    if(_net){ _capital -= Math.min(optionVault.getMaxHedge() + optionVault.sellPutCollaterals(), _capital);}
     if(_average){ 
       if(totalSupply() > 0) {
         _capital = _capital.ethdiv(totalSupply()); }
@@ -97,7 +97,7 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption{
 
   function tradeSwaps(int256 _underlyingAmt, int256 _fundingAmt, IUniswapV2Router02 _router, uint256 _deadline) external onlyRole(EXCHANGE_ROLE) {
     (uint256 _fromAmt, uint256 _toAmt, address _fromAddress, address _toAddress) = MarketLibrary.cleanTradeAmounts(_underlyingAmt, _fundingAmt, address(underlying), address(funding));
-    require(ERC20(_fromAddress).approve(_router, _fromAmt), "Swap approval failed");
+    require(ERC20(_fromAddress).approve(address(_router), _fromAmt), "Swap approval failed");
     address[] memory _path = new address[](2);
     _path[0]=_fromAddress;
     _path[1] = _toAddress;

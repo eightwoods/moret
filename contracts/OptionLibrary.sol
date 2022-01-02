@@ -7,8 +7,9 @@
 pragma solidity ^0.8.0;
 
 import "./FullMath.sol";
-import "prb-math/contracts/PRBMath.sol";
+// import "prb-math/contracts/PRBMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 library OptionLibrary {
   using FullMath for uint256;
@@ -19,13 +20,14 @@ library OptionLibrary {
   enum OptionSide{ Buy, Sell}
   enum OptionStatus { Draft, Active, Exercised, Expired}
   
+  // Arguments: option type, option side, contract status, contract holder address, contract id, creation timestamp, effective timestamp, tenor in seconds, maturity timestamp, excersie timestamp, amount or size of contract, current spot price, option strike, implied volatility, calculated premium and total cost including collaterals.
   struct Option { 
     PayoffType poType; OptionSide side; OptionStatus status; 
     address holder; uint256 id; 
     uint256 createTime; uint256 effectiveTime; 
     uint256 tenor; uint256 maturity; uint256 exerciseTime; 
     uint256 amount;
-    uint256 spot;uint256 strike;
+    uint256 spot; uint256 strike;
     uint256 volatility;
     uint256 premium;uint256 cost;}
   
@@ -59,16 +61,39 @@ library OptionLibrary {
       else if(_poType == PayoffType.Call){ 
         _cost = _amount.ethmul(_price) - _premium;}}}
 
-  function calcPayoff(Option storage _option, uint256 _price) public view returns(uint256){
-    return calcIntrinsicValue(_option.strike, _price, _option.amount, _option.poType);}
+  // payoff is the premium of options, payback is the amount owned to the option holder including both the signed amount of payoff and paid collaterals.
+  function calcPayoff(Option storage _option, uint256 _price) public view returns(uint256 _payoff, uint256 _payback){
+    _payoff = calcIntrinsicValue(_option.strike, _price, _option.amount, _option.poType);
+    _payback = _payoff;
+    if(_option.side == OptionSide.Sell){
+      if (_option.poType == PayoffType.Call){
+        _payback = _option.amount.ethmul(_price) - _payoff;}
+      else if(_option.poType == PayoffType.Put){
+        _payback = _option.amount.ethmul(_option.strike) - _payoff;}}}
 
-  function calcNotionalExposure(Option storage _option, uint256 _price) public view returns(uint256){ 
-    return _option.amount.ethmul(_price);}
+  function sellPutCollateral(Option storage _option) public view returns (uint256 _collateral){
+    if(_option.side == OptionSide.Sell && _option.poType == PayoffType.Put) _collateral = _option.amount.ethmul(_option.strike);}
 
-  function calcDelta(Option storage _option, uint256 _price, uint256 _vol) public view returns(uint256 _delta){
-    uint256 _moneyness = _price.ethdiv(_option.strike);
-    int256 _d = SafeCast.toInt256(2 *  (_moneyness * BASE).sqrt().ethdiv(_vol)) - SafeCast.toInt256(2 * BASE.ethdiv(_vol)) + SafeCast.toInt256(_vol/ 2);
-    _delta = _d.logistic().ethmul(_option.amount);}
+  function calcRemainingMaturity(Option storage _option) public view returns(uint256 _maturityLeft){
+    _maturityLeft = _option.maturity - Math.min(_option.maturity, block.timestamp);}
+
+  function calcDelta(Option storage _option, uint256 _price, uint256 _vol, bool _includeExpiring) public view returns(int256 _delta){
+    _delta = 0;
+    if(_option.status== OptionStatus.Active && (_includeExpiring || (_option.maturity > block.timestamp))){
+      if(_option.side== OptionSide.Buy){
+        uint256 _moneyness = _price.ethdiv(_option.strike);
+        int256 _d = SafeCast.toInt256(2 *  (_moneyness * BASE).sqrt().ethdiv(_vol)) - SafeCast.toInt256(2 * BASE.ethdiv(_vol)) + SafeCast.toInt256(_vol/ 2);
+        _delta = SafeCast.toInt256(_d.logistic().ethmul(_option.amount));
+        if(_option.poType == PayoffType.Put) {
+          _delta = -SafeCast.toInt256(_option.amount) + _delta; }}
+      else if(_option.side== OptionSide.Sell && _option.poType== PayoffType.Call){ 
+        _delta = SafeCast.toInt256(_option.amount);}}} // collateral for sell call options. zero for sell put options  
+
+  function calcDeltaAtZero(Option storage _option) public view returns(uint256 _delta){
+    _delta = _option.poType == PayoffType.Call? _option.amount: 0;}
+
+  function calcDeltaAtMax(Option storage _option) public view returns(uint256 _delta){
+    _delta = (_option.poType == PayoffType.Put && _option.side== OptionSide.Buy)? _option.amount: 0;}
   
   function calcGamma(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _gamma){
     uint256 _moneyness = _price.ethdiv(_strike);
@@ -91,5 +116,8 @@ library OptionLibrary {
     if(_input > 0){ _capacity -= SafeCast.toInt256(uint256(_input).muldiv(_volCapacityFactor, _max));}
     require(_capacity>=0,"Capacity breached.");
     return SafeCast.toInt256(_constant.ethdiv(uint256(_capacity))) - SafeCast.toInt256(_constant);}
+
+  function isExpiring(Option storage _option) public view returns (bool){ 
+    return (_option.status== OptionLibrary.OptionStatus.Active) && (_option.maturity <= block.timestamp);}
 
 }
