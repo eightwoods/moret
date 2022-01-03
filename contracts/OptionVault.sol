@@ -8,8 +8,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./MarketLibrary.sol";
-import "./interfaces/EOption.sol";
 import "./VolatilityChain.sol";
+import "./interfaces/EOption.sol";
 import "./interfaces/IProtocolDataProvider.sol";
 import "./interfaces/ILendingPoolAddressesProvider.sol";
 

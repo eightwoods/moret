@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IProtocolDataProvider.sol";
-import "./FullMath.sol";
 import "./OptionLibrary.sol";
 
 library MarketLibrary {

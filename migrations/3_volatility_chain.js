@@ -5,12 +5,14 @@ const settings={
   thirty: {seconds: 2592000,  params: [27386127, 109544511 ,0,0,90000000,10000000]}};
 
 const volChain = artifacts.require("./VolatilityChain");
+const mathLib = artifacts.require('./FullMath');
 
 module.exports = (deployer) => deployer
     .then(()=> deployVolChain(deployer))
     .then(() => displayDeployed());
 
 async function deployVolChain(deployer){
+  await deployer.link(mathLib, volChain);
   await deployer.deploy(
     volChain,
     process.env.CHAINLINK_FEED,

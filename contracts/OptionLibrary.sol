@@ -1,20 +1,14 @@
-/**
- * SPDX-License-Identifier: GPL-3.0-or-later
- * Moret
- * Copyright (C) 2021 Moret
-*/
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
 
 import "./FullMath.sol";
-// import "prb-math/contracts/PRBMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 library OptionLibrary {
   using FullMath for uint256;
   using FullMath for int256;
-  // using PRBMath for uint256;
 
   enum PayoffType { Call, Put}
   enum OptionSide{ Buy, Sell}

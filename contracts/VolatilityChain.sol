@@ -73,7 +73,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
         uint256 _tenorInterval = _upperTenor - _lowerTenor;
         _vol = _lowerVol.muldiv( _upperTenor - _tenor,  _tenorInterval) + _upperVol.muldiv( _tenor - _lowerTenor, _tenorInterval);}}
 
-      _vol *= _vol.ethdiv(priceMultiplier);}
+      _vol = _vol.ethdiv(priceMultiplier);}
 
   function queryPrice() external view returns(uint256, uint256){
     (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();

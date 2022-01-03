@@ -1,10 +1,12 @@
 const optionLib = artifacts.require('./OptionLibrary');
+const mathLib = artifacts.require('./FullMath');
 
 module.exports =(deployer) => deployer
   .then(()=> deployOptionLibrary(deployer))
   .then(()=> displayDeployed());
 
-async function deployOptionLibrary(deployer){
+async function deployOptionLibrary(deployer) {
+  await deployer.link(mathLib, optionLib);
   await deployer.deploy(optionLib);
 }
 
