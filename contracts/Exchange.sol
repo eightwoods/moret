@@ -57,7 +57,7 @@ contract Exchange is AccessControl, EOption{
     require(_amount.ethmul(_price)<=marketMaker.calcCapital(true,false),'insufficient capital');
     int256 _riskPremium = calcRiskPremium(_price, _vol, _strike, _amount, _side);
     require((SafeCast.toInt256(_vol)+_riskPremium) > 0,"Incorrect vol premium");
-    _vol = uint256(SafeCast.toInt256(_vol)+_riskPremium);}
+    _vol = SafeCast.toUint256(SafeCast.toInt256(_vol)+_riskPremium);}
 
   function calcRiskPremium(uint256 _price, uint256 _vol, uint256 _strike, uint256 _amount, OptionLibrary.OptionSide _side) internal view returns(int256) {
     uint256 _maxGamma = OptionLibrary.calcGamma(_price, _price, _vol).muldiv(marketMaker.calcCapital(false, false), _price);
