@@ -1876,7 +1876,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.3",
-  "updatedAt": "2022-01-02T15:46:52.735Z",
+  "updatedAt": "2022-01-09T15:35:15.033Z",
   "devdoc": {
     "details": "External interface of AccessControl declared to support ERC165 detection.",
     "events": {

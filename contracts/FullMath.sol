@@ -107,18 +107,20 @@ function muldiv(
 // see https://medium.com/coinmonks/math-in-solidity-part-3-percents-and-proportions-4db014e080b1#4821
 function ethmul (uint256 x, uint256 y) public pure returns (uint256 result)
 {
-    uint256 z = 1e18;
-    uint256 a = x / z; uint256 b = x % z; // x = a * z + b
-    uint256 c = y / z; uint256 d = y % z; // y = c * z + d
-    return a * b * z + a * d + b * c + b * d / z;
+    // uint256 z = 1e18;
+    // uint256 a = x / z; uint256 b = x % z; // x = a * z + b
+    // uint256 c = y / z; uint256 d = y % z; // y = c * z + d
+    // return a * b * z + a * d + b * c + b * d / z;
+    return muldiv(x, y, 1e18);
 }
 
 function accrue(uint256 x, uint256 i) public pure returns (uint256 result){
-    uint256 z = 1e18;
-    uint256 y = 1e18 + i;
-    uint256 a = x / z; uint256 b = x % z; // x = a * z + b
-    uint256 c = y / z; uint256 d = y % z; // y = c * z + d
-    return a * b * z + a * d + b * c + b * d / z;
+    // uint256 z = 1e18;
+    // uint256 y = 1e18 + i;
+    // uint256 a = x / z; uint256 b = x % z; // x = a * z + b
+    // uint256 c = y / z; uint256 d = y % z; // y = c * z + d
+    // return a * b * z + a * d + b * c + b * d / z;
+    return muldiv(x, 1e18 + i, 1e18);
 }
 
 function ethdiv(

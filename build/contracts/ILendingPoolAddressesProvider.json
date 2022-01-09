@@ -18,8 +18,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -32,8 +31,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.11+commit.d7f03943\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"}],\"name\":\"getAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getLendingPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/interfaces/ILendingPoolAddressesProvider.sol\":\"ILendingPoolAddressesProvider\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/interfaces/ILendingPoolAddressesProvider.sol\":{\"keccak256\":\"0x070c005507b9f28a14d7042024dbdb891245fbbb97954ecc0db3b808e50e5974\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3fa72afb7bf1b45685855edccc300ffcaa673d388a9ea1ca258a7468e21a1f3a\",\"dweb:/ipfs/QmVmqeqCEYgXaicfbUU7K4MAaTvyjZzUb8ZreMmUaF5V3V\"]}},\"version\":1}",
@@ -50,15 +48,15 @@
     "absolutePath": "project:/contracts/interfaces/ILendingPoolAddressesProvider.sol",
     "exportedSymbols": {
       "ILendingPoolAddressesProvider": [
-        9360
+        9272
       ]
     },
-    "id": 9361,
+    "id": 9273,
     "license": "MIT",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 9347,
+        "id": 9259,
         "literals": [
           "solidity",
           "^",
@@ -75,9 +73,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 9360,
+        "id": 9272,
         "linearizedBaseContracts": [
-          9360
+          9272
         ],
         "name": "ILendingPoolAddressesProvider",
         "nameLocation": "67:29:25",
@@ -85,7 +83,7 @@
         "nodes": [
           {
             "functionSelector": "21f8a721",
-            "id": 9354,
+            "id": 9266,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -93,17 +91,17 @@
             "nameLocation": "110:10:25",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 9350,
+              "id": 9262,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9349,
+                  "id": 9261,
                   "mutability": "mutable",
                   "name": "id",
                   "nameLocation": "129:2:25",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9354,
+                  "scope": 9266,
                   "src": "121:10:25",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -112,7 +110,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 9348,
+                    "id": 9260,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "121:7:25",
@@ -127,17 +125,17 @@
               "src": "120:12:25"
             },
             "returnParameters": {
-              "id": 9353,
+              "id": 9265,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9352,
+                  "id": 9264,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9354,
+                  "scope": 9266,
                   "src": "156:7:25",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -146,7 +144,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9351,
+                    "id": 9263,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "156:7:25",
@@ -161,7 +159,7 @@
               ],
               "src": "155:9:25"
             },
-            "scope": 9360,
+            "scope": 9272,
             "src": "101:64:25",
             "stateMutability": "view",
             "virtual": false,
@@ -169,7 +167,7 @@
           },
           {
             "functionSelector": "0261bf8b",
-            "id": 9359,
+            "id": 9271,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -177,23 +175,23 @@
             "nameLocation": "177:14:25",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 9355,
+              "id": 9267,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "191:2:25"
             },
             "returnParameters": {
-              "id": 9358,
+              "id": 9270,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9357,
+                  "id": 9269,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9359,
+                  "scope": 9271,
                   "src": "217:7:25",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -202,7 +200,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9356,
+                    "id": 9268,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "217:7:25",
@@ -217,14 +215,14 @@
               ],
               "src": "216:9:25"
             },
-            "scope": 9360,
+            "scope": 9272,
             "src": "168:58:25",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 9361,
+        "scope": 9273,
         "src": "57:170:25",
         "usedErrors": []
       }
@@ -235,15 +233,15 @@
     "absolutePath": "project:/contracts/interfaces/ILendingPoolAddressesProvider.sol",
     "exportedSymbols": {
       "ILendingPoolAddressesProvider": [
-        9360
+        9272
       ]
     },
-    "id": 9361,
+    "id": 9273,
     "license": "MIT",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 9347,
+        "id": 9259,
         "literals": [
           "solidity",
           "^",
@@ -260,9 +258,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 9360,
+        "id": 9272,
         "linearizedBaseContracts": [
-          9360
+          9272
         ],
         "name": "ILendingPoolAddressesProvider",
         "nameLocation": "67:29:25",
@@ -270,7 +268,7 @@
         "nodes": [
           {
             "functionSelector": "21f8a721",
-            "id": 9354,
+            "id": 9266,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -278,17 +276,17 @@
             "nameLocation": "110:10:25",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 9350,
+              "id": 9262,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9349,
+                  "id": 9261,
                   "mutability": "mutable",
                   "name": "id",
                   "nameLocation": "129:2:25",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9354,
+                  "scope": 9266,
                   "src": "121:10:25",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -297,7 +295,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 9348,
+                    "id": 9260,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "121:7:25",
@@ -312,17 +310,17 @@
               "src": "120:12:25"
             },
             "returnParameters": {
-              "id": 9353,
+              "id": 9265,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9352,
+                  "id": 9264,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9354,
+                  "scope": 9266,
                   "src": "156:7:25",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -331,7 +329,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9351,
+                    "id": 9263,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "156:7:25",
@@ -346,7 +344,7 @@
               ],
               "src": "155:9:25"
             },
-            "scope": 9360,
+            "scope": 9272,
             "src": "101:64:25",
             "stateMutability": "view",
             "virtual": false,
@@ -354,7 +352,7 @@
           },
           {
             "functionSelector": "0261bf8b",
-            "id": 9359,
+            "id": 9271,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -362,23 +360,23 @@
             "nameLocation": "177:14:25",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 9355,
+              "id": 9267,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "191:2:25"
             },
             "returnParameters": {
-              "id": 9358,
+              "id": 9270,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9357,
+                  "id": 9269,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9359,
+                  "scope": 9271,
                   "src": "217:7:25",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -387,7 +385,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9356,
+                    "id": 9268,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "217:7:25",
@@ -402,14 +400,14 @@
               ],
               "src": "216:9:25"
             },
-            "scope": 9360,
+            "scope": 9272,
             "src": "168:58:25",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 9361,
+        "scope": 9273,
         "src": "57:170:25",
         "usedErrors": []
       }
@@ -422,8 +420,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.3",
-  "updatedAt": "2022-01-03T10:38:57.821Z",
-  "networkType": "ethereum",
+  "updatedAt": "2022-01-09T15:35:15.555Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},
