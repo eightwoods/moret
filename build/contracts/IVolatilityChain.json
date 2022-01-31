@@ -128,7 +128,7 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface IVolatilityChain{\n    // tenors, timestamp when volchain block is added and the information on the price stamp \n    event NewVolatilityChainBlock(uint256 indexed _tenor, uint256 _timeStamp, PriceStamp _book);\n    event ResetParameter(uint256 indexed _tenor, uint256 _timeStamp, address _executor);\n    event RemovedTenor(uint256 indexed _tenor, uint256 _timeStamp, address _executor);\n\n    // price stamp includes information like: \n    // start time stamp of price observation, \n    // end time stamp of price observation, \n    // open price,\n    // high price during the observation period, subject to the periodicity of updating schedule (on openzeppelin or separate bot)\n    // low price\n    // close price\n    // volatility based on the GARCH model prescribed with the VolParam\n    // accentus which is a higher estimate of volatility using the most extreme of high and low prices instead of close price in deducing the volatility using the same GARCH parameters\n    struct PriceStamp{ uint256 startTime; uint256 endTime; uint256 open; uint256 highest; uint256 lowest; uint256 close; uint256 volatility; uint256 accentus; }\n\n    // GARCH parameters include:\n    // starting value of volatility which is fixed\n    // long term value of volatility which is the target of mean reversion\n    // w: weight to the long term volatility\n    // p: weight to moving average\n    // q: weight to auto regression\n    struct VolParam{ uint256 initialVol; uint256 ltVol; uint256 ltVolWeighted; uint256 w; uint256 p; uint256 q; }\n    }",
-  "sourcePath": "/Users/mac/Documents/GitHub/moret/contracts/interfaces/IVolatilityChain.sol",
+  "sourcePath": "/Users/sen/Documents/GitHub/moret/contracts/interfaces/IVolatilityChain.sol",
   "ast": {
     "absolutePath": "project:/contracts/interfaces/IVolatilityChain.sol",
     "exportedSymbols": {
@@ -1640,8 +1640,8 @@
     "version": "0.8.11+commit.d7f03943.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2022-01-31T16:00:43.766Z",
+  "schemaVersion": "3.4.4",
+  "updatedAt": "2022-01-31T19:44:49.187Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

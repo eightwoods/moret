@@ -358,7 +358,7 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport \"../OptionLibrary.sol\";\n\ninterface EOption{\n    event NewOption(address indexed _purchaser, OptionLibrary.Option _option, uint256 _cost, bool _inVol);\n    event Expire(address indexed _purchaser, OptionLibrary.Option _option, uint256 _payoff);\n    event StampNewOption(uint256 indexed _id, uint256 _timestamp);\n    event StampExpire(uint256 indexed _id, uint256 _timestamp);\n    event VolTokenAddition(uint256 indexed _tenor, address _tokenAddress);\n    event VolTokenRemoved(uint256 indexed _tenor);\n    event ResetParameter(uint256 indexed _parameterId, uint256 _parameter);\n    event ResetAddress(uint256 indexed _addressId, address _address);\n    event Response(bool success, bytes data);}",
-  "sourcePath": "/Users/mac/Documents/GitHub/moret/contracts/interfaces/EOption.sol",
+  "sourcePath": "/Users/sen/Documents/GitHub/moret/contracts/interfaces/EOption.sol",
   "ast": {
     "absolutePath": "project:/contracts/interfaces/EOption.sol",
     "exportedSymbols": {
@@ -1928,8 +1928,8 @@
     "version": "0.8.11+commit.d7f03943.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2022-01-31T16:00:43.745Z",
+  "schemaVersion": "3.4.4",
+  "updatedAt": "2022-01-31T19:44:49.184Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

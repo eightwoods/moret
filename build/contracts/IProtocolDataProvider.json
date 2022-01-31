@@ -104,7 +104,7 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ninterface IProtocolDataProvider {\n  function getReserveConfigurationData(address asset) external view returns (uint256 decimals, uint256 ltv, uint256 liquidationThreshold, uint256 liquidationBonus, uint256 reserveFactor, bool usageAsCollateralEnabled, bool borrowingEnabled, bool stableBorrowRateEnabled, bool isActive, bool isFrozen);\n  function getReserveTokensAddresses(address asset) external view returns (address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress);}\n",
-  "sourcePath": "/Users/mac/Documents/GitHub/moret/contracts/interfaces/IProtocolDataProvider.sol",
+  "sourcePath": "/Users/sen/Documents/GitHub/moret/contracts/interfaces/IProtocolDataProvider.sol",
   "ast": {
     "absolutePath": "project:/contracts/interfaces/IProtocolDataProvider.sol",
     "exportedSymbols": {
@@ -1136,8 +1136,8 @@
     "version": "0.8.11+commit.d7f03943.Emscripten.clang"
   },
   "networks": {},
-  "schemaVersion": "3.4.3",
-  "updatedAt": "2022-01-31T16:00:43.758Z",
+  "schemaVersion": "3.4.4",
+  "updatedAt": "2022-01-31T19:44:49.185Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},
