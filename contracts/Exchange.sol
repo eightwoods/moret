@@ -24,7 +24,7 @@ contract Exchange is AccessControl, EOption{
   uint256 internal constant SECONDS_1Y = 31536000; // 365 * 24 * 60 * 60
 
   uint256 public volCapacityFactor = 0.5e18;
-  uint256 public minTradeAmount = 1e18;
+  uint256 public minTradeAmount = 1e14;
   uint256 public loanInterest = 0; // Annualised interest rate in 1e18
   uint256 public hedgingSlippage = 3e15; // 0.3% for hedging slippage (similar to DEX tx fees)
   bool public allowTrading = true;
