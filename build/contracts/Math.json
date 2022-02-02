@@ -2189,7 +2189,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.4",
-  "updatedAt": "2022-01-31T19:44:49.049Z",
+  "updatedAt": "2022-02-02T00:58:41.350Z",
   "devdoc": {
     "details": "Standard math utilities missing in the Solidity language.",
     "kind": "dev",

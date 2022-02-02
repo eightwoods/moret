@@ -74,7 +74,7 @@ contract Exchange is AccessControl, EOption{
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
     require(fundingToken.transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
     optionVault.stampActiveOption(_id, msg.sender);
-    emit NewOption(msg.sender, optionVault.getOption(_id), _payInCost, false);}
+    emit NewOption(msg.sender, _id, _payInCost, false);}
 
   function getOptionPayoffValue(uint256 _id) external view returns(uint256 _payback){
     (,_payback) = optionVault.getContractPayoff(_id);}
@@ -109,7 +109,7 @@ contract Exchange is AccessControl, EOption{
     uint256 _id = optionVault.addOption(_tenor, _price, _amount, _poType, OptionLibrary.OptionSide.Buy, _premium, _cost, _price, _vol, msg.sender);
     require(fundingToken.transfer(address(marketMaker), _premium), 'payment error');  
     optionVault.stampActiveOption(_id, msg.sender);
-    emit NewOption(msg.sender, optionVault.getOption(_id), _volAmount, true);}
+    emit NewOption(msg.sender, _id, _volAmount, true);}
 
   function sellOptionInVol(uint256 _tenor, uint256 _amount, OptionLibrary.PayoffType _poType, uint256 _payInCost) external {
     require(allowTrading,"Trading stopped!");
@@ -122,7 +122,7 @@ contract Exchange is AccessControl, EOption{
     uint256 _id = optionVault.addOption(_tenor, _price, _amount, _poType, OptionLibrary.OptionSide.Sell, _premium, _cost, _price, _vol, msg.sender);
     volTokenAddressList[_tenor].mint(msg.sender, _volAmount);
     optionVault.stampActiveOption(_id, msg.sender);
-    emit NewOption(msg.sender, optionVault.getOption(_id), _volAmount, true);}
+    emit NewOption(msg.sender, _id, _volAmount, true);}
 
   function addVolToken(uint256 _tenor, address _tokenAddress) external onlyRole(ADMIN_ROLE){ 
     require(VolatilityToken(_tokenAddress).tenor()==_tenor && VolatilityToken(_tokenAddress).tokenHash()==optionVault.tokenHash(), 'mismatched token address');

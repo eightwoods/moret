@@ -42,30 +42,30 @@ contract MoretMarketMaker is ERC20, AccessControl, EOption{
 
   function expireOptions(address _exerciseFeeRecipient) external {
     uint256 _expiringId = optionVault.getExpiringOptionId();
+    (OptionLibrary.OptionStatus _optionStatus, OptionLibrary.OptionSide _optionSide, address _optionHolder) = optionVault.getOptionInfo(_expiringId);
 
-    optionVault.stampExpiredOption(_expiringId);
+    if(_optionStatus == OptionLibrary.OptionStatus.Active){
+      optionVault.stampExpiredOption(_expiringId);
     
-    (uint256 _payoff, uint256 _payback) = optionVault.getContractPayoff(_expiringId);
-    
-    uint256 _settleFeeAmount = _payoff.ethmul(settlementFee);
-    uint256 _exerciseFeeAmount = _payoff.ethmul(exerciseFee);
-    
-    OptionLibrary.Option memory _option = optionVault.getOption(_expiringId);
-    OptionLibrary.OptionSide _optionSide = _option.side;
-    if(_optionSide == OptionLibrary.OptionSide.Buy){
-      _payback = _payback - Math.min(_payback, _settleFeeAmount + _exerciseFeeAmount);
-      if(_payback > 0){
-        require(funding.transfer(optionVault.getOption(_expiringId).holder, _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}}
-    else if(_optionSide == OptionLibrary.OptionSide.Sell && _payback > 0){
-      require(funding.transfer(optionVault.getOption(_expiringId).holder, _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}
+      (uint256 _payoff, uint256 _payback) = optionVault.getContractPayoff(_expiringId);
+      
+      uint256 _settleFeeAmount = _payoff.ethmul(settlementFee);
+      uint256 _exerciseFeeAmount = _payoff.ethmul(exerciseFee);
+      
+      if(_optionSide == OptionLibrary.OptionSide.Buy){
+        _payback = _payback - Math.min(_payback, _settleFeeAmount + _exerciseFeeAmount);
+        if(_payback > 0){
+          require(funding.transfer(_optionHolder, _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}}
+      else if(_optionSide == OptionLibrary.OptionSide.Sell && _payback > 0){
+        require(funding.transfer(_optionHolder, _payback.toDecimals(fundingDecimals)), "Failed payment to holder");}
 
-    if(_settleFeeAmount > 0){
-      require(funding.transfer(maintenanceAddress, _settleFeeAmount.toDecimals(fundingDecimals)), "Failed payment to maintenance");}
+      if(_settleFeeAmount > 0){
+        require(funding.transfer(maintenanceAddress, _settleFeeAmount.toDecimals(fundingDecimals)), "Failed payment to maintenance");}
 
-    if(_exerciseFeeAmount > 0){
-      require(funding.transfer(_exerciseFeeRecipient, _exerciseFeeAmount.toDecimals(fundingDecimals)), "Failed payment to exerciser.");}
-    
-    emit Expire(_option.holder, _option, _payback);}
+      if(_exerciseFeeAmount > 0){
+        require(funding.transfer(_exerciseFeeRecipient, _exerciseFeeAmount.toDecimals(fundingDecimals)), "Failed payment to exerciser.");}
+      
+      emit Expire(_optionHolder, _expiringId, _payback);}}
 
   function calcCapital(bool _net, bool _average) public view returns(uint256 _capital){
     _capital = optionVault.getGrossCapital(address(this));

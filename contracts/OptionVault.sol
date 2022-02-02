@@ -59,9 +59,9 @@ contract OptionVault is AccessControl, EOption{
   function getHoldersOptionCount(address _address) external view returns(uint256){return activeOptionsPerOwner[_address].length();}
   function getHoldersOption(uint256 _index, address _address) external view returns(OptionLibrary.Option memory) {return optionsList[activeOptionsPerOwner[_address].at(_index)];}
 
-  function getOption(uint256 _id) external view returns(OptionLibrary.Option memory) {
+  function getOptionInfo(uint256 _id) external view returns(OptionLibrary.OptionStatus, OptionLibrary.OptionSide, address) {
     require(_id< optionsList.length);
-    return optionsList[_id];}
+    return (optionsList[_id].status, optionsList[_id].side, optionsList[_id].holder);}
 
   function getGrossCapital(address _address) external view returns(uint256 _capital){
     (uint256 _price, ) = volatilityChain.queryPrice();
@@ -136,17 +136,17 @@ contract OptionVault is AccessControl, EOption{
     emit StampNewOption(_id, block.timestamp);}
 
   function stampExpiredOption(uint256 _id)  external onlyRole(EXCHANGE_ROLE){
-    OptionLibrary.Option storage _option = optionsList[_id];
-    activeOptionsPerOwner[_option.holder].remove(_id);
     activeOptions.remove(_id);
     activeContractCount -= Math.min(activeContractCount, 1);
-
+    
+    OptionLibrary.Option storage _option = optionsList[_id];
+    _option.status = OptionLibrary.OptionStatus.Expired;
+    _option.exerciseTime = block.timestamp;
+    activeOptionsPerOwner[_option.holder].remove(_id);
+    
     deltaAtZero -= Math.min(deltaAtZero, _option.calcDeltaAtZero());
     deltaAtMax -= Math.min(deltaAtMax, _option.calcDeltaAtMax());
     sellPutCollaterals -= Math.min(sellPutCollaterals, _option.sellPutCollateral());
-    
-    _option.status = OptionLibrary.OptionStatus.Expired;
-    _option.exerciseTime = block.timestamp;
     
     emit StampExpire(_id, block.timestamp);}
 
