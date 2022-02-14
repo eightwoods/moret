@@ -41,15 +41,16 @@ contract Exchange is AccessControl, EOption{
   // Returns premium, costs (if sell option, cost includes collateral) and implied volatility
   function calcCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 , uint256 , uint256 ){
     (uint256 _price,) = optionVault.queryPrice();
-    return calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side);}
+    return calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side, true);}
 
-  function calcOptionCost(uint256 _tenor, uint256 _price, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side) public view returns(uint256 _premium, uint256 _cost, uint256 _vol){
+  function calcOptionCost(uint256 _tenor, uint256 _price, uint256 _strike, uint256 _amount, OptionLibrary.PayoffType _poType, OptionLibrary.OptionSide _side, bool _inDecimals) public view returns(uint256 _premium, uint256 _cost, uint256 _vol){
     _vol = queryOptionVolatility(_tenor, _strike, _amount, _side);
     uint256 _interest = loanInterest.muldiv(_tenor, SECONDS_1Y);
     _premium = OptionLibrary.calcPremium(_price, _vol, _strike, _poType, _amount, _interest, hedgingSlippage);
     _cost = OptionLibrary.calcCost(_price, _strike, _amount, _poType, _side, _premium);
-    _premium = _premium.toDecimals(fundingDecimals);
-    _cost = _cost.toDecimals(fundingDecimals);}
+    if(_inDecimals){
+      _premium = _premium.toDecimals(fundingDecimals);
+    _cost = _cost.toDecimals(fundingDecimals);}}
 
   function queryOptionVolatility(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLibrary.OptionSide _side) public view returns(uint256 _vol){  
     _vol = optionVault.queryVol(_tenor); // running vol
@@ -69,7 +70,7 @@ contract Exchange is AccessControl, EOption{
     require(allowTrading,"Trading stopped!");
     require(minTradeAmount<= _amount, "Trade amount below minimum.");
     (uint256 _price, ) = optionVault.queryPrice();
-    (uint256 _premium, uint256 _cost, uint256 _vol) = calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side );      
+    (uint256 _premium, uint256 _cost, uint256 _vol) = calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side, true);      
     require(_payInCost >= _cost, "Incorrect cost paid.");
     uint256 _id = optionVault.addOption(_tenor, _strike, _amount, _poType, _side, _premium, _cost, _price, _vol, msg.sender);
     require(fundingToken.transferFrom(msg.sender, address(marketMaker), _payInCost), 'Failed payment.');  
@@ -82,8 +83,9 @@ contract Exchange is AccessControl, EOption{
   function calcVolAmount(uint256 _tenor, uint256 _amount, OptionLibrary.OptionSide _side) public view returns(uint256 _volAmount, uint256 _vol, uint256 _premium, uint256 _cost, uint256 _price){
     require(address(volTokenAddressList[_tenor])!=address(0), "Tenor is not set");
     (_price, ) = optionVault.queryPrice();
-    (_premium, _cost, _vol) = calcOptionCost(_tenor, _price, _price, _amount, OptionLibrary.PayoffType.Call, _side); 
-    _volAmount = _premium.ethdiv(_vol).toDecimals(volTokenAddressList[_tenor].decimals());}
+    (uint256 _premiumDef, , uint256 _volTemp) = calcOptionCost(_tenor, _price, _price, _amount, OptionLibrary.PayoffType.Call, _side, false); 
+    _volAmount = _premiumDef.ethdiv(_volTemp).toDecimals(volTokenAddressList[_tenor].decimals());
+    (_premium, _cost, _vol) = calcOptionCost(_tenor, _price, _price, _amount, OptionLibrary.PayoffType.Call, _side, true);}
 
   function buyVol(uint256 _tenor, uint256 _amount, uint256 _payInCost) external {
     require(allowTrading,"Trading stopped!");

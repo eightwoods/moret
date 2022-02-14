@@ -1,6 +1,6 @@
 const parameterDecimals = 8;   
 const settings={
-  one: {seconds: 86400,  params: [5000000,20000000,0,0,90000000,10000000]},
+  one: {seconds: 86400,  params: [4700000,20000000,0,0,90000000,10000000]},
   seven: {seconds: 604800,  params: [13228756, 52915026 ,0,0,90000000,10000000]},
   thirty: {seconds: 2592000,  params: [27386127, 109544511 ,0,0,90000000,10000000]}};
 

@@ -10,8 +10,8 @@ contract VolatilityToken is ERC20, AccessControl
     uint256 public tenor;
     bytes32 public tokenHash;
 
-    constructor(string memory _tokenName, uint256 _tenor, string memory _name, string memory _symbol ) ERC20(_name, _symbol) {
-        _setupRole(EXCHANGE_ROLE, msg.sender);
+    constructor(string memory _tokenName, uint256 _tenor, string memory _name, string memory _symbol, address _exchangeAddress ) ERC20(_name, _symbol) {
+        _setupRole(EXCHANGE_ROLE, _exchangeAddress);
         tenor = _tenor;
         tokenHash = keccak256(bytes(_tokenName));}
 
