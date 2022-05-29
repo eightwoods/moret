@@ -1,22 +1,40 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "./libraries/MathLib.sol";
 
-contract VolatilityToken is ERC20, AccessControl
-{
-    bytes32 public constant EXCHANGE_ROLE = keccak256("EXCHANGE_ROLE");
+contract VolatilityToken is ERC20, AccessControl{
+    using MathLib for uint256;
+    using Math for uint256;
+
+    bytes32 public constant EXCHANGE = keccak256("EXCHANGE");
+
     uint256 public tenor;
-    bytes32 public tokenHash;
+    address public underlying;
+    ERC20 public funding;
 
-    constructor(string memory _tokenName, uint256 _tenor, string memory _name, string memory _symbol, address _exchangeAddress ) ERC20(_name, _symbol) {
-        _setupRole(EXCHANGE_ROLE, _exchangeAddress);
+    // constructor, ownership is transferred to Moret gov token which can mint and burn the tokens.
+    constructor(ERC20 _funding, address _underlying, uint256 _tenor, string memory _name, string memory _symbol, address _exchange ) ERC20(_name, _symbol) {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        funding = _funding;
         tenor = _tenor;
-        tokenHash = keccak256(bytes(_tokenName));}
+        underlying = _underlying;
+        grantRole(EXCHANGE, _exchange);}
 
-    function mint(address _account, uint256 _amount) public payable onlyRole(EXCHANGE_ROLE) {_mint(_account, _amount);}
-    function burn(address _account, uint256 _amount) public onlyRole(EXCHANGE_ROLE){ 
-        require(allowance(_account, msg.sender)>=_amount, "Allowance error");
-        _burn(_account, _amount);}
+    function getMintAmount(uint256 _premium, uint256 _vol) public view returns(uint256 _mintAmount, uint256 _volPrice){
+        uint256 _supply = totalSupply();
+        _volPrice = _supply > 0? _vol.max(funding.balanceOf(address(this)).ethdiv(_supply)): _vol;
+        _mintAmount = _premium.ethdiv(_vol);}
+
+    function getBurnAmount(uint256 _premium, uint256 _vol) public view returns(uint256 _burnAmount, uint256 _volPrice){
+        uint256 _supply = totalSupply();
+        _volPrice = _supply > 0? _vol.min(funding.balanceOf(address(this)).ethdiv(_supply)): _vol;
+        _burnAmount = _premium.ethdiv(_vol);}
+
+    function mint(address _account, uint256 _amount) public onlyRole(EXCHANGE) {_mint(_account, _amount);}
+    function burn(address _account, uint256 _amount) public onlyRole(EXCHANGE) {_burn(_account, _amount);}
+    function pay(address _account, uint256 _amount) public onlyRole(EXCHANGE){require(funding.transfer(_account, _amount), '-VS');}
 }

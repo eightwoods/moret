@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 interface IVolatilityChain{
     // tenors, timestamp when volchain block is added and the information on the price stamp 
     event NewVolatilityChainBlock(uint256 indexed _tenor, uint256 _timeStamp, PriceStamp _book);
-    event ResetParameter(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
+    event ResetVolChainParameter(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
     event RemovedTenor(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
 
     // price stamp includes information like: 
@@ -24,5 +24,8 @@ interface IVolatilityChain{
     // w: weight to the long term volatility
     // p: weight to moving average
     // q: weight to auto regression
-    struct VolParam{ uint256 initialVol; uint256 ltVol; uint256 ltVolWeighted; uint256 w; uint256 p; uint256 q; }
+    struct VolParam{uint256 initialVol; uint256 ltVol; uint256 ltVolWeighted; uint256 w; uint256 p; uint256 q; }
+
+    function queryPrice() external view returns(uint256);
+    function queryVol(uint256 _tenor) external view returns(uint256 _vol);
     }

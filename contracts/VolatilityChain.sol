@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import "./FullMath.sol";
+import "./libraries/MathLib.sol";
 import "./interfaces/IVolatilityChain.sol";
 
 contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
-  using FullMath for uint256;
+  using MathLib for uint256;
+  using SafeMath for uint256;
   using EnumerableSet for EnumerableSet.UintSet;
 
   bytes32 public constant UPDATE_ROLE = keccak256("UPDATE_ROLE");
@@ -32,9 +34,12 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
   uint256 internal immutable volParamDecimals;
   uint256 internal immutable parameterMultiplier;
 
-  constructor( AggregatorV3Interface _priceSource, uint256 _parameterDecimals, string memory _tokenName )  {
-    _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _setupRole(UPDATE_ROLE, msg.sender);
+  uint256 internal constant SECONDS_1Y = 31536000; // 365 * 24 * 60 * 60
+
+  constructor(AggregatorV3Interface _priceSource, uint256 _parameterDecimals, string memory _tokenName, address _updateAddress )  {
+    _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); 
+
+    _setupRole(UPDATE_ROLE, _updateAddress);
     tokenHash = keccak256(bytes(_tokenName));
     tenors.add(1 days);
     tenors.add(7 days);
@@ -45,7 +50,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     volParamDecimals = _parameterDecimals;
     parameterMultiplier = 10 ** _parameterDecimals;}
 
-  function getVol(uint256 _tenor) external view returns(uint256 _vol){
+  function queryVol(uint256 _tenor) external override view returns(uint256 _vol){
     _vol = 0;
     if(tenors.contains(_tenor)){ 
       _vol = priceBook[_tenor][latestBookTime[_tenor]].volatility;}
@@ -75,9 +80,9 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
 
       _vol = _vol.ethdiv(priceMultiplier);}
 
-  function queryPrice() external view returns(uint256, uint256){
-    (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
-    return (SafeCast.toUint256(_price).ethdiv(priceMultiplier), _timeStamp);}
+  function queryPrice() external override view returns(uint256){
+    (,int _price,,,) = priceInterface.latestRoundData();
+    return SafeCast.toUint256(_price).ethdiv(priceMultiplier);}
 
   function update() external onlyRole(UPDATE_ROLE){
     (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
@@ -116,6 +121,8 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
   function resetVolParams(uint256 _tenor, VolParam memory _volParams) external onlyOwner{
     if(!tenors.contains(_tenor)){
       tenors.add(_tenor);}
+    // sqrtRatios[_tenor] = _ratio;
+    
     require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier);
     volatilityParameters[_tenor] = _volParams;
     volatilityParameters[_tenor].ltVolWeighted = (volatilityParameters[_tenor].ltVol*volatilityParameters[_tenor].ltVol).muldiv( volatilityParameters[_tenor].w, parameterMultiplier);
@@ -128,7 +135,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     _priceStamp.startTime = _timeStamp;
     _priceStamp.volatility = _priceStamp.accentus = volatilityParameters[_tenor].initialVol;
     _priceStamp.open = _priceStamp.highest = _priceStamp.lowest = _updatePrice;
-    emit ResetParameter(_tenor, block.timestamp, msg.sender);}
+    emit ResetVolChainParameter(_tenor, block.timestamp, msg.sender);}
 
   function removeTenor(uint256 _tenor) external onlyOwner{
     require(tenors.contains(_tenor));
@@ -138,4 +145,14 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
   function getPriceBook(uint256 _tenor) external view returns(PriceStamp memory){
     require(tenors.contains(_tenor), "Input option tenor is not allowed.");
     return priceBook[_tenor][latestBookTime[_tenor]];}
-  }
+
+  // // update sqrt ratio
+  // function updateSqrtRatio(uint256 _tenor, uint256 _ratio) external onlyOwner{
+  //     if(!tenors.contains(_tenor)){
+  //       tenors.add(_tenor);}
+  //     sqrtRatios[_tenor] = _ratio;}
+  
+  function getSqrtRatio(uint256 _tenor) external pure returns(uint256){
+    return SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
+    }
+}
