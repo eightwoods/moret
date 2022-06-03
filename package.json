@@ -28,7 +28,9 @@
     "@openzeppelin/contracts": "^4.6.0",
     "@truffle/hdwallet-provider": "^2.0.5",
     "@uniswap/v2-periphery": "*",
+    "async": "^3.2.3",
     "dotenv": "^10.0.0",
+    "truffle": "^5.5.16",
     "truffle-contract-size": "^2.0.1",
     "web3": "^1.7.3"
   },
