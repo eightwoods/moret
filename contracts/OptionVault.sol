@@ -171,7 +171,7 @@ contract OptionVault is EOption, AccessControl{
     if (_forceATM){_option.strike = _price;}
 
     _premium = _option.calcPremium(_price, _impVol, _market.loanInterest());
-    _collateral = _option.calcCollateral();}
+    _collateral = _option.calcCollateral(_price);}
 
   function calcImpliedVol(MarketMaker _market, uint256 _tenor, uint256 _volCapacityFactor, int256 _currentNetNotional, int256 _newNetNotional) public view returns(uint256 _price, uint256 _impVol, uint256 _annualisedVol){
     VolatilityChain _volChain = _market.getVolatilityChain();

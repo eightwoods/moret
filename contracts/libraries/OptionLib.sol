@@ -51,12 +51,12 @@ library OptionLib {
     uint256 _intrinsicValue = calcIntrinsicValue(_option, _price);
     _premium = _intrinsicValue + _timeValue;}
 
-  function calcCollateral(Option memory _option) public pure returns(uint256 _collateral){
+  function calcCollateral(Option memory _option, uint256 _price) public pure returns(uint256 _collateral){
     if(_option.side == OptionSide.Sell){
       if(_option.poType == PayoffType.Put){ 
         _collateral =  _option.amount.ethmul(_option.strike);}
       else if(_option.poType == PayoffType.Call){ 
-        _collateral = _option.amount.ethmul(_option.spot);}}
+        _collateral = _option.amount.ethmul(_price);}}
   }
 
   // function calcCost(OptionSide _side, uint256 _premium) public pure returns (uint256 _cost) {
