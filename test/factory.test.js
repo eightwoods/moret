@@ -12,6 +12,7 @@ const VolatilityChain = artifacts.require("./VolatilityChain");
 const VolatilityToken = artifacts.require("./VolatilityToken");
 const Moret = artifacts.require('./Moret');
 const MoretBroker = artifacts.require('./MoretBroker');
+const MoretGovernor = artifacts.require('./MoretGoveror');
 
 const MarketMakerFactory = artifacts.require('./MarketMakerFactory');
 const PoolFactory = artifacts.require('./PoolFactory');
@@ -31,7 +32,7 @@ const initialCapital = 1e18;
 const optionAmount = 1e16;
 const optionApproveAmount = 1e6;
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
-const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
+const relay_address = web3.utils.toChecksumAddress(process.env.RELAYER_ACCOUNT);
 
 contract("Factory test", async accounts => {
     it("Add volchain to Moret", async () => {
@@ -77,7 +78,7 @@ contract("Factory test", async accounts => {
 
     it("create Pool and buy option", async () => {
         const account_one = accounts[0];
-        const hedging_bot = account_one;
+        const hedging_bot = relay_address;
 
         const marketFactoryInstance = await MarketMakerFactory.deployed();
         const poolFactoryInstance = await PoolFactory.deployed();
@@ -102,10 +103,10 @@ contract("Factory test", async accounts => {
         const outExerciseFee = await poolInstance.exerciseFee();
         assert.equal(web3.utils.fromWei(outExerciseFee), 0.005, 'wrong Pool fees');
 
-        // const poolGovBytecode = web3.utils.soliditySha3(poolGovernor.bytecode, web3.eth.abi.encodeParameters(['address', 'address payable'], [poolInstance.address, timelockInstance.address]));
-
-        // const poolGovAddress = await poolGovFactoryInstance.deploy(salt, poolGovBytecode, {from: account_one});
-        // const poolGovInstance = await poolGovernor.at(poolGovAddress);
+        await poolGovFactoryInstance.deploy(salt, poolAddress, {from: account_one});
+        const poolGovBytecode = web3.utils.soliditySha3(MoretGovernor.bytecode, web3.eth.abi.encodeParameters(['address'], [poolAddress]));
+        const poolGovAddress = '0x' + web3.utils.soliditySha3('0xff', poolGovFactoryInstance.address, salt, poolGovBytecode).substr(26);
+        const poolGovInstance = await MoretGovernor.at(poolGovAddress);
         // const outName = await poolGovInstance.name();
         // assert.equal(outName, poolGovName, 'wrong Pool name'); 
         
