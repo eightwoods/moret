@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./interfaces/IProtocolDataProvider.sol";
-import "./OptionLibrary.sol";
+import "../interfaces/IProtocolDataProvider.sol";
+import "../interfaces/ILendingPoolAddressesProvider.sol";
+import "../pools/Pool.sol";
+import "../pools/MarketMaker.sol";
+import "./MathLib.sol";
 
-library MarketLibrary {
-  using FullMath for uint256;
+library MarketLib {
+  using MathLib for uint256;
+  using SignedMath for int256;
   uint256 public constant LTV_DECIMALS = 4;
   uint256 public constant DECIMALS = 18;
+  uint256 internal constant BASE  = 1e18;
 
   // Returns balances of ERC20 token (as for _tokenAddress), its corresponding aToken (i.e. collaterals posted), and its debt tokens (including both variable and fixed loans)
   function getTokenBalances(address _contractAddress, IProtocolDataProvider _protocolDataProvider, ERC20 _token) public view returns(uint256, uint256, uint256) {
@@ -73,4 +79,34 @@ library MarketLibrary {
       _fromAddress = _underlyingAddress;
       _toAmount = uint256(_fundingAmt);
       _toAddress = _fundingAddress;}}
+
+  // calculate the gross capital of a market address, in DEFAULT decimals.
+  function getGrossCapital(MarketMaker _market, uint256 _price) public view returns(uint256){
+    // _price = _volChain.queryPrice();
+    // if(_pool.aaveAddressesProvider() != address(0)){
+    //   IProtocolDataProvider _protocolDataProvider = IProtocolDataProvider(ILendingPoolAddressesProvider(_pool.aaveAddressesProvider()).getAddress("0x1"));
+    //   (uint256 _underlyingBalance, , uint256 _debtBalance) = getTokenBalances(address(_pool), _protocolDataProvider, _pool.underlying());
+    //   (uint256 _fundingBalance, uint256 _collateralBalance,) = getTokenBalances(address(_pool), _protocolDataProvider, _pool.govToken().funding());
+
+    //   _capital = _fundingBalance + _collateralBalance + _underlyingBalance.ethmul(_price);
+    //   uint256 _debt_amount = _debtBalance.ethmul(_price);
+    //   require(_capital > _debt_amount, "Negative equity.");
+    //   _capital -= _debt_amount;}
+    // else{
+    uint256 _underlyingBalance = balanceDef(ERC20(_market.underlying()), address(_market));
+    uint256 _fundingBalance = balanceDef(_market.govToken().funding(), address(_market));
+    return  _fundingBalance + _underlyingBalance.ethmul(_price);}
+  
+  function calcRiskPremium(uint256 _grossCapital, int256 _currentNetNotional, int256 _newNetNotional, uint256 _runningVol,uint256 _volCapacityFactor ) public pure returns(uint256){
+    int256 _riskPremium = calcRiskPremiumAMM(_grossCapital, _currentNetNotional,  _runningVol, _volCapacityFactor).average(calcRiskPremiumAMM(_grossCapital, _newNetNotional, _runningVol, _volCapacityFactor));
+    require((SafeCast.toInt256(_runningVol) + _riskPremium) > 0,"Incorrect vol premium");
+    return SafeCast.toUint256(SafeCast.toInt256(_runningVol) + _riskPremium); 
+  }
+
+  function calcRiskPremiumAMM(uint256 _max, int256 _input, uint256 _constant, uint256 _volCapacityFactor) public pure returns(int256) {
+    int256 _capacity = SafeCast.toInt256(BASE); // capacity should be in (0,2)
+    if(_input < 0){_capacity +=  SafeCast.toInt256(uint256(-_input).muldiv(_volCapacityFactor, _max));}
+    if(_input > 0){ _capacity -= SafeCast.toInt256(uint256(_input).muldiv(_volCapacityFactor, _max));}
+    require(_capacity>=0 , "Capacity breached.");
+    return SafeCast.toInt256(_constant.ethdiv(uint256(_capacity))) - SafeCast.toInt256(_constant);}
 }

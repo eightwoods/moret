@@ -3,10 +3,9 @@ node_modules
 .deps
 app.js
 app
-trading
 .env
 *.dot
 **.json
 archive
-test
 *.py
+trading/__pycache__/library.cpython-37.pyc

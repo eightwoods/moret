@@ -25,11 +25,15 @@
   "dependencies": {
     "@aave/protocol-v2": "^1.0.1",
     "@chainlink/contracts": "^0.2.2",
-    "@openzeppelin/contracts": "^4.4.1",
-    "@truffle/hdwallet-provider": "^1.0.37",
+    "@openzeppelin/contracts": "^4.6.0",
+    "@truffle/hdwallet-provider": "^2.0.5",
     "@uniswap/v2-periphery": "*",
+    "async": "^3.2.3",
+    "defender-relay-client": "^1.23.0",
     "dotenv": "^10.0.0",
-    "web3": "^0.20.7"
+    "truffle": "^5.5.16",
+    "truffle-contract-size": "^2.0.1",
+    "web3": "^1.7.3"
   },
   "files": [
     "build/contracts/MoretMarketMaker.json",
