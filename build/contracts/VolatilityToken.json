@@ -173,8 +173,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -187,8 +186,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -212,8 +210,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -256,8 +253,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -270,8 +266,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -308,8 +303,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -328,8 +322,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -371,8 +364,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -409,8 +401,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -465,8 +456,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -479,8 +469,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -493,8 +482,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [],
@@ -507,8 +495,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -574,8 +561,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -604,8 +590,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -634,8 +619,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -19345,7 +19329,7 @@
         5787
       ],
       "MathLib": [
-        14449
+        14509
       ],
       "Strings": [
         4888
@@ -19412,7 +19396,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 11386,
-        "sourceUnit": 14450,
+        "sourceUnit": 14510,
         "src": "226:33:39",
         "symbolAliases": [],
         "unitAlias": ""
@@ -19472,7 +19456,7 @@
               "id": 11181,
               "name": "MathLib",
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 14449,
+              "referencedDeclaration": 14509,
               "src": "321:7:39"
             },
             "nodeType": "UsingForDirective",
@@ -20507,7 +20491,7 @@
                               "lValueRequested": false,
                               "memberName": "ethdiv",
                               "nodeType": "MemberAccess",
-                              "referencedDeclaration": 13625,
+                              "referencedDeclaration": 13685,
                               "src": "1158:39:39",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -20655,7 +20639,7 @@
                         "lValueRequested": false,
                         "memberName": "ethdiv",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 13625,
+                        "referencedDeclaration": 13685,
                         "src": "1237:15:39",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -21123,7 +21107,7 @@
                               "lValueRequested": false,
                               "memberName": "ethdiv",
                               "nodeType": "MemberAccess",
-                              "referencedDeclaration": 13625,
+                              "referencedDeclaration": 13685,
                               "src": "1465:39:39",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -21271,7 +21255,7 @@
                         "lValueRequested": false,
                         "memberName": "ethdiv",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 13625,
+                        "referencedDeclaration": 13685,
                         "src": "1544:15:39",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -22115,7 +22099,7 @@
         5787
       ],
       "MathLib": [
-        14449
+        14509
       ],
       "Strings": [
         4888
@@ -22182,7 +22166,7 @@
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
         "scope": 11386,
-        "sourceUnit": 14450,
+        "sourceUnit": 14510,
         "src": "226:33:39",
         "symbolAliases": [],
         "unitAlias": ""
@@ -22242,7 +22226,7 @@
               "id": 11181,
               "name": "MathLib",
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 14449,
+              "referencedDeclaration": 14509,
               "src": "321:7:39"
             },
             "nodeType": "UsingForDirective",
@@ -23277,7 +23261,7 @@
                               "lValueRequested": false,
                               "memberName": "ethdiv",
                               "nodeType": "MemberAccess",
-                              "referencedDeclaration": 13625,
+                              "referencedDeclaration": 13685,
                               "src": "1158:39:39",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -23425,7 +23409,7 @@
                         "lValueRequested": false,
                         "memberName": "ethdiv",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 13625,
+                        "referencedDeclaration": 13685,
                         "src": "1237:15:39",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -23893,7 +23877,7 @@
                               "lValueRequested": false,
                               "memberName": "ethdiv",
                               "nodeType": "MemberAccess",
-                              "referencedDeclaration": 13625,
+                              "referencedDeclaration": 13685,
                               "src": "1465:39:39",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -24041,7 +24025,7 @@
                         "lValueRequested": false,
                         "memberName": "ethdiv",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 13625,
+                        "referencedDeclaration": 13685,
                         "src": "1544:15:39",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_delegatecall_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
@@ -25127,8 +25111,7 @@
     }
   },
   "schemaVersion": "3.4.4",
-  "updatedAt": "2022-05-31T00:32:30.717Z",
-  "networkType": "ethereum",
+  "updatedAt": "2022-06-06T21:05:33.944Z",
   "devdoc": {
     "kind": "dev",
     "methods": {

@@ -165,15 +165,15 @@
     "absolutePath": "project:/contracts/interfaces/IVolatilityChain.sol",
     "exportedSymbols": {
       "IVolatilityChain": [
-        12716
+        12776
       ]
     },
-    "id": 12717,
+    "id": 12777,
     "license": "MIT",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 12648,
+        "id": 12708,
         "literals": [
           "solidity",
           "^",
@@ -190,9 +190,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 12716,
+        "id": 12776,
         "linearizedBaseContracts": [
-          12716
+          12776
         ],
         "name": "IVolatilityChain",
         "nameLocation": "67:16:50",
@@ -201,23 +201,23 @@
           {
             "anonymous": false,
             "eventSelector": "acc5a92f422695ec223f46e9e8d944e705858adc9b9bd84eef64b9c3bc462e21",
-            "id": 12657,
+            "id": 12717,
             "name": "NewVolatilityChainBlock",
             "nameLocation": "189:23:50",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 12656,
+              "id": 12716,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12650,
+                  "id": 12710,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "229:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12657,
+                  "scope": 12717,
                   "src": "213:22:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -226,7 +226,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12649,
+                    "id": 12709,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "213:7:50",
@@ -239,13 +239,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12652,
+                  "id": 12712,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_timeStamp",
                   "nameLocation": "245:10:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12657,
+                  "scope": 12717,
                   "src": "237:18:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -254,7 +254,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12651,
+                    "id": 12711,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "237:7:50",
@@ -267,34 +267,34 @@
                 },
                 {
                   "constant": false,
-                  "id": 12655,
+                  "id": 12715,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_book",
                   "nameLocation": "268:5:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12657,
+                  "scope": 12717,
                   "src": "257:16:50",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_PriceStamp_$12690_memory_ptr",
+                    "typeIdentifier": "t_struct$_PriceStamp_$12750_memory_ptr",
                     "typeString": "struct IVolatilityChain.PriceStamp"
                   },
                   "typeName": {
-                    "id": 12654,
+                    "id": 12714,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 12653,
+                      "id": 12713,
                       "name": "PriceStamp",
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 12690,
+                      "referencedDeclaration": 12750,
                       "src": "257:10:50"
                     },
-                    "referencedDeclaration": 12690,
+                    "referencedDeclaration": 12750,
                     "src": "257:10:50",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_PriceStamp_$12690_storage_ptr",
+                      "typeIdentifier": "t_struct$_PriceStamp_$12750_storage_ptr",
                       "typeString": "struct IVolatilityChain.PriceStamp"
                     }
                   },
@@ -308,23 +308,23 @@
           {
             "anonymous": false,
             "eventSelector": "c9da3ef1cd9a1e60f158af3c87742d2ad2d68916eb599d3d740a66844efb1325",
-            "id": 12665,
+            "id": 12725,
             "name": "ResetVolChainParameter",
             "nameLocation": "286:22:50",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 12664,
+              "id": 12724,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12659,
+                  "id": 12719,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "325:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12665,
+                  "scope": 12725,
                   "src": "309:22:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -333,7 +333,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12658,
+                    "id": 12718,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "309:7:50",
@@ -346,13 +346,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12661,
+                  "id": 12721,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_timeStamp",
                   "nameLocation": "341:10:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12665,
+                  "scope": 12725,
                   "src": "333:18:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -361,7 +361,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12660,
+                    "id": 12720,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "333:7:50",
@@ -374,13 +374,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12663,
+                  "id": 12723,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_executor",
                   "nameLocation": "361:9:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12665,
+                  "scope": 12725,
                   "src": "353:17:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -389,7 +389,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 12662,
+                    "id": 12722,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "353:7:50",
@@ -409,23 +409,23 @@
           {
             "anonymous": false,
             "eventSelector": "16525c17fb1186872bcf57b8588cd51b6e0a69ed167b3471bdd67b5ac538c47e",
-            "id": 12673,
+            "id": 12733,
             "name": "RemovedTenor",
             "nameLocation": "383:12:50",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 12672,
+              "id": 12732,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12667,
+                  "id": 12727,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "412:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12673,
+                  "scope": 12733,
                   "src": "396:22:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -434,7 +434,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12666,
+                    "id": 12726,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "396:7:50",
@@ -447,13 +447,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12669,
+                  "id": 12729,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_timeStamp",
                   "nameLocation": "428:10:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12673,
+                  "scope": 12733,
                   "src": "420:18:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -462,7 +462,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12668,
+                    "id": 12728,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "420:7:50",
@@ -475,13 +475,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12671,
+                  "id": 12731,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_executor",
                   "nameLocation": "448:9:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12673,
+                  "scope": 12733,
                   "src": "440:17:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -490,7 +490,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 12670,
+                    "id": 12730,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "440:7:50",
@@ -509,16 +509,16 @@
           },
           {
             "canonicalName": "IVolatilityChain.PriceStamp",
-            "id": 12690,
+            "id": 12750,
             "members": [
               {
                 "constant": false,
-                "id": 12675,
+                "id": 12735,
                 "mutability": "mutable",
                 "name": "startTime",
                 "nameLocation": "1074:9:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1066:17:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -527,7 +527,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12674,
+                  "id": 12734,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1066:7:50",
@@ -540,12 +540,12 @@
               },
               {
                 "constant": false,
-                "id": 12677,
+                "id": 12737,
                 "mutability": "mutable",
                 "name": "endTime",
                 "nameLocation": "1093:7:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1085:15:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -554,7 +554,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12676,
+                  "id": 12736,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1085:7:50",
@@ -567,12 +567,12 @@
               },
               {
                 "constant": false,
-                "id": 12679,
+                "id": 12739,
                 "mutability": "mutable",
                 "name": "open",
                 "nameLocation": "1110:4:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1102:12:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -581,7 +581,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12678,
+                  "id": 12738,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1102:7:50",
@@ -594,12 +594,12 @@
               },
               {
                 "constant": false,
-                "id": 12681,
+                "id": 12741,
                 "mutability": "mutable",
                 "name": "highest",
                 "nameLocation": "1124:7:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1116:15:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -608,7 +608,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12680,
+                  "id": 12740,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1116:7:50",
@@ -621,12 +621,12 @@
               },
               {
                 "constant": false,
-                "id": 12683,
+                "id": 12743,
                 "mutability": "mutable",
                 "name": "lowest",
                 "nameLocation": "1141:6:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1133:14:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -635,7 +635,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12682,
+                  "id": 12742,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1133:7:50",
@@ -648,12 +648,12 @@
               },
               {
                 "constant": false,
-                "id": 12685,
+                "id": 12745,
                 "mutability": "mutable",
                 "name": "close",
                 "nameLocation": "1157:5:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1149:13:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -662,7 +662,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12684,
+                  "id": 12744,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1149:7:50",
@@ -675,12 +675,12 @@
               },
               {
                 "constant": false,
-                "id": 12687,
+                "id": 12747,
                 "mutability": "mutable",
                 "name": "volatility",
                 "nameLocation": "1172:10:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1164:18:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -689,7 +689,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12686,
+                  "id": 12746,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1164:7:50",
@@ -702,12 +702,12 @@
               },
               {
                 "constant": false,
-                "id": 12689,
+                "id": 12749,
                 "mutability": "mutable",
                 "name": "accentus",
                 "nameLocation": "1192:8:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1184:16:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -716,7 +716,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12688,
+                  "id": 12748,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1184:7:50",
@@ -731,22 +731,22 @@
             "name": "PriceStamp",
             "nameLocation": "1054:10:50",
             "nodeType": "StructDefinition",
-            "scope": 12716,
+            "scope": 12776,
             "src": "1047:156:50",
             "visibility": "public"
           },
           {
             "canonicalName": "IVolatilityChain.VolParam",
-            "id": 12703,
+            "id": 12763,
             "members": [
               {
                 "constant": false,
-                "id": 12692,
+                "id": 12752,
                 "mutability": "mutable",
                 "name": "initialVol",
                 "nameLocation": "1508:10:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1500:18:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -755,7 +755,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12691,
+                  "id": 12751,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1500:7:50",
@@ -768,12 +768,12 @@
               },
               {
                 "constant": false,
-                "id": 12694,
+                "id": 12754,
                 "mutability": "mutable",
                 "name": "ltVol",
                 "nameLocation": "1528:5:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1520:13:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -782,7 +782,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12693,
+                  "id": 12753,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1520:7:50",
@@ -795,12 +795,12 @@
               },
               {
                 "constant": false,
-                "id": 12696,
+                "id": 12756,
                 "mutability": "mutable",
                 "name": "ltVolWeighted",
                 "nameLocation": "1543:13:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1535:21:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -809,7 +809,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12695,
+                  "id": 12755,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1535:7:50",
@@ -822,12 +822,12 @@
               },
               {
                 "constant": false,
-                "id": 12698,
+                "id": 12758,
                 "mutability": "mutable",
                 "name": "w",
                 "nameLocation": "1566:1:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1558:9:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -836,7 +836,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12697,
+                  "id": 12757,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1558:7:50",
@@ -849,12 +849,12 @@
               },
               {
                 "constant": false,
-                "id": 12700,
+                "id": 12760,
                 "mutability": "mutable",
                 "name": "p",
                 "nameLocation": "1577:1:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1569:9:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -863,7 +863,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12699,
+                  "id": 12759,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1569:7:50",
@@ -876,12 +876,12 @@
               },
               {
                 "constant": false,
-                "id": 12702,
+                "id": 12762,
                 "mutability": "mutable",
                 "name": "q",
                 "nameLocation": "1588:1:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1580:9:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -890,7 +890,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12701,
+                  "id": 12761,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1580:7:50",
@@ -905,13 +905,13 @@
             "name": "VolParam",
             "nameLocation": "1491:8:50",
             "nodeType": "StructDefinition",
-            "scope": 12716,
+            "scope": 12776,
             "src": "1484:108:50",
             "visibility": "public"
           },
           {
             "functionSelector": "b0667cf8",
-            "id": 12708,
+            "id": 12768,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -919,23 +919,23 @@
             "nameLocation": "1607:10:50",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 12704,
+              "id": 12764,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1617:2:50"
             },
             "returnParameters": {
-              "id": 12707,
+              "id": 12767,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12706,
+                  "id": 12766,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12708,
+                  "scope": 12768,
                   "src": "1642:7:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -944,7 +944,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12705,
+                    "id": 12765,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1642:7:50",
@@ -958,7 +958,7 @@
               ],
               "src": "1641:9:50"
             },
-            "scope": 12716,
+            "scope": 12776,
             "src": "1598:53:50",
             "stateMutability": "view",
             "virtual": false,
@@ -966,7 +966,7 @@
           },
           {
             "functionSelector": "cfc2dc20",
-            "id": 12715,
+            "id": 12775,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -974,17 +974,17 @@
             "nameLocation": "1665:8:50",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 12711,
+              "id": 12771,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12710,
+                  "id": 12770,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "1682:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12715,
+                  "scope": 12775,
                   "src": "1674:14:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -993,7 +993,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12709,
+                    "id": 12769,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1674:7:50",
@@ -1008,17 +1008,17 @@
               "src": "1673:16:50"
             },
             "returnParameters": {
-              "id": 12714,
+              "id": 12774,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12713,
+                  "id": 12773,
                   "mutability": "mutable",
                   "name": "_vol",
                   "nameLocation": "1720:4:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12715,
+                  "scope": 12775,
                   "src": "1712:12:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1027,7 +1027,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12712,
+                    "id": 12772,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1712:7:50",
@@ -1041,14 +1041,14 @@
               ],
               "src": "1711:14:50"
             },
-            "scope": 12716,
+            "scope": 12776,
             "src": "1656:70:50",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 12717,
+        "scope": 12777,
         "src": "57:1675:50",
         "usedErrors": []
       }
@@ -1059,15 +1059,15 @@
     "absolutePath": "project:/contracts/interfaces/IVolatilityChain.sol",
     "exportedSymbols": {
       "IVolatilityChain": [
-        12716
+        12776
       ]
     },
-    "id": 12717,
+    "id": 12777,
     "license": "MIT",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 12648,
+        "id": 12708,
         "literals": [
           "solidity",
           "^",
@@ -1084,9 +1084,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 12716,
+        "id": 12776,
         "linearizedBaseContracts": [
-          12716
+          12776
         ],
         "name": "IVolatilityChain",
         "nameLocation": "67:16:50",
@@ -1095,23 +1095,23 @@
           {
             "anonymous": false,
             "eventSelector": "acc5a92f422695ec223f46e9e8d944e705858adc9b9bd84eef64b9c3bc462e21",
-            "id": 12657,
+            "id": 12717,
             "name": "NewVolatilityChainBlock",
             "nameLocation": "189:23:50",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 12656,
+              "id": 12716,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12650,
+                  "id": 12710,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "229:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12657,
+                  "scope": 12717,
                   "src": "213:22:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1120,7 +1120,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12649,
+                    "id": 12709,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "213:7:50",
@@ -1133,13 +1133,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12652,
+                  "id": 12712,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_timeStamp",
                   "nameLocation": "245:10:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12657,
+                  "scope": 12717,
                   "src": "237:18:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1148,7 +1148,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12651,
+                    "id": 12711,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "237:7:50",
@@ -1161,34 +1161,34 @@
                 },
                 {
                   "constant": false,
-                  "id": 12655,
+                  "id": 12715,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_book",
                   "nameLocation": "268:5:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12657,
+                  "scope": 12717,
                   "src": "257:16:50",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_PriceStamp_$12690_memory_ptr",
+                    "typeIdentifier": "t_struct$_PriceStamp_$12750_memory_ptr",
                     "typeString": "struct IVolatilityChain.PriceStamp"
                   },
                   "typeName": {
-                    "id": 12654,
+                    "id": 12714,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 12653,
+                      "id": 12713,
                       "name": "PriceStamp",
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 12690,
+                      "referencedDeclaration": 12750,
                       "src": "257:10:50"
                     },
-                    "referencedDeclaration": 12690,
+                    "referencedDeclaration": 12750,
                     "src": "257:10:50",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_PriceStamp_$12690_storage_ptr",
+                      "typeIdentifier": "t_struct$_PriceStamp_$12750_storage_ptr",
                       "typeString": "struct IVolatilityChain.PriceStamp"
                     }
                   },
@@ -1202,23 +1202,23 @@
           {
             "anonymous": false,
             "eventSelector": "c9da3ef1cd9a1e60f158af3c87742d2ad2d68916eb599d3d740a66844efb1325",
-            "id": 12665,
+            "id": 12725,
             "name": "ResetVolChainParameter",
             "nameLocation": "286:22:50",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 12664,
+              "id": 12724,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12659,
+                  "id": 12719,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "325:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12665,
+                  "scope": 12725,
                   "src": "309:22:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1227,7 +1227,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12658,
+                    "id": 12718,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "309:7:50",
@@ -1240,13 +1240,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12661,
+                  "id": 12721,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_timeStamp",
                   "nameLocation": "341:10:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12665,
+                  "scope": 12725,
                   "src": "333:18:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1255,7 +1255,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12660,
+                    "id": 12720,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "333:7:50",
@@ -1268,13 +1268,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12663,
+                  "id": 12723,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_executor",
                   "nameLocation": "361:9:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12665,
+                  "scope": 12725,
                   "src": "353:17:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1283,7 +1283,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 12662,
+                    "id": 12722,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "353:7:50",
@@ -1303,23 +1303,23 @@
           {
             "anonymous": false,
             "eventSelector": "16525c17fb1186872bcf57b8588cd51b6e0a69ed167b3471bdd67b5ac538c47e",
-            "id": 12673,
+            "id": 12733,
             "name": "RemovedTenor",
             "nameLocation": "383:12:50",
             "nodeType": "EventDefinition",
             "parameters": {
-              "id": 12672,
+              "id": 12732,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12667,
+                  "id": 12727,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "412:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12673,
+                  "scope": 12733,
                   "src": "396:22:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1328,7 +1328,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12666,
+                    "id": 12726,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "396:7:50",
@@ -1341,13 +1341,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12669,
+                  "id": 12729,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_timeStamp",
                   "nameLocation": "428:10:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12673,
+                  "scope": 12733,
                   "src": "420:18:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1356,7 +1356,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12668,
+                    "id": 12728,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "420:7:50",
@@ -1369,13 +1369,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 12671,
+                  "id": 12731,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "_executor",
                   "nameLocation": "448:9:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12673,
+                  "scope": 12733,
                   "src": "440:17:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1384,7 +1384,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 12670,
+                    "id": 12730,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "440:7:50",
@@ -1403,16 +1403,16 @@
           },
           {
             "canonicalName": "IVolatilityChain.PriceStamp",
-            "id": 12690,
+            "id": 12750,
             "members": [
               {
                 "constant": false,
-                "id": 12675,
+                "id": 12735,
                 "mutability": "mutable",
                 "name": "startTime",
                 "nameLocation": "1074:9:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1066:17:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1421,7 +1421,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12674,
+                  "id": 12734,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1066:7:50",
@@ -1434,12 +1434,12 @@
               },
               {
                 "constant": false,
-                "id": 12677,
+                "id": 12737,
                 "mutability": "mutable",
                 "name": "endTime",
                 "nameLocation": "1093:7:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1085:15:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1448,7 +1448,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12676,
+                  "id": 12736,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1085:7:50",
@@ -1461,12 +1461,12 @@
               },
               {
                 "constant": false,
-                "id": 12679,
+                "id": 12739,
                 "mutability": "mutable",
                 "name": "open",
                 "nameLocation": "1110:4:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1102:12:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1475,7 +1475,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12678,
+                  "id": 12738,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1102:7:50",
@@ -1488,12 +1488,12 @@
               },
               {
                 "constant": false,
-                "id": 12681,
+                "id": 12741,
                 "mutability": "mutable",
                 "name": "highest",
                 "nameLocation": "1124:7:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1116:15:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1502,7 +1502,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12680,
+                  "id": 12740,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1116:7:50",
@@ -1515,12 +1515,12 @@
               },
               {
                 "constant": false,
-                "id": 12683,
+                "id": 12743,
                 "mutability": "mutable",
                 "name": "lowest",
                 "nameLocation": "1141:6:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1133:14:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1529,7 +1529,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12682,
+                  "id": 12742,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1133:7:50",
@@ -1542,12 +1542,12 @@
               },
               {
                 "constant": false,
-                "id": 12685,
+                "id": 12745,
                 "mutability": "mutable",
                 "name": "close",
                 "nameLocation": "1157:5:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1149:13:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1556,7 +1556,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12684,
+                  "id": 12744,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1149:7:50",
@@ -1569,12 +1569,12 @@
               },
               {
                 "constant": false,
-                "id": 12687,
+                "id": 12747,
                 "mutability": "mutable",
                 "name": "volatility",
                 "nameLocation": "1172:10:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1164:18:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1583,7 +1583,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12686,
+                  "id": 12746,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1164:7:50",
@@ -1596,12 +1596,12 @@
               },
               {
                 "constant": false,
-                "id": 12689,
+                "id": 12749,
                 "mutability": "mutable",
                 "name": "accentus",
                 "nameLocation": "1192:8:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12690,
+                "scope": 12750,
                 "src": "1184:16:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1610,7 +1610,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12688,
+                  "id": 12748,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1184:7:50",
@@ -1625,22 +1625,22 @@
             "name": "PriceStamp",
             "nameLocation": "1054:10:50",
             "nodeType": "StructDefinition",
-            "scope": 12716,
+            "scope": 12776,
             "src": "1047:156:50",
             "visibility": "public"
           },
           {
             "canonicalName": "IVolatilityChain.VolParam",
-            "id": 12703,
+            "id": 12763,
             "members": [
               {
                 "constant": false,
-                "id": 12692,
+                "id": 12752,
                 "mutability": "mutable",
                 "name": "initialVol",
                 "nameLocation": "1508:10:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1500:18:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1649,7 +1649,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12691,
+                  "id": 12751,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1500:7:50",
@@ -1662,12 +1662,12 @@
               },
               {
                 "constant": false,
-                "id": 12694,
+                "id": 12754,
                 "mutability": "mutable",
                 "name": "ltVol",
                 "nameLocation": "1528:5:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1520:13:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1676,7 +1676,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12693,
+                  "id": 12753,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1520:7:50",
@@ -1689,12 +1689,12 @@
               },
               {
                 "constant": false,
-                "id": 12696,
+                "id": 12756,
                 "mutability": "mutable",
                 "name": "ltVolWeighted",
                 "nameLocation": "1543:13:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1535:21:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1703,7 +1703,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12695,
+                  "id": 12755,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1535:7:50",
@@ -1716,12 +1716,12 @@
               },
               {
                 "constant": false,
-                "id": 12698,
+                "id": 12758,
                 "mutability": "mutable",
                 "name": "w",
                 "nameLocation": "1566:1:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1558:9:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1730,7 +1730,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12697,
+                  "id": 12757,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1558:7:50",
@@ -1743,12 +1743,12 @@
               },
               {
                 "constant": false,
-                "id": 12700,
+                "id": 12760,
                 "mutability": "mutable",
                 "name": "p",
                 "nameLocation": "1577:1:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1569:9:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1757,7 +1757,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12699,
+                  "id": 12759,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1569:7:50",
@@ -1770,12 +1770,12 @@
               },
               {
                 "constant": false,
-                "id": 12702,
+                "id": 12762,
                 "mutability": "mutable",
                 "name": "q",
                 "nameLocation": "1588:1:50",
                 "nodeType": "VariableDeclaration",
-                "scope": 12703,
+                "scope": 12763,
                 "src": "1580:9:50",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -1784,7 +1784,7 @@
                   "typeString": "uint256"
                 },
                 "typeName": {
-                  "id": 12701,
+                  "id": 12761,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
                   "src": "1580:7:50",
@@ -1799,13 +1799,13 @@
             "name": "VolParam",
             "nameLocation": "1491:8:50",
             "nodeType": "StructDefinition",
-            "scope": 12716,
+            "scope": 12776,
             "src": "1484:108:50",
             "visibility": "public"
           },
           {
             "functionSelector": "b0667cf8",
-            "id": 12708,
+            "id": 12768,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -1813,23 +1813,23 @@
             "nameLocation": "1607:10:50",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 12704,
+              "id": 12764,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1617:2:50"
             },
             "returnParameters": {
-              "id": 12707,
+              "id": 12767,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12706,
+                  "id": 12766,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12708,
+                  "scope": 12768,
                   "src": "1642:7:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1838,7 +1838,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12705,
+                    "id": 12765,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1642:7:50",
@@ -1852,7 +1852,7 @@
               ],
               "src": "1641:9:50"
             },
-            "scope": 12716,
+            "scope": 12776,
             "src": "1598:53:50",
             "stateMutability": "view",
             "virtual": false,
@@ -1860,7 +1860,7 @@
           },
           {
             "functionSelector": "cfc2dc20",
-            "id": 12715,
+            "id": 12775,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -1868,17 +1868,17 @@
             "nameLocation": "1665:8:50",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 12711,
+              "id": 12771,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12710,
+                  "id": 12770,
                   "mutability": "mutable",
                   "name": "_tenor",
                   "nameLocation": "1682:6:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12715,
+                  "scope": 12775,
                   "src": "1674:14:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1887,7 +1887,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12709,
+                    "id": 12769,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1674:7:50",
@@ -1902,17 +1902,17 @@
               "src": "1673:16:50"
             },
             "returnParameters": {
-              "id": 12714,
+              "id": 12774,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 12713,
+                  "id": 12773,
                   "mutability": "mutable",
                   "name": "_vol",
                   "nameLocation": "1720:4:50",
                   "nodeType": "VariableDeclaration",
-                  "scope": 12715,
+                  "scope": 12775,
                   "src": "1712:12:50",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1921,7 +1921,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 12712,
+                    "id": 12772,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1712:7:50",
@@ -1935,14 +1935,14 @@
               ],
               "src": "1711:14:50"
             },
-            "scope": 12716,
+            "scope": 12776,
             "src": "1656:70:50",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 12717,
+        "scope": 12777,
         "src": "57:1675:50",
         "usedErrors": []
       }
@@ -1955,7 +1955,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.4",
-  "updatedAt": "2022-05-30T19:25:12.947Z",
+  "updatedAt": "2022-06-06T21:05:33.994Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},
