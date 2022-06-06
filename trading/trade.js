@@ -49,22 +49,22 @@ const tradeOptions = async(broker, chain, exchange, token) => {
         console.log(web3.utils.fromWei(spotPrice,'ether'), web3.utils.fromWei(callStrike, 'ether'), web3.utils.fromWei(putStrike, 'ether'), web3.utils.fromWei(cost[0], 'ether'));
         const tx = await exchange.methods.tradeOption(pool, optionTenor, callStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 0 , 0).send();
         // print("{} options created at {} on exchange {} | pool {}: {}".format(token, datetime.now().strftime("%d/%m/%Y, %H:%M:%S"), exchange.address, pool, web3.toHex(web3.keccak(signed_txn.rawTransaction))))
-        const txPut = await exchange.functions.tradeOption(pool, optionTenor, putStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 1, 0).send(); 
+        const txPut = await exchange.methods.tradeOption(pool, optionTenor, putStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 1, 0).send(); 
     };
 }
 
 const main = async () => {
     try {
         const account = await getAccount();
-        const moret = getContract('Moret.json', moretAddress, account);
-        const exchange = getContract('Exchange.json', exchangeAddress, account);
+        const moret = getContract('Moret.json', moretAddress[chainId], account);
+        const exchange = getContract('Exchange.json', exchangeAddress[chainId], account);
         const broker = await getBroker(moret, account);
 
         // check max allowance
         const funding = await getFunding(broker, account);
-        const approvedAmount = await funding.methods.allowance(account, exchangeAddress).call();
+        const approvedAmount = await funding.methods.allowance(account, exchangeAddress[chainId]).call();
         if(web3.utils.toBN(web3.utils.toWei(optionAmount.toString(),'ether')).gt(web3.utils.toBN(approvedAmount))){
-          await funding.methods.approve(exchangeAddress, maxAmount).send();
+          await funding.methods.approve(exchangeAddress[chainId], maxAmount).send();
         }
         
         await Promise.all(tokens.map(async (token) => {

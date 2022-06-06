@@ -48,8 +48,8 @@ const expireOptions = async(broker, vault, exchange, token, account) => {
 const main = async () => {
     try {
         const account = await getAccount();
-        const moret = getContract('Moret.json', moretAddress, account);
-        const exchange = getContract('Exchange.json', exchangeAddress, account);
+        const moret = getContract('Moret.json', moretAddress[chainId], account);
+        const exchange = getContract('Exchange.json', exchangeAddress[chainId], account);
         const broker = await getBroker(moret, account);
         const vault = await getVault(exchange, account);
         

@@ -8,3 +8,4 @@ app
 **.json
 archive
 *.py
+trading/__pycache__/library.cpython-37.pyc
