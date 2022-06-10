@@ -91,7 +91,8 @@ contract OptionVault is EOption, AccessControl{
   function getHolderOptions(address _pool, address _address) external view returns(uint256[] memory){
     return mHolderAtiveOption[_pool][_address].values();}
   function getOption(uint256 _id) external view returns(OptionLib.Option memory) {return aOption[_id];}
-  function getActiveOptionCount(address _poolAddress) external view returns(uint256) {return mActiveOption[_poolAddress].length();}
+  function getActiveOptionCount(address _poolAddress) public view returns(uint256) {return mActiveOption[_poolAddress].length();}
+  function getActiveOptions(address _poolAddress) public view returns(uint256[] memory) {return mActiveOption[_poolAddress].values();}
 
   // function getHoldersOption(uint256 _index, address _address) external view returns(OptionLib.Option memory) {return aOption[activeOptionsPerOwner[_address].at(_index)];}
   function getOptionInfo(uint256 _id) external view returns(OptionLib.OptionStatus, OptionLib.OptionSide, address, Pool) {
@@ -108,8 +109,9 @@ contract OptionVault is EOption, AccessControl{
   // aggregate delta of all active contracts, optional including expiring contracts yet stamped as Expired. Arguments: spot price and whether to include expiring contracts
   // function calculateAggregateDelta(address _pool, uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
   //   _delta= 0;
-  //   for(uint256 i=0;i<activeContractCount;i++){
-  //     OptionLib.Option storage _option = aOption[uint256(activeOptions.at(i))];
+  //   uint256 _activeContractCount = getActiveOptionCount(_pool);
+  //   for(uint256 i= 0;i < _activeContractCount; i++){
+  //     OptionLib.Option storage _option = aOption[uint256(mActiveOption[_pool].at(i))];
   //     uint256 _maturityLeft = _option.calcRemainingMaturity();
   //     uint256 _vol = volChain.queryVol(_maturityLeft);
   //     _delta += _option.calcDelta(_price, _vol, _includeExpiring);}}
@@ -176,7 +178,8 @@ contract OptionVault is EOption, AccessControl{
   function calcImpliedVol(MarketMaker _market, uint256 _tenor, uint256 _volCapacityFactor, int256 _currentNetNotional, int256 _newNetNotional) public view returns(uint256 _price, uint256 _impVol, uint256 _annualisedVol){
     VolatilityChain _volChain = _market.getVolatilityChain();
     _price = _volChain.queryPrice();
-    _impVol = MarketLib.calcRiskPremium(MarketLib.getGrossCapital(_market, _price), _currentNetNotional, _newNetNotional, _volChain.queryVol(_tenor), _volCapacityFactor);
+    uint256 _capitalInNotional = MarketLib.getGrossCapital(_market, _price).ethdiv(_price);
+    _impVol = MarketLib.calcRiskPremium(_capitalInNotional, _currentNetNotional, _newNetNotional, _volChain.queryVol(_tenor), _volCapacityFactor);
     _annualisedVol = _impVol.ethmul(_volChain.getSqrtRatio(_tenor));}
     
   // functions related to capital calculation, addition and removals

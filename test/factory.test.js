@@ -26,13 +26,13 @@ const Exchange = artifacts.require('./Exchange');
 const OptionVault = artifacts.require('./OptionVault');
 
 const marketMakerDescription = web3.utils.fromAscii('test MarketMaker maker');
-const poolName = 'ETH Market Pool Test';
-const poolSymbol = 'ETHmpTest';
-const initialCapital = 1e18;
+const poolName = 'ETH Market Pool 1';
+const poolSymbol = 'ETHmp1';
+const initialCapital = 1;
 const optionAmount = 1e16;
 const optionApproveAmount = 1e6;
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
-const relay_address = web3.utils.toChecksumAddress(process.env.RELAYER_ACCOUNT);
+const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
 
 contract("Factory test", async accounts => {
     it("Add volchain to Moret", async () => {
@@ -112,10 +112,13 @@ contract("Factory test", async accounts => {
         
         const fundingAddress = await marketInstance.funding();
         const funding = await ERC20.at(fundingAddress);
-        await funding.approve(exchangeInstance.address, web3.utils.toBN(initialCapital), {from: account_one});
-        await exchangeInstance.addCapital(poolInstance.address, web3.utils.toBN(initialCapital), { from: account_one });
+        const fundingDecimals = await funding.decimals();
+        var initialCapitalERC20 = initialCapital * (10 ** (Number(fundingDecimals)));
+        initialCapitalERC20 = web3.utils.toBN(initialCapitalERC20.toString());
+        await funding.approve(exchangeInstance.address, initialCapitalERC20, {from: account_one});
+        await exchangeInstance.addCapital(poolInstance.address, initialCapitalERC20, { from: account_one });
         const poolCapital = await vaultInstance.calcCapital(poolInstance.address, false, false);
-        assert.equal(web3.utils.fromWei(poolCapital), web3.utils.fromWei(web3.utils.toBN(initialCapital)), 'wrong capital invested');
+        assert.equal(web3.utils.fromWei(poolCapital), initialCapital, 'wrong capital invested');
 
     });
 

@@ -1,5 +1,5 @@
 const optionTenor = 86400;
-const optionAmount = 0.01;
+const optionAmount = 1;
 
 const {moretAddress, exchangeAddress, tokenAddresses, tokens, chainId, minTicks, maxAmount} = require('./config.json');
 
@@ -44,12 +44,13 @@ const tradeOptions = async(broker, chain, exchange, token) => {
   
     const pools = await broker.methods.getAllPools(tokenAddresses[chainId][token]).call();
     for (var i = 0; i < 1; i++) {
-        const pool = pools[i];
-        const cost = await exchange.methods.queryOption(pool, optionTenor, callStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 0 , 0, false).call();
-        console.log(web3.utils.fromWei(spotPrice,'ether'), web3.utils.fromWei(callStrike, 'ether'), web3.utils.fromWei(putStrike, 'ether'), web3.utils.fromWei(cost[0], 'ether'));
-        const tx = await exchange.methods.tradeOption(pool, optionTenor, callStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 0 , 0).send();
+      const pool = pools[i];
+      const cost = await exchange.methods.queryOption(pool, optionTenor, callStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 0 , 0, false).call();
+      console.log(web3.utils.fromWei(spotPrice,'ether'), web3.utils.fromWei(callStrike, 'ether'), web3.utils.fromWei(putStrike, 'ether'));
+      console.log(web3.utils.fromWei(cost[0], 'ether'), web3.utils.fromWei(cost[1], 'ether'), web3.utils.fromWei(cost[2], 'ether'), web3.utils.fromWei(cost[3], 'ether'));
+        // const tx = await exchange.methods.tradeOption(pool, optionTenor, callStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 0 , 0).send();
         // print("{} options created at {} on exchange {} | pool {}: {}".format(token, datetime.now().strftime("%d/%m/%Y, %H:%M:%S"), exchange.address, pool, web3.toHex(web3.keccak(signed_txn.rawTransaction))))
-        const txPut = await exchange.methods.tradeOption(pool, optionTenor, putStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 1, 0).send(); 
+        // const txPut = await exchange.methods.tradeOption(pool, optionTenor, putStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 1, 0).send(); 
     };
 }
 
