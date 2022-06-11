@@ -12,9 +12,9 @@ function getContract(abiFile, address, account) {
     var { abi } = require('../build/contracts/' + abiFile);
     var contract = new web3.eth.Contract(abi, address, { from: account });
     return contract;
-}
+  }
 
-const getAccount = async () => {
+const getAccount = async() =>{
     const [from] = await web3.eth.getAccounts();
     return from;
 }
@@ -81,17 +81,17 @@ const swap = async(market, funding, delta, spot, account) => {
 
     const tradeHedge = delta - currentHedge;
     const tradeValue = tradeHedge * spot;
-
+    console.log(delta, tradeHedge, tradeValue, hedgeThreshold, spot);
     if (Math.abs(tradeValue) > hedgeThreshold){
         let spenderData = await fetchAsync(oneinchUrl[chainId] + "approve/spender");
         let spenderAddress = web3.utils.toChecksumAddress(spenderData['address']);
-        console.log(tradeHedge, tradeValue, spot, spenderAddress);
+        console.log('spender address', spenderAddress);
 
         if (tradeHedge > 0) { 
             let tradeFunding = web3.utils.toBN(web3.utils.toWei(tradeValue.toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(fundingDecimals))));
             let swapParams = { 'fromTokenAddress': funding._address, 'toTokenAddress': underlyingAddress, 'amount': tradeFunding, 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' } ;
             swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
-            // console.log(swapData);
+            console.log(swapData);
             // await market.methods.trade(funding._address, tradeFunding, spenderAddress, hexToBytes(swapData['tx']['data']), defaultGas);
         }
         else{
@@ -108,16 +108,16 @@ const hedge = async (vault, broker, oracle, funding, token, account) => {
     const pools = await broker.methods.getAllPools(tokenAddresses[chainId][token]).call();
     var ts = Math.round((new Date()).getTime() / 1000); // current UNIX timestamp in seconds
     var spot = await oracle.methods.queryPrice().call();
-    spot = parseFloat(web3.utils.fromWei(spot));
     var vol = await oracle.methods.queryVol(86400).call();
-    vol = parseFloat(web3.utils.fromWei(vol));
     var ann = await oracle.methods.getSqrtRatio(86400).call();
-    console.log(spot, vol * parseFloat(web3.utils.fromWei(ann)));
+    console.log(web3.utils.fromWei(spot), parseFloat(web3.utils.fromWei(vol)) * parseFloat(web3.utils.fromWei(ann)));
 
     for (var i = 0; i < 1; i++) {
         const pool = getContract('Pool.json', pools[i], account);
         // const options = await vault.methods.getActiveOptions(pool).call();
-        let delta = 0.001;
+        // let delta = 0.00005;
+        let delta = await vault.methods.calculateAggregateDelta(pools[i], spot, false).call();
+        delta = parseFloat(web3.utils.fromWei(delta));
         // for (var j = 0;j < options.length(); j++){
         //     let option = await vault.methods.getOption(options[j]).call();
         //     let timeToExpiry = Math.max(0, option.maturity - ts); 
@@ -128,7 +128,7 @@ const hedge = async (vault, broker, oracle, funding, token, account) => {
         const marketAddress = await pool.methods.marketMaker().call();
         console.log('market', marketAddress);
         const market = getContract('MarketMaker.json', marketAddress, account);
-        await swap(market, funding, delta, spot, account);
+        await swap(market, funding, delta, parseFloat(web3.utils.fromWei(spot)), account);
         // print("{} options created at {} on exchange {} | pool {}: {}".format(token, datetime.now().strftime("%d/%m/%Y, %H:%M:%S"), exchange.address, pool, web3.toHex(web3.keccak(signed_txn.rawTransaction))))
         // const txPut = await exchange.methods.tradeOption(pool, optionTenor, putStrike, web3.utils.toWei(optionAmount.toString(),'ether'), 1, 0).send(); 
     };

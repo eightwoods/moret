@@ -92,7 +92,7 @@ contract OptionVault is EOption, AccessControl{
     return mHolderAtiveOption[_pool][_address].values();}
   function getOption(uint256 _id) external view returns(OptionLib.Option memory) {return aOption[_id];}
   function getActiveOptionCount(address _poolAddress) public view returns(uint256) {return mActiveOption[_poolAddress].length();}
-  function getActiveOptions(address _poolAddress) public view returns(uint256[] memory) {return mActiveOption[_poolAddress].values();}
+  function getActiveOptions(address _poolAddress) external view returns(uint256[] memory) {return mActiveOption[_poolAddress].values();}
 
   // function getHoldersOption(uint256 _index, address _address) external view returns(OptionLib.Option memory) {return aOption[activeOptionsPerOwner[_address].at(_index)];}
   function getOptionInfo(uint256 _id) external view returns(OptionLib.OptionStatus, OptionLib.OptionSide, address, Pool) {
@@ -107,14 +107,16 @@ contract OptionVault is EOption, AccessControl{
   //   return Math.max(mDeltaAtZero[_poolAddress], mDeltaAtMax[_poolAddress]).ethmul(_volChain.queryPrice());}
 
   // aggregate delta of all active contracts, optional including expiring contracts yet stamped as Expired. Arguments: spot price and whether to include expiring contracts
-  // function calculateAggregateDelta(address _pool, uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
-  //   _delta= 0;
-  //   uint256 _activeContractCount = getActiveOptionCount(_pool);
-  //   for(uint256 i= 0;i < _activeContractCount; i++){
-  //     OptionLib.Option storage _option = aOption[uint256(mActiveOption[_pool].at(i))];
-  //     uint256 _maturityLeft = _option.calcRemainingMaturity();
-  //     uint256 _vol = volChain.queryVol(_maturityLeft);
-  //     _delta += _option.calcDelta(_price, _vol, _includeExpiring);}}
+  function calculateAggregateDelta(address _pool, uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
+    _delta= 0;
+    uint256 _activeContractCount = getActiveOptionCount(_pool);
+    MarketMaker _marketMaker = Pool(_pool).marketMaker();
+    VolatilityChain _volChain = _marketMaker.getVolatilityChain();
+    for(uint256 i=0;i< _activeContractCount;i++){
+      OptionLib.Option storage _option = aOption[uint256(mActiveOption[_pool].at(i))];
+      uint256 _maturityLeft = _option.calcRemainingMaturity();
+      uint256 _vol = _volChain.queryVol(_maturityLeft);
+      _delta += _option.calcDelta(_price, _vol, _includeExpiring);}}
   
   // aggregate gamma. Arguments: spot price
   // function calculateAggregateGamma(address _pool, uint256 _price) external view returns(int256 _gamma){

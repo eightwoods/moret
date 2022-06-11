@@ -30,7 +30,6 @@ const poolName = 'ETH Market Pool 1';
 const poolSymbol = 'ETHmp1';
 const initialCapital = 1;
 const optionAmount = 1e16;
-const optionApproveAmount = 1e6;
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
 const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
 
@@ -60,17 +59,17 @@ contract("Factory test", async accounts => {
         assert.equal(outVolToken, volTokenInstance.address, 'vol token not deployed correctly');
     
         var outAddress = await volTokenInstance.underlying();
-        assert.equal(outAddress, process.env.TOKEN_ADDRESS, 'wrong underlying');
+        assert.equal(outAddress, token_address, 'wrong underlying');
 
         // add 7d and 30d vol tokens
         var exchangeInstance = await Exchange.deployed();
         // await deployer.link(mathLib, volToken);
-        var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, process.env.TOKEN_ADDRESS, seven.seconds, [process.env.TOKEN_NAME, seven.ext, 'days'].join(' '), [process.env.TOKEN_NAME, seven.ext, 'D'].join(''), exchangeInstance.address);
+        var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, seven.seconds, [process.env.TOKEN_NAME, seven.ext, 'days'].join(' '), [process.env.TOKEN_NAME, seven.ext, 'D'].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, seven.seconds, newVolInstance.address, {from: account_one} );
         outVolToken = await moretInstance.getVolatilityToken(token_address, seven.seconds);
         assert.equal(outVolToken, newVolInstance.address, '7d vol token not deployed correctly')
 
-        newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, process.env.TOKEN_ADDRESS, thirty.seconds, [process.env.TOKEN_ADDRESS, thirty.ext, 'days'].join(' '), [process.env.TOKEN_NAME, thirty.ext, 'D'].join(''), exchangeInstance.address);
+        newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, thirty.seconds, [token_address, thirty.ext, 'days'].join(' '), [process.env.TOKEN_NAME, thirty.ext, 'D'].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, thirty.seconds, newVolInstance.address, {from: account_one});
         outVolToken = await moretInstance.getVolatilityToken(token_address, thirty.seconds);
         assert.equal(outVolToken, newVolInstance.address, '30d vol token not deployed correctly')
@@ -133,11 +132,16 @@ contract("Factory test", async accounts => {
         assert.equal(pools.length, 1, 'incorrect number of pools');
 
         const poolInstance = await Pool.at(pools[0]);
-
         const optionQuote = await exchangeInstance.queryOption(poolInstance.address, one.seconds, 1, web3.utils.toBN(optionAmount), 1, 0, true);
-        
-        assert.equal(parseFloat(web3.utils.fromWei(optionQuote[0])).toFixed(2), '0.39', 'option price wrong');
+
+        // const volchainInstance = await VolatilityChain.deployed();
+        // const spotPrice = await volchainInstance.queryPrice();
+        // const delta = await vaultInstance.calculateAggregateDelta(poolInstance.address, spotPrice, false);
+
+        // assert.equal(parseFloat(web3.utils.fromWei(optionQuote[0])).toFixed(2), '0.39', 'option price wrong');
         assert.equal(parseFloat(web3.utils.fromWei(optionQuote[1])), 0, 'option collateral wrong');
+        
+        const volchainAddress = await moret.methods.getVolatilityChain(tokenAddress).call();
         assert.equal(parseFloat(web3.utils.fromWei(optionQuote[3])).toFixed(2), '0.90', 'option vol wrong');
 
         const marketAddress = await poolInstance.marketMaker();
