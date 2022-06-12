@@ -8,4 +8,4 @@ app
 *.dot
 archive
 *.py
-trading/__pycache__/library.cpython-37.pyc
+*.pyc

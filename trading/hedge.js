@@ -1,8 +1,10 @@
-const { moretAddress, exchangeAddress, tokenAddresses, tokens, chainId, maxAmount, hedgeThreshold, oneinchUrl, oneinchSlippage, defaultGas } = require('./config.json');
+const { moretAddress, exchangeAddress, tokenAddresses, aaveAddressesProvider, tokens, chainId, maxAmount, hedgeThreshold, oneinchUrl, oneinchSlippage, defaultGas, allowShorting, lendingPoolRateMode} = require('./config.json');
 const optionAmount = 1;
+const allowTrade = true;
 
 const { DefenderRelayProvider } = require('defender-relay-client/lib/web3');
 const Web3 = require('web3');
+const lib = require('library');
 
 const credentials = { apiKey: process.env.RELAYER_KEY, apiSecret: process.env.RELAYER_SECRET };
 const provider = new DefenderRelayProvider(credentials, { speed: 'fast' });
@@ -53,53 +55,196 @@ async function fetchAsyncWithParams(requestURL, params) {
     return data;
 }
 
-// Convert a hex string to a byte array
-function hexToBytes(hex) {
-    for (var bytes = [], c = 0; c < hex.length; c += 2)
-        bytes.push(parseInt(hex.substr(c, 2), 16));
-    return bytes;
+async function getLendingPool(account) {
+    let lendingPoolAddressesProvider = getContract('ILendingPoolAddressesProvider.json', aaveAddressesProvider[chainId], account);
+    let lendingPoolAddress = await lendingPoolAddressesProvider.methods.getLendingPool().call();
+    let lendingPool = getContract('ILendingPool.json', lendingPoolAddress, account);
+    return lendingPool;
 }
 
-// Convert a byte array to a hex string
-function bytesToHex(bytes) {
-    for (var hex = [], i = 0; i < bytes.length; i++) {
-        var current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
-        hex.push((current >>> 4).toString(16));
-        hex.push((current & 0xF).toString(16));
+async function calcLoanTrade(targetHedge, underlyingAddress, spot, account){
+    let lendingPoolAddressesProvider = getContract('ILendingPoolAddressesProvider.json', aaveAddressesProvider[chainId], account);
+    let protocolProviderAddress = await lendingPoolAddressesProvider.methods.getAddress("0x1").call();
+    let protocolProvider = getContract('IProtocolDataProvider.json', protocolProviderAddress, account);
+    // let aaveLendingAddresses = await protocolProvider.methods.getReserveTokensAddresses(underlyingAddress).call(); // aTokenAddress, stableDebtTokenAddress, variableDebtTokenAddress
+    // let stableDebtBalance = await loanBalance(aaveAddressesProvider[1], account);
+    // let variableDebtBalance = await loanBalance(aaveAddressesProvider[2], account);
+    // let debtBalance = stableDebtBalance + variableDebtBalance;
+
+    let reserveConfig = await protocolProvider.methods.getReserveConfigurationData(underlyingAddress).call();
+    let accountData = await protocolProvider.methods.getUserReserveData(underlyingAddress, account).call();
+    let loanBalance = parseFloat(web3.utils.fromWei(accountData[1])) + parseFloat(web3.utils.fromWei(accountData[2]));
+    let collateralBalance = parseFloat(web3.utils.fromWei(accountData[0]));
+
+    let debtTrade = Math.max(0, -targetHedge) - loanBalance;
+    let collateralChange = targetHedge * (reserveConfig[1] / 1e4) * spot - collateralBalance; 
+    return [debtTrade, collateralChange];
+}
+
+// async function loanPrincipal(address, isStable, account){
+//     if(isStable){
+//         let debt = getContract('IStableDebtToken.json', address, account);
+//         let debtPrincipal = await debt.principalBalanceOf(account);
+//         return debtPrincipal;
+//     }
+//     else{
+//         let debt = getContract('IScaledBalanceToken.json', address, account);
+//         let debtPrincipal = await debt.scaledBalanceOf(account);
+//         return debtPrincipal;
+//     }
+// }
+
+// async function loanBalance(address, account) {    
+//     let debt = getContract('IERC20.json', address, account);
+//     let debtBalance = await debt.balanceOf(account);
+//     return parseFloat(web3.utils.fromWei(debtBalance));
+// }
+
+const buyUnderlying = async (tradeValue, fundingDecimals, fundingAddress, underlyingAddress, marketAddress, spenderAddress) => {
+    let tradeFunding = web3.utils.toBN(web3.utils.toWei(tradeValue.toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(fundingDecimals))));
+    let swapParams = { 'fromTokenAddress': fundingAddress, 'toTokenAddress': underlyingAddress, 'amount': tradeFunding, 'fromAddress': marketAddress, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
+    swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
+    let callData = web3.utils.hexToBytes(swapData['tx']['data']);
+
+    if (allowTrade) {
+        await market.methods.trade(funding._address, tradeFunding, spenderAddress, callData, defaultGas).send();
     }
-    return hex.join("");
+    else {
+        console.log(funding._address, Number(tradeFunding), spenderAddress, callData, defaultGas);
+    }
 }
 
+const sellUnderlying = async (tradeValue, fundingDecimals, fundingAddress, underlyingAddress, marketAddress, spenderAddress) => {
+    let tradeFunding = web3.utils.toBN(web3.utils.toWei(tradeValue.toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(fundingDecimals))));
+    let swapParams = { 'fromTokenAddress': fundingAddress, 'toTokenAddress': underlyingAddress, 'amount': tradeFunding, 'fromAddress': marketAddress, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
+    swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
+    let callData = web3.utils.hexToBytes(swapData['tx']['data']);
+
+    if (allowTrade) {
+        await market.methods.trade(funding._address, tradeFunding, spenderAddress, callData, defaultGas).send();
+    }
+    else {
+        console.log(funding._address, Number(tradeFunding), spenderAddress, callData, defaultGas);
+    }
+}
+
+const checkApproval = async(token, account, spender, spendAmount)=>{
+    const approvedAmount = await token.methods.allowance(account, spender).call();
+    if (web3.utils.toBN(web3.utils.toWei(spendAmount.toString(), 'ether')).gt(web3.utils.toBN(approvedAmount))) {
+        await token.methods.approve(spendAmount, maxAmount).send();
+    }
+}
+
+// swap function adjust hedges of a given market maker contract address
+// based on target hedge and current hedge positions, it calculates the following
+// 1. buy underlying token
+// 2. repayment of borrowing
+// 3. additional borrowing from Aave
+// 4. sell underlying token
 const swap = async(market, funding, delta, spot, account) => {
     const underlyingAddress = await market.methods.underlying().call();
     const underlying = getContract('ERC20.json', underlyingAddress, account);
     const underlyingDecimals = await underlying.methods.decimals().call();
     const fundingDecimals = await funding.methods.decimals().call();
 
+    let spenderData = await fetchAsync(oneinchUrl[chainId] + "approve/spender");
+    let spenderAddress = web3.utils.toChecksumAddress(spenderData['address']);
+    console.log('spender address', spenderAddress);
+
     let currentHedge = await underlying.methods.balanceOf(market._address).call();
-    currentHedge = parseFloat(web3.utils.fromWei(web3.utils.toBN(currentHedge).mul(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(underlyingDecimals))))))
+    currentHedge = parseFloat(web3.utils.fromWei(web3.utils.toBN(currentHedge).mul(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(underlyingDecimals))))));
+    let lendingPool = await getLendingPool(account);
+    const loanTrade = await calcLoanTrade(delta, underlyingAddress, account);
+    const loanTradeValue = loanTrade[0] * spot; 
 
-    const tradeHedge = delta - currentHedge;
-    const tradeValue = tradeHedge * spot;
-    console.log(delta, tradeHedge, tradeValue, hedgeThreshold, spot);
+    // if loans needs to be repaid
+    if (loanTradeValue < -hedgeThreshold){
+        // trade for tokens needed for loan repayment.
+        await buyUnderlying(Math.abs(loanTradeValue), fundingDecimals, funding._address, underlyingAddress, market._address, spenderAddress).send();
+
+        // repay loans
+        await checkApproval(underlying, account, spenderAddress, Math.abs(loanTrade[0]));
+        await lendingPool.methods.repay(underlyingAddress, web3.utils.toWei(Math.abs(loanTrade[0]),'ether'), lendingPoolRateMode, market._address);
+
+        // reduce collaterals if needed
+
+    }
+    else if (loanTradeValue > hedgeThreshold){
+        // more collaterals if needed
+
+
+
+    }
+
+
+    const tradeHedge = delta - currentHedge ;
+    var tradeValue = tradeHedge * spot;
+
+    console.log(delta, currentHedge, tradeHedge, tradeValue, hedgeThreshold, borrowTrade, spot);
+
+
+
     if (Math.abs(tradeValue) > hedgeThreshold){
-        let spenderData = await fetchAsync(oneinchUrl[chainId] + "approve/spender");
-        let spenderAddress = web3.utils.toChecksumAddress(spenderData['address']);
-        console.log('spender address', spenderAddress);
+        
 
+        // Step 1: purchase hedges
         if (tradeHedge > 0) { 
             let tradeFunding = web3.utils.toBN(web3.utils.toWei(tradeValue.toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(fundingDecimals))));
             let swapParams = { 'fromTokenAddress': funding._address, 'toTokenAddress': underlyingAddress, 'amount': tradeFunding, 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' } ;
             swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
-            console.log(swapData);
-            // await market.methods.trade(funding._address, tradeFunding, spenderAddress, hexToBytes(swapData['tx']['data']), defaultGas);
+            let callData = web3.utils.hexToBytes(swapData['tx']['data']);
+
+            if (allowTrade){
+                await market.methods.trade(funding._address, tradeFunding, spenderAddress, callData, defaultGas).send();
+            }
+            else{
+                console.log(funding._address, Number(tradeFunding), spenderAddress, callData, defaultGas);
+            }
         }
-        else{
-            let tradeUnderlying = web3.utils.toBN(web3.utils.toWei(Math.abs(tradeHedge).toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(fundingDecimals))));
+
+        // Step 2: repay borrowing
+        if (tradeHedge > 0 && currentHedge < 0){
+            let repayAmount = Math.min(tradeHedge, Math.abs(currentHedge));
+            let repayValue = repayAmount * spot;
+            console.log("Repayment loan", repayAmount, repayValue);
+
+            
+            
+            
+
+    # loan_trade_amount, collateral_change, loan_address, collateral_address = vault.functions.calcLoanTradesInTok(market.address, loan_rate_mode).call()
+    # print("Loan transaction {}, collateral change {} USDC, nonce {}.".format(
+    #     loan_trade_amount, collateral_change, nonce))
+    # if abs(collateral_change) > trade_threshold:
+    #     txn = market.functions.hedgeTradesForLoans().buildTransaction(
+    #         { 'gas': default_gas, 'from': web3.eth.default_account, 'nonce': nonce, 'chainId': chain_id, 'gasPrice': default_gas_price })
+    #     signed_txn = web3.eth.account.signTransaction(
+    #         txn, private_key = os.environ['MNEMONIC'])
+    #     web3.eth.sendRawTransaction(signed_txn.rawTransaction)
+    #     print("Transaction sent {} ".format(
+    #         web3.toHex(web3.keccak(signed_txn.rawTransaction))))
+    #     receipt = web3.eth.wait_for_transaction_receipt(
+    #         web3.toHex(web3.keccak(signed_txn.rawTransaction)))
+    #     print("Transaction mined {} ".format(
+    #         web3.toHex(web3.keccak(signed_txn.rawTransaction))))
+    #     nonce = nonce + 1
+    # else:
+    #     print("Loan transaction too small, skipped.")
+        }
+
+        // Step 3: new borrowing
+        if (allowShorting){
+
+        }
+
+        // Step 4: sell hedges
+        if (tradeHedge<0) {
+            let tradeUnderlying = web3.utils.toBN(web3.utils.toWei(Math.abs(tradeHedge).toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(underlyingDecimals))));
             let swapParams = { 'fromTokenAddress': underlyingAddress, 'toTokenAddress': funding._address, 'amount': tradeUnderlying, 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
             swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
-            console.log(swapData);
-            // await market.methods.trade(underlyingAddress, tradeUnderlying, spenderAddress, hexToBytes(swapData['tx']['data']), defaultGas);
+            // console.log(swapData);
+            let callData = web3.utils.hexToBytes(swapData['tx']['data']);
+            await market.methods.trade(underlyingAddress, tradeUnderlying, spenderAddress, callData, defaultGas).send();
         }
     }
 }

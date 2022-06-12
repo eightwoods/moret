@@ -32,6 +32,7 @@ const initialCapital = 1;
 const optionAmount = 1e16;
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
 const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
+const oneinch_route = web3.utils.toChecksumAddress(process.env.ONEINCH_ROUTE);
 
 contract("Factory test", async accounts => {
     it("Add volchain to Moret", async () => {
@@ -75,6 +76,12 @@ contract("Factory test", async accounts => {
         assert.equal(outVolToken, newVolInstance.address, '30d vol token not deployed correctly')
     });
 
+    it("add hedging bot", async() =>{
+        const account_one = accounts[0];
+        const moretInstance = await Moret.deployed();
+        await moretInstance.updateEligibleRoute(oneinch_route, true, {from: account_one});
+    })
+
     it("create Pool and buy option", async () => {
         const account_one = accounts[0];
         const hedging_bot = relay_address;
@@ -115,8 +122,8 @@ contract("Factory test", async accounts => {
         var initialCapitalERC20 = initialCapital * (10 ** (Number(fundingDecimals)));
         initialCapitalERC20 = web3.utils.toBN(initialCapitalERC20.toString());
         await funding.approve(exchangeInstance.address, initialCapitalERC20, {from: account_one});
-        await exchangeInstance.addCapital(poolInstance.address, initialCapitalERC20, { from: account_one });
-        const poolCapital = await vaultInstance.calcCapital(poolInstance.address, false, false);
+        await exchangeInstance.addCapital(poolAddress, initialCapitalERC20, { from: account_one });
+        const poolCapital = await vaultInstance.calcCapital(poolAddress, false, false);
         assert.equal(web3.utils.fromWei(poolCapital), initialCapital, 'wrong capital invested');
 
     });

@@ -52,8 +52,8 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         // emit DivestFromGov(msg.sender, _capitalToDivest);}
     }
 
-    // withdraw from certain pool -> 
-    function withdrawPool(Pool _pool, uint256 _amount) external onlyOwner{
+    // withdraw from certain pool so funding tokens can be saved in. This could be only executed by the owner address
+    function withdraw(Pool _pool, uint256 _amount) external onlyOwner{
         Exchange(_pool.exchange()).withdrawCapital(_pool, _amount);
         emit WithdrawPoolTokens(address(_pool), _amount);}
 
@@ -62,7 +62,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         protocolFee = _newFee;
         emit UpdateProtocolFees(_newFee);}
     function setProtocolRecipient(address _newAddress) public onlyOwner(){ 
-        require(_newAddress != address(0), "Param too big"); 
+        require(_newAddress != address(0), "0 address"); 
         protocolFeeRecipient = _newAddress;}
 
     // list of underlying addresses
