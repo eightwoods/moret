@@ -128,6 +128,8 @@ const sellUnderlying = async (tradeValue, fundingDecimals, fundingAddress, under
     }
 }
 
+
+
 const checkApproval = async(token, account, spender, spendAmount)=>{
     const approvedAmount = await token.methods.allowance(account, spender).call();
     if (web3.utils.toBN(web3.utils.toWei(spendAmount.toString(), 'ether')).gt(web3.utils.toBN(approvedAmount))) {
@@ -138,10 +140,63 @@ const checkApproval = async(token, account, spender, spendAmount)=>{
 // swap function adjust hedges of a given market maker contract address
 // based on target hedge and current hedge positions, it calculates the following
 // 1. buy underlying token
+// 2. sell underlying token
+const swap = async (market, funding, delta, spot, account) => {
+    const underlyingAddress = await market.methods.underlying().call();
+    const underlying = getContract('ERC20.json', underlyingAddress, account);
+    const underlyingDecimals = await underlying.methods.decimals().call();
+    const fundingDecimals = await funding.methods.decimals().call();
+
+    let spenderData = await fetchAsync(oneinchUrl[chainId] + "approve/spender");
+    let spenderAddress = web3.utils.toChecksumAddress(spenderData['address']);
+    console.log('spender address', spenderAddress);
+
+    let currentHedge = await underlying.methods.balanceOf(market._address).call();
+    currentHedge = parseFloat(web3.utils.fromWei(web3.utils.toBN(currentHedge).mul(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(underlyingDecimals))))));
+    const tradeHedge = delta - currentHedge;
+    var tradeValue = tradeHedge * spot;
+    console.log(delta, currentHedge, tradeHedge, tradeValue, hedgeThreshold, borrowTrade, spot);
+
+    if (Math.abs(tradeValue) > hedgeThreshold) {
+        // Option 1: purchase hedges
+        if (tradeHedge > 0) {
+            let tradeFunding = web3.utils.toBN(web3.utils.toWei(tradeValue.toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(fundingDecimals))));
+            let swapParams = { 'fromTokenAddress': funding._address, 'toTokenAddress': underlyingAddress, 'amount': tradeFunding, 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
+            swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
+            let callData = web3.utils.hexToBytes(swapData['tx']['data']);
+
+            if (allowTrade) {
+                await market.methods.trade(funding._address, tradeFunding, spenderAddress, callData, defaultGas).send();
+            }
+            else {
+                console.log(funding._address, Number(tradeFunding), spenderAddress, callData, defaultGas);
+            }
+        }
+
+        // Option 2: sell hedges
+        if (tradeHedge < 0) {
+            let tradeUnderlying = web3.utils.toBN(web3.utils.toWei(Math.abs(tradeHedge).toString(), 'ether')).div(web3.utils.toBN(10).pow(web3.utils.toBN(18 - Number(underlyingDecimals))));
+            let swapParams = { 'fromTokenAddress': underlyingAddress, 'toTokenAddress': funding._address, 'amount': tradeUnderlying, 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
+            swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
+            // console.log(swapData);
+            let callData = web3.utils.hexToBytes(swapData['tx']['data']);
+            if (allowTrade) {
+                await market.methods.trade(underlyingAddress, tradeUnderlying, spenderAddress, callData, defaultGas).send();
+            }
+            else {
+                console.log(funding._address, Number(tradeFunding), spenderAddress, callData, defaultGas);
+            }
+        }
+    }
+}
+
+// swap function adjust hedges of a given market maker contract address
+// based on target hedge and current hedge positions, it calculates the following
+// 1. buy underlying token
 // 2. repayment of borrowing
 // 3. additional borrowing from Aave
 // 4. sell underlying token
-const swap = async(market, funding, delta, spot, account) => {
+const swapAndLoan = async(market, funding, delta, spot, account) => {
     const underlyingAddress = await market.methods.underlying().call();
     const underlying = getContract('ERC20.json', underlyingAddress, account);
     const underlyingDecimals = await underlying.methods.decimals().call();
@@ -157,29 +212,27 @@ const swap = async(market, funding, delta, spot, account) => {
     const loanTrade = await calcLoanTrade(delta, underlyingAddress, account);
     const loanTradeValue = loanTrade[0] * spot; 
 
-    // if loans needs to be repaid
-    if (loanTradeValue < -hedgeThreshold){
-        // trade for tokens needed for loan repayment.
-        await buyUnderlying(Math.abs(loanTradeValue), fundingDecimals, funding._address, underlyingAddress, market._address, spenderAddress).send();
+    // // if loans needs to be repaid
+    // if (loanTradeValue < -hedgeThreshold){
+    //     // trade for tokens needed for loan repayment.
+    //     await buyUnderlying(Math.abs(loanTradeValue), fundingDecimals, funding._address, underlyingAddress, market._address, spenderAddress).send();
 
-        // repay loans
-        await checkApproval(underlying, account, spenderAddress, Math.abs(loanTrade[0]));
-        await lendingPool.methods.repay(underlyingAddress, web3.utils.toWei(Math.abs(loanTrade[0]),'ether'), lendingPoolRateMode, market._address);
+    //     // repay loans
+    //     await checkApproval(underlying, account, spenderAddress, Math.abs(loanTrade[0]));
+    //     await lendingPool.methods.repay(underlyingAddress, web3.utils.toWei(Math.abs(loanTrade[0]),'ether'), lendingPoolRateMode, market._address);
 
-        // reduce collaterals if needed
+    //     // reduce collaterals if needed
 
-    }
-    else if (loanTradeValue > hedgeThreshold){
-        // more collaterals if needed
+    // }
+    // else if (loanTradeValue > hedgeThreshold){
+    //     // more collaterals if needed
 
 
 
-    }
-
+    // }
 
     const tradeHedge = delta - currentHedge ;
     var tradeValue = tradeHedge * spot;
-
     console.log(delta, currentHedge, tradeHedge, tradeValue, hedgeThreshold, borrowTrade, spot);
 
 
@@ -202,40 +255,19 @@ const swap = async(market, funding, delta, spot, account) => {
             }
         }
 
-        // Step 2: repay borrowing
-        if (tradeHedge > 0 && currentHedge < 0){
-            let repayAmount = Math.min(tradeHedge, Math.abs(currentHedge));
-            let repayValue = repayAmount * spot;
-            console.log("Repayment loan", repayAmount, repayValue);
+        // // Step 2: repay borrowing
+        // if (tradeHedge > 0){
+        //     let repayAmount = Math.min(tradeHedge, Math.abs(currentHedge));
+        //     let repayValue = repayAmount * spot;
+        //     console.log("Repayment loan", repayAmount, repayValue);
 
             
-            
-            
+        // }
 
-    # loan_trade_amount, collateral_change, loan_address, collateral_address = vault.functions.calcLoanTradesInTok(market.address, loan_rate_mode).call()
-    # print("Loan transaction {}, collateral change {} USDC, nonce {}.".format(
-    #     loan_trade_amount, collateral_change, nonce))
-    # if abs(collateral_change) > trade_threshold:
-    #     txn = market.functions.hedgeTradesForLoans().buildTransaction(
-    #         { 'gas': default_gas, 'from': web3.eth.default_account, 'nonce': nonce, 'chainId': chain_id, 'gasPrice': default_gas_price })
-    #     signed_txn = web3.eth.account.signTransaction(
-    #         txn, private_key = os.environ['MNEMONIC'])
-    #     web3.eth.sendRawTransaction(signed_txn.rawTransaction)
-    #     print("Transaction sent {} ".format(
-    #         web3.toHex(web3.keccak(signed_txn.rawTransaction))))
-    #     receipt = web3.eth.wait_for_transaction_receipt(
-    #         web3.toHex(web3.keccak(signed_txn.rawTransaction)))
-    #     print("Transaction mined {} ".format(
-    #         web3.toHex(web3.keccak(signed_txn.rawTransaction))))
-    #     nonce = nonce + 1
-    # else:
-    #     print("Loan transaction too small, skipped.")
-        }
+        // // Step 3: new borrowing
+        // if (allowShorting){
 
-        // Step 3: new borrowing
-        if (allowShorting){
-
-        }
+        // }
 
         // Step 4: sell hedges
         if (tradeHedge<0) {
@@ -244,7 +276,12 @@ const swap = async(market, funding, delta, spot, account) => {
             swapData = await fetchAsyncWithParams(oneinchUrl[chainId] + 'swap', swapParams);
             // console.log(swapData);
             let callData = web3.utils.hexToBytes(swapData['tx']['data']);
-            await market.methods.trade(underlyingAddress, tradeUnderlying, spenderAddress, callData, defaultGas).send();
+            if (allowTrade) {
+                await market.methods.trade(underlyingAddress, tradeUnderlying, spenderAddress, callData, defaultGas).send();
+            }
+            else{
+                console.log(funding._address, Number(tradeFunding), spenderAddress, callData, defaultGas);
+            }
         }
     }
 }
