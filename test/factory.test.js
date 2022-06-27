@@ -1,5 +1,3 @@
-// const { assert } = require("chai");
-
 const { assert } = require("chai");
 
 const one = {ext: '1', seconds: 86400, 'params': [4700000,20000000,0,0,90000000,10000000]};
@@ -12,7 +10,7 @@ const VolatilityChain = artifacts.require("./VolatilityChain");
 const VolatilityToken = artifacts.require("./VolatilityToken");
 const Moret = artifacts.require('./Moret');
 const MoretBroker = artifacts.require('./MoretBroker');
-const MoretGovernor = artifacts.require('./MoretGoveror');
+const Govern = artifacts.require('./Govern');
 
 const MarketMakerFactory = artifacts.require('./MarketMakerFactory');
 const PoolFactory = artifacts.require('./PoolFactory');
@@ -25,11 +23,12 @@ const Pool = artifacts.require('./Pool');
 const Exchange = artifacts.require('./Exchange');
 const OptionVault = artifacts.require('./OptionVault');
 
-const marketMakerDescription = web3.utils.fromAscii('test MarketMaker maker');
-const poolName = 'ETH Market Pool 1';
-const poolSymbol = 'ETHmp1';
+const marketMakerDescription = web3.utils.fromAscii('MarketMaker Original ' + process.env.TOKEN_NAME);
+const poolName = process.env.TOKEN_NAME + ' Market Pool 0';
+const poolSymbol = process.env.TOKEN_NAME + 'mp0';
 const initialCapital = 1;
 const optionAmount = 1e16;
+const parameterDecimals = 8;
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
 const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
 const oneinch_route = web3.utils.toChecksumAddress(process.env.ONEINCH_ROUTE);
@@ -39,7 +38,11 @@ contract("Factory test", async accounts => {
         const account_one = accounts[0];
 
         const moretInstance = await Moret.deployed();
-        const volChainInstance = await VolatilityChain.deployed();
+        // const volChainInstance = await VolatilityChain.deployed();
+        const volChainInstance = await VolatilityChain.new(web3.utils.toChecksumAddress(process.env.CHAINLINK_FEED), parameterDecimals, process.env.TOKEN_NAME, relay_address);
+        await volChainInstance.resetVolParams(one.seconds, one.params);
+        await volChainInstance.resetVolParams(seven.seconds, seven.params);
+        await volChainInstance.resetVolParams(thirty.seconds, thirty.params);
 
         await moretInstance.updateVolChain(token_address, volChainInstance.address, { from: account_one});
         var outVolChain = await moretInstance.getVolatilityChain(token_address);
@@ -65,6 +68,11 @@ contract("Factory test", async accounts => {
         // add 7d and 30d vol tokens
         var exchangeInstance = await Exchange.deployed();
         // await deployer.link(mathLib, volToken);
+        var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, one.seconds, [process.env.TOKEN_NAME, one.ext, 'days'].join(' '), [process.env.TOKEN_NAME, one.ext, 'D'].join(''), exchangeInstance.address);
+        await moretInstance.updateVolToken(token_address, one.seconds, newVolInstance.address, { from: account_one });
+        outVolToken = await moretInstance.getVolatilityToken(token_address, one.seconds);
+        assert.equal(outVolToken, newVolInstance.address, '7d vol token not deployed correctly')
+
         var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, seven.seconds, [process.env.TOKEN_NAME, seven.ext, 'days'].join(' '), [process.env.TOKEN_NAME, seven.ext, 'D'].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, seven.seconds, newVolInstance.address, {from: account_one} );
         outVolToken = await moretInstance.getVolatilityToken(token_address, seven.seconds);
@@ -110,9 +118,9 @@ contract("Factory test", async accounts => {
         assert.equal(web3.utils.fromWei(outExerciseFee), 0.005, 'wrong Pool fees');
 
         await poolGovFactoryInstance.deploy(salt, poolAddress, {from: account_one});
-        const poolGovBytecode = web3.utils.soliditySha3(MoretGovernor.bytecode, web3.eth.abi.encodeParameters(['address'], [poolAddress]));
+        const poolGovBytecode = web3.utils.soliditySha3(Govern.bytecode, web3.eth.abi.encodeParameters(['address'], [poolAddress]));
         const poolGovAddress = '0x' + web3.utils.soliditySha3('0xff', poolGovFactoryInstance.address, salt, poolGovBytecode).substr(26);
-        const poolGovInstance = await MoretGovernor.at(poolGovAddress);
+        const poolGovInstance = await Govern.at(poolGovAddress);
         // const outName = await poolGovInstance.name();
         // assert.equal(outName, poolGovName, 'wrong Pool name'); 
         

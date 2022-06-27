@@ -1,6 +1,6 @@
 const moret = artifacts.require('./Moret');
 const broker = artifacts.require('./MoretBroker');
-const moretGov = artifacts.require('./MoretGovernor');
+const moretGov = artifacts.require('./Govern');
 const mathLib = artifacts.require('./MathLib');
 const optionVault = artifacts.require("./OptionVault");
 // const timelocker = artifacts.require("./TimelockController");
@@ -63,6 +63,6 @@ async function displayDeployed() {
     console.log(`=========
     Deployed MoretBroker: ${brokerInstance.address}
     Deployed Moret: ${moretInstance.address}
-    Deployed MoretGovernor: ${moretGovInstance.address}
+    Deployed Govern: ${moretGovInstance.address}
     =========`)
 }

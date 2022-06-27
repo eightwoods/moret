@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol
 import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 
-contract MoretGovernor is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
+contract Govern is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
     constructor(IVotes _token)
-        Governor("MoretGovernor")
+        Governor("MG")
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
     {}

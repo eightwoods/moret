@@ -27,12 +27,12 @@ contract VolatilityToken is ERC20, AccessControl{
     function getMintAmount(uint256 _premium, uint256 _vol) public view returns(uint256 _mintAmount, uint256 _volPrice){
         uint256 _supply = totalSupply();
         _volPrice = _supply > 0? _vol.max(funding.balanceOf(address(this)).ethdiv(_supply)): _vol;
-        _mintAmount = _premium.ethdiv(_vol);}
+        _mintAmount = _premium.ethdiv(_volPrice);}
 
     function getBurnAmount(uint256 _premium, uint256 _vol) public view returns(uint256 _burnAmount, uint256 _volPrice){
         uint256 _supply = totalSupply();
         _volPrice = _supply > 0? _vol.min(funding.balanceOf(address(this)).ethdiv(_supply)): _vol;
-        _burnAmount = _premium.ethdiv(_vol);}
+        _burnAmount = _premium.ethdiv(_volPrice);}
 
     function mint(address _account, uint256 _amount) public onlyRole(EXCHANGE) {_mint(_account, _amount);}
     function burn(address _account, uint256 _amount) public onlyRole(EXCHANGE) {_burn(_account, _amount);}

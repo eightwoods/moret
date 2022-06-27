@@ -25,9 +25,9 @@ for token in tokensList:
     for pool in pools:
         any_expiring = vault.functions.anyOptionExpiring(pool).call()
         if any_expiring:
-            expireId = vault.function.getExpiringOptionId(pool).call()
+            # expireId = vault.function.getExpiringOptionId(pool).call()
             nonce = web3.eth.get_transaction_count(web3.eth.default_account)
-            txn = exchange.functions.expireOption(expireId, web3.eth.default_account).buildTransaction(
+            txn = exchange.functions.expireOption(pool, web3.eth.default_account).buildTransaction(
                 {'gas': gas, 'from': web3.eth.default_account, 'nonce': nonce, 'chainId': lib.chainId, 'gasPrice': gas_price})
             signed_txn = web3.eth.account.signTransaction(txn, private_key=os.environ['MNEMONIC'])
             web3.eth.sendRawTransaction(signed_txn.rawTransaction)

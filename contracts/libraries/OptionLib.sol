@@ -12,6 +12,7 @@ library OptionLib {
   enum PayoffType { Call, Put}
   enum OptionSide{ Buy, Sell}
   enum OptionStatus { Draft, Active, Exercised, Expired}
+  enum PaymentMethod { USDC, Token, Vol}
 
   uint256 internal constant SECONDS_1Y = 31536000; // 365 * 24 * 60 * 60
 

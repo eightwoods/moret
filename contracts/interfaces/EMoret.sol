@@ -11,4 +11,5 @@ interface EMoret{
     // event InvestPoolTokens(address _pool, uint256 _amount);
     // event DivestFromGov(address _receipient, uint256 _amount);
     event ExchangePoolTokens(address _pool, address _sender, uint256 _amount, uint256 _moretAmount);
+    
     }

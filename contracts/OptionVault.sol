@@ -159,10 +159,10 @@ contract OptionVault is EOption, AccessControl{
         _id = _id_i;
         break;}}}
 
-  function tryATMOptionCost(Pool _pool, uint256 _tenor, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) public view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _volatilty){
-    OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, 0, 0, 0, 0, address(_pool));
-    return calcOptionCost(_option, true);
-  }
+  // function tryATMOptionCost(Pool _pool, uint256 _tenor, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) public view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _volatilty){
+  //   OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, 0, 0, 0, 0, address(_pool));
+  //   return calcOptionCost(_option, true);
+  // }
 
   function calcOptionCost(OptionLib.Option memory _option, bool _forceATM) public view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _annualisedVol){
     Pool _pool = Pool(_option.pool);
