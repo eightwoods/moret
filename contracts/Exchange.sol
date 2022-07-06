@@ -38,8 +38,6 @@ contract Exchange is Ownable, EOption{
     OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, 0, 0, 0, address(_pool));
     (uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol) = vault.calcOptionCost(_option, false);
 
-    require(_collateral > _premium,"wrong premium");
-
     // transfer premiums
     if(_side == OptionLib.OptionSide.Buy){
       buyOption(_pool, msg.sender, _tenor, _premium, _price, _vol, _payment);

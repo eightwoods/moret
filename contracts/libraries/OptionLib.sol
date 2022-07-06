@@ -8,6 +8,7 @@ import "./MathLib.sol";
 library OptionLib {
   using MathLib for uint256;
   using MathLib for int256;
+  using Math for uint256;
 
   enum PayoffType { Call, Put}
   enum OptionSide{ Buy, Sell}
@@ -52,12 +53,12 @@ library OptionLib {
     uint256 _intrinsicValue = calcIntrinsicValue(_option, _price);
     _premium = _intrinsicValue + _timeValue;}
 
-  function calcCollateral(Option memory _option, uint256 _price) public pure returns(uint256 _collateral){
+  function calcCollateral(Option memory _option, uint256 _price, uint256 _premium) public pure returns(uint256 _collateral){
     if(_option.side == OptionSide.Sell){
       if(_option.poType == PayoffType.Put){ 
-        _collateral =  _option.amount.ethmul(_option.strike);}
+        _collateral =  _option.amount.ethmul(_option.strike).max(_premium);}
       else if(_option.poType == PayoffType.Call){ 
-        _collateral = _option.amount.ethmul(_price);}}
+        _collateral = _option.amount.ethmul(_price).max(_premium);}}
   }
 
   // function calcCost(OptionSide _side, uint256 _premium) public pure returns (uint256 _cost) {
@@ -76,10 +77,10 @@ library OptionLib {
     if(_option.side == OptionSide.Sell){
       if (_option.poType == PayoffType.Call){
         _collateral = _option.amount.ethmul(_price);
-        _payback = _collateral - _payoff;}
+        _payback = _collateral - _collateral.min(_payoff);}
       else if(_option.poType == PayoffType.Put){
         _collateral = _option.amount.ethmul(_option.strike);
-        _payback = _collateral - _payoff;}}}
+        _payback = _collateral - _collateral.min(_payoff);}}}
 
   function getNetNotional(Option storage _option) public view returns(int256 _netNotional){
     _netNotional = SafeCast.toInt256(_option.amount);
@@ -89,7 +90,7 @@ library OptionLib {
     if(_option.side == OptionSide.Sell && _option.poType == PayoffType.Put) _collateral = _option.amount.ethmul(_option.strike);}
 
   function calcRemainingMaturity(Option storage _option) public view returns(uint256 _maturityLeft){
-    _maturityLeft = _option.maturity - Math.min(_option.maturity, block.timestamp);}
+    _maturityLeft = _option.maturity - _option.maturity.min(block.timestamp);}
 
   function calcDelta(Option storage _option, uint256 _price, uint256 _vol, bool _includeExpiring) public view returns(int256 _delta){
     _delta = 0;

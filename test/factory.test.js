@@ -29,11 +29,18 @@ const poolSymbol = process.env.TOKEN_NAME + 'mp0';
 const initialCapital = 1;
 const optionAmount = 1e16;
 const parameterDecimals = 8;
+const maxAmount = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
 const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
 const oneinch_route = web3.utils.toChecksumAddress(process.env.ONEINCH_ROUTE);
 
 contract("Factory test", async accounts => {
+    it("add hedging bot", async () => {
+        const account_one = accounts[0];
+        const moretInstance = await Moret.deployed();
+        await moretInstance.updateEligibleRoute(oneinch_route, true, { from: account_one });
+    })
+
     it("Add volchain to Moret", async () => {
         const account_one = accounts[0];
 
@@ -56,39 +63,33 @@ contract("Factory test", async accounts => {
         const account_one = accounts[0];
 
         const moretInstance = await Moret.deployed();
-        const volTokenInstance = await VolatilityToken.deployed();
-
-        await moretInstance.updateVolToken(token_address, one.seconds, volTokenInstance.address, { from: account_one });
-        var outVolToken = await moretInstance.getVolatilityToken(token_address, one.seconds);
-        assert.equal(outVolToken, volTokenInstance.address, 'vol token not deployed correctly');
+        
+        // const volTokenInstance = await VolatilityToken.deployed();
+        // await moretInstance.updateVolToken(token_address, one.seconds, volTokenInstance.address, { from: account_one });
+        // var outVolToken = await moretInstance.getVolatilityToken(token_address, one.seconds);
+        // assert.equal(outVolToken, volTokenInstance.address, 'vol token not deployed correctly');
     
-        var outAddress = await volTokenInstance.underlying();
-        assert.equal(outAddress, token_address, 'wrong underlying');
+        // var outAddress = await volTokenInstance.underlying();
+        // assert.equal(outAddress, token_address, 'wrong underlying');
 
         // add 7d and 30d vol tokens
         var exchangeInstance = await Exchange.deployed();
         // await deployer.link(mathLib, volToken);
-        var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, one.seconds, [process.env.TOKEN_NAME, one.ext, 'days'].join(' '), [process.env.TOKEN_NAME, one.ext, 'D'].join(''), exchangeInstance.address);
+        var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, one.seconds, [process.env.TOKEN_NAME, one.ext, 'days'].join(' '), [process.env.TOKEN_NAME, one.ext].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, one.seconds, newVolInstance.address, { from: account_one });
         outVolToken = await moretInstance.getVolatilityToken(token_address, one.seconds);
         assert.equal(outVolToken, newVolInstance.address, '7d vol token not deployed correctly')
 
-        var newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, seven.seconds, [process.env.TOKEN_NAME, seven.ext, 'days'].join(' '), [process.env.TOKEN_NAME, seven.ext, 'D'].join(''), exchangeInstance.address);
+        newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, seven.seconds, [process.env.TOKEN_NAME, seven.ext, 'days'].join(' '), [process.env.TOKEN_NAME, seven.ext].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, seven.seconds, newVolInstance.address, {from: account_one} );
         outVolToken = await moretInstance.getVolatilityToken(token_address, seven.seconds);
         assert.equal(outVolToken, newVolInstance.address, '7d vol token not deployed correctly')
 
-        newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, thirty.seconds, [token_address, thirty.ext, 'days'].join(' '), [process.env.TOKEN_NAME, thirty.ext, 'D'].join(''), exchangeInstance.address);
+        newVolInstance = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, thirty.seconds, [token_address, thirty.ext, 'days'].join(' '), [process.env.TOKEN_NAME, thirty.ext].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, thirty.seconds, newVolInstance.address, {from: account_one});
         outVolToken = await moretInstance.getVolatilityToken(token_address, thirty.seconds);
         assert.equal(outVolToken, newVolInstance.address, '30d vol token not deployed correctly')
     });
-
-    it("add hedging bot", async() =>{
-        const account_one = accounts[0];
-        const moretInstance = await Moret.deployed();
-        await moretInstance.updateEligibleRoute(oneinch_route, true, {from: account_one});
-    })
 
     it("create Pool and buy option", async () => {
         const account_one = accounts[0];
@@ -129,8 +130,9 @@ contract("Factory test", async accounts => {
         const fundingDecimals = await funding.decimals();
         var initialCapitalERC20 = initialCapital * (10 ** (Number(fundingDecimals)));
         initialCapitalERC20 = web3.utils.toBN(initialCapitalERC20.toString());
-        await funding.approve(exchangeInstance.address, initialCapitalERC20, {from: account_one});
+        // await funding.approve(exchangeInstance.address, maxAmount, {from: account_one});
         await exchangeInstance.addCapital(poolAddress, initialCapitalERC20, { from: account_one });
+        // await exchangeInstance.withdrawCapital(poolAddress, balanceToWithdraw, {from: account_one});
         const poolCapital = await vaultInstance.calcCapital(poolAddress, false, false);
         assert.equal(web3.utils.fromWei(poolCapital), initialCapital, 'wrong capital invested');
 

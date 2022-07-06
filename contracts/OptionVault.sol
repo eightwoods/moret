@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import "./libraries/MarketLib.sol";
 import "./libraries/OptionLib.sol";
 import "./libraries/MathLib.sol";
@@ -27,7 +26,6 @@ contract OptionVault is EOption, AccessControl{
   OptionLib.Option[] internal aOption;
   mapping(address=>mapping(address=> EnumerableSet.UintSet)) internal mHolderAtiveOption;
   mapping(address=>EnumerableSet.UintSet) internal mActiveOption;
-  // mapping(address=>uint256) public mActiveContractCount = 0;
   mapping(address=>int256) public mNetNotional;
   mapping(address=>uint256) public mPutCollateral;
   mapping(address=>uint256) public mDeltaAtZero;
@@ -175,7 +173,7 @@ contract OptionVault is EOption, AccessControl{
     if (_forceATM){_option.strike = _price;}
 
     _premium = _option.calcPremium(_price, _impVol, _market.loanInterest());
-    _collateral = _option.calcCollateral(_price);}
+    _collateral = _option.calcCollateral(_price, _premium);}
 
   function calcImpliedVol(MarketMaker _market, uint256 _tenor, uint256 _volCapacityFactor, int256 _currentNetNotional, int256 _newNetNotional) public view returns(uint256 _price, uint256 _impVol, uint256 _annualisedVol){
     VolatilityChain _volChain = _market.getVolatilityChain();
