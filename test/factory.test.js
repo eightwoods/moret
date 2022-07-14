@@ -28,17 +28,14 @@ const poolName = process.env.TOKEN_NAME + ' Market Pool 0';
 const poolSymbol = process.env.TOKEN_NAME + 'mp0';
 const initialCapital = 1;
 const optionAmount = 1e16;
-const parameterDecimals = 8;
 const maxAmount = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 const token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
-const relay_address = web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT);
-const oneinch_route = web3.utils.toChecksumAddress(process.env.ONEINCH_ROUTE);
 
 contract("Factory test", async accounts => {
     it("add hedging bot", async () => {
         const account_one = accounts[0];
         const moretInstance = await Moret.deployed();
-        await moretInstance.updateEligibleRoute(oneinch_route, true, { from: account_one });
+        await moretInstance.updateEligibleRoute(web3.utils.toChecksumAddress(process.env.ONEINCH_ROUTE), true, { from: account_one });
     })
 
     it("Add volchain to Moret", async () => {
@@ -46,7 +43,7 @@ contract("Factory test", async accounts => {
 
         const moretInstance = await Moret.deployed();
         // const volChainInstance = await VolatilityChain.deployed();
-        const volChainInstance = await VolatilityChain.new(web3.utils.toChecksumAddress(process.env.CHAINLINK_FEED), parameterDecimals, process.env.TOKEN_NAME, relay_address);
+        const volChainInstance = await VolatilityChain.new(web3.utils.toChecksumAddress(process.env.CHAINLINK_FEED), 8, process.env.TOKEN_NAME, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT));
         await volChainInstance.resetVolParams(one.seconds, one.params);
         await volChainInstance.resetVolParams(seven.seconds, seven.params);
         await volChainInstance.resetVolParams(thirty.seconds, thirty.params);
@@ -93,7 +90,6 @@ contract("Factory test", async accounts => {
 
     it("create Pool and buy option", async () => {
         const account_one = accounts[0];
-        const hedging_bot = relay_address;
 
         const marketFactoryInstance = await MarketMakerFactory.deployed();
         const poolFactoryInstance = await PoolFactory.deployed();
@@ -106,8 +102,8 @@ contract("Factory test", async accounts => {
 
         const factoryCount = await marketFactoryInstance.count();
         const salt = web3.utils.keccak256(factoryCount.toString());
-        await marketFactoryInstance.deploy(salt, hedging_bot, token_address, marketMakerDescription, {from: account_one});
-        const marketAddress = await marketFactoryInstance.computeAddress(salt, hedging_bot, token_address, marketMakerDescription);
+        await marketFactoryInstance.deploy(salt, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT), token_address, marketMakerDescription, {from: account_one});
+        const marketAddress = await marketFactoryInstance.computeAddress(salt, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT), token_address, marketMakerDescription);
         const marketInstance = await MarketMaker.at(marketAddress);
         const outHedgingCost = await marketInstance.hedgingCost();
         assert.equal(web3.utils.fromWei(outHedgingCost), 0.003, 'wrong MarketMaker fees');
@@ -135,6 +131,9 @@ contract("Factory test", async accounts => {
         // await exchangeInstance.withdrawCapital(poolAddress, balanceToWithdraw, {from: account_one});
         const poolCapital = await vaultInstance.calcCapital(poolAddress, false, false);
         assert.equal(web3.utils.fromWei(poolCapital), initialCapital, 'wrong capital invested');
+
+        const moretInstance = await Moret.deployed();
+        await moretInstance.updateVolTradingPool(poolAddress, true, { from: account_one });
 
     });
 

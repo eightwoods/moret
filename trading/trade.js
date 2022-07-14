@@ -1,5 +1,5 @@
 const optionTenor = 86400;
-const optionAmount = 0.0001;
+const optionAmount = 0.001;
 
 const {moretAddress, exchangeAddress, tokenAddresses, tokens, chainId, minTicks, maxAmount} = require('./config.json');
 

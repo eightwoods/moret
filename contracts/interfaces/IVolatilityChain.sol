@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IVolatilityChain{
     // tenors, timestamp when volchain block is added and the information on the price stamp 
-    event NewVolatilityChainBlock(uint256 indexed _tenor, uint256 _timeStamp, PriceStamp _book);
+    event NewVolatilityChainBlock(uint256 indexed _tenor, uint256 _timeStamp, uint256 _price, uint256 _volatility, uint256 _baseTime);
     event ResetVolChainParameter(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
     event RemovedTenor(uint256 indexed _tenor, uint256 _timeStamp, address _executor);
 
@@ -16,7 +16,7 @@ interface IVolatilityChain{
     // close price
     // volatility based on the GARCH model prescribed with the VolParam
     // accentus which is a higher estimate of volatility using the most extreme of high and low prices instead of close price in deducing the volatility using the same GARCH parameters
-    struct PriceStamp{ uint256 startTime; uint256 endTime; uint256 open; uint256 highest; uint256 lowest; uint256 close; uint256 volatility; uint256 accentus; }
+    struct PriceStamp{ uint256 startTime; uint256 endTime; uint256 open; uint256 close; uint256 volatility; }
 
     // GARCH parameters include:
     // starting value of volatility which is fixed

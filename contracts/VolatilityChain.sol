@@ -24,17 +24,17 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
 
   mapping(uint256=>mapping(uint256=>PriceStamp)) private priceBook;
   mapping(uint256=>uint256) public latestBookTime;
+  mapping(uint256=>EnumerableSet.UintSet) internal latestBookTimeSet;
 
   uint256 internal immutable priceMultiplier;
 
-  uint256 public volatilityUpdateCounter;
-  uint256 public volatilityUpdateTime;
-
   mapping(uint256=> VolParam) internal volatilityParameters;
+  mapping(uint256=>uint256) public sqrtRatios; 
   uint256 internal immutable volParamDecimals;
   uint256 internal immutable parameterMultiplier;
 
   uint256 internal constant SECONDS_1Y = 31536000; // 365 * 24 * 60 * 60
+  uint256 internal constant TOLERANCE = 60; // 60s tolerance for updating timestamp
 
   constructor(AggregatorV3Interface _priceSource, uint256 _parameterDecimals, string memory _tokenName, address _updateAddress )  {
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); 
@@ -84,57 +84,63 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     (,int _price,,,) = priceInterface.latestRoundData();
     return SafeCast.toUint256(_price).ethdiv(priceMultiplier);}
 
-  function update() external onlyRole(UPDATE_ROLE){
-    (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
+  function update(uint256 _tenor) external onlyRole(UPDATE_ROLE){
+    require(tenors.contains(_tenor),"no such tenor");
+    (,int _price,,uint _priceTime,) = priceInterface.latestRoundData();
     uint256 _updatePrice = SafeCast.toUint256(_price);
-    uint _tenorsCount = tenors.length();
+    
+    // find the last time stamp available prior to the tenor period
+    uint256 _baseTime = latestBookTime[_tenor];
+    EnumerableSet.UintSet storage _bookTimeSet = latestBookTimeSet[_tenor];
+    uint256 _stampCount = _bookTimeSet.length();
+    if(_stampCount > 0){
+      for(uint256 i = _stampCount;i> 0;i--){
+        uint256 _iTime = _bookTimeSet.at(i-1);
+        if (_iTime <= (_priceTime - _tenor + TOLERANCE)) {
+          if ((_iTime > _baseTime) || (_baseTime > (_priceTime - _tenor + TOLERANCE)) ){
+            _baseTime = _iTime;}
+          else{
+            _bookTimeSet.remove(_iTime);
+          }}}}
+    
+    // update vols
+    PriceStamp storage _baseStamp = priceBook[_tenor][_baseTime];
+    PriceStamp storage _newStamp = priceBook[_tenor][_priceTime];
+    _newStamp.startTime = _baseTime;
+    _newStamp.endTime = _priceTime;
+    _newStamp.open = _baseStamp.close;
+    _newStamp.close = _updatePrice;
 
-    for(uint i = 0;i< _tenorsCount;i++) {
-      uint256 _tenor = tenors.at(i);
-      uint256 _latestTimeStamp = latestBookTime[_tenor];
-      PriceStamp storage _priceStamp = priceBook[_tenor][_latestTimeStamp];
-      if(_updatePrice > _priceStamp.highest){
-        _priceStamp.highest=_updatePrice;}
-      if(_updatePrice<_priceStamp.lowest){
-         _priceStamp.lowest=_updatePrice;}
+    uint256 _open = _newStamp.open;
+    uint256 _priceMove = (_open < _updatePrice)? (_updatePrice.muldiv(priceMultiplier, _open) - priceMultiplier) : (priceMultiplier - _updatePrice.muldiv( priceMultiplier, _open));
+    _priceMove = _priceMove.muldiv(_tenor.sqrt(), (_priceTime-_baseTime).sqrt());
 
-      if(_timeStamp>= (_latestTimeStamp + _tenor)){
-        _priceStamp.endTime = _timeStamp;
-        _priceStamp.close = _updatePrice;
-        uint256 _open = _priceStamp.open;
-        uint256 _periodMove = (_open < _updatePrice)? (_updatePrice.muldiv( priceMultiplier, _open) - priceMultiplier) : (priceMultiplier - _updatePrice.muldiv( priceMultiplier, _open ));
-        uint256 _largestMove = Math.max(_priceStamp.highest.muldiv(priceMultiplier, _open) - priceMultiplier , priceMultiplier - _priceStamp.lowest.muldiv( priceMultiplier, _open ));
+    VolParam storage _volParameter = volatilityParameters[_tenor];
+    _newStamp.volatility = (_volParameter.ltVolWeighted + (_priceMove * _priceMove).muldiv( _volParameter.q, parameterMultiplier) + (_baseStamp.volatility * _baseStamp.volatility).muldiv( _volParameter.p, parameterMultiplier)).sqrt();
 
-        PriceStamp storage _newPriceStamp = priceBook[_tenor][_timeStamp];
-        VolParam storage _volParameter = volatilityParameters[_tenor];
-        _newPriceStamp.startTime = _timeStamp;
-        _newPriceStamp.volatility = (_volParameter.ltVolWeighted + (_periodMove * _periodMove).muldiv( _volParameter.q, parameterMultiplier) + (_priceStamp.volatility * _priceStamp.volatility).muldiv( _volParameter.p, parameterMultiplier)).sqrt();
-        _newPriceStamp.accentus = (_volParameter.ltVolWeighted + (_largestMove * _largestMove).muldiv( _volParameter.q, parameterMultiplier) + (_priceStamp.accentus * _priceStamp.accentus).muldiv( _volParameter.p, parameterMultiplier)).sqrt();
-        _newPriceStamp.open = _newPriceStamp.highest = _newPriceStamp.lowest = _updatePrice;
-
-        latestBookTime[_tenor] = _timeStamp;
-        emit NewVolatilityChainBlock(_tenor, _timeStamp, _newPriceStamp);} }
-
-    volatilityUpdateTime = _timeStamp;
-    volatilityUpdateCounter ++;}
+    latestBookTime[_tenor] = _priceTime;
+    _bookTimeSet.add(_priceTime);
+    emit NewVolatilityChainBlock(_tenor, _priceTime, _updatePrice, _newStamp.volatility, _baseTime);}
 
   function resetVolParams(uint256 _tenor, VolParam memory _volParams) external onlyOwner{
     if(!tenors.contains(_tenor)){
       tenors.add(_tenor);}
-    // sqrtRatios[_tenor] = _ratio;
+
+    sqrtRatios[_tenor] = SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
     
     require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier);
     volatilityParameters[_tenor] = _volParams;
     volatilityParameters[_tenor].ltVolWeighted = (volatilityParameters[_tenor].ltVol*volatilityParameters[_tenor].ltVol).muldiv( volatilityParameters[_tenor].w, parameterMultiplier);
 
-    (,int _price,,uint _timeStamp,) = priceInterface.latestRoundData();
+    (,int _price,,uint _priceTime,) = priceInterface.latestRoundData();
     uint256 _updatePrice = SafeCast.toUint256(_price);
 
-    latestBookTime[_tenor] = _timeStamp;
-    PriceStamp storage _priceStamp = priceBook[_tenor][_timeStamp];
-    _priceStamp.startTime = _timeStamp;
-    _priceStamp.volatility = _priceStamp.accentus = volatilityParameters[_tenor].initialVol;
-    _priceStamp.open = _priceStamp.highest = _priceStamp.lowest = _updatePrice;
+    latestBookTime[_tenor] = _priceTime;
+
+    PriceStamp storage _priceStamp = priceBook[_tenor][_priceTime];
+    _priceStamp.startTime = _priceStamp.endTime = _priceTime;
+    _priceStamp.volatility = volatilityParameters[_tenor].initialVol;
+    _priceStamp.open = _priceStamp.close = _updatePrice;
     emit ResetVolChainParameter(_tenor, block.timestamp, msg.sender);}
 
   function removeTenor(uint256 _tenor) external onlyOwner{
@@ -143,16 +149,12 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     emit RemovedTenor(_tenor, block.timestamp, msg.sender);}
 
   function getPriceBook(uint256 _tenor) external view returns(PriceStamp memory){
-    require(tenors.contains(_tenor), "Input option tenor is not allowed.");
+    require(tenors.contains(_tenor), "Input tenor not allowed.");
     return priceBook[_tenor][latestBookTime[_tenor]];}
 
-  // // update sqrt ratio
-  // function updateSqrtRatio(uint256 _tenor, uint256 _ratio) external onlyOwner{
-  //     if(!tenors.contains(_tenor)){
-  //       tenors.add(_tenor);}
-  //     sqrtRatios[_tenor] = _ratio;}
-  
-  function getSqrtRatio(uint256 _tenor) external pure returns(uint256){
-    return SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
+  function getSqrtRatio(uint256 _tenor) external view returns(uint256){
+    require(tenors.contains(_tenor), "Input tenor not allowed.");
+    return sqrtRatios[_tenor];
+    // return SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
     }
 }
