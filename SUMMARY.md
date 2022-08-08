@@ -2,20 +2,20 @@
 
 ## Overview
 
-* [Moret Protocol](README.md)
+* [DeFi Option Exchanges](README.md)
+* [Moret: Option exchange](overview/moret-option-exchange.md)
+* [Moret: Volatility tokens](overview/moret-volatility-tokens.md)
+* [Moret: Liquidity pools](overview/moret-liquidity-pools.md)
 
-## Investments
+## Trading Guide <a href="#trading" id="trading"></a>
 
-* [Option Traders](investments/how-to-trade.md)
-* [Managed Risk Products](investments/managed-risk-products.md)
-* [Liquidity Providers](investments/market-making-protocol/README.md)
-  * [Market Makers](investments/market-making-protocol/market-makers.md)
-  * [Yield Farmers](investments/market-making-protocol/yield-farmers.md)
+* [Option Traders](trading/how-to-trade.md)
+* [Volatility Tokens](trading/volatility-tokens.md)
+* [Market Makers](trading/market-making-protocol.md)
 
-## Volatility
+## Oracle
 
-* [Volatility Oracle](volatility/on-chain-oracle.md)
-* [Volatility Tokens](volatility/volatility-tokens.md)
+* [Volatility Oracle](oracle/on-chain-oracle.md)
 
 ## Governance
 

@@ -12,8 +12,6 @@ While crypto prices are notoriously volatile, volatility itself is, to a large e
 
 Moret provides two interfaces for volatility tokens: **Issuance/Redemption** and **Option conversion**.
 
-![](https://cdn-images-1.medium.com/max/1200/1\*TTDwrBs0kmCkUxvMMxshgQ.png)
-
 #### Issuance/Redemption
 
 Investors can buy volatility tokens from Moret in the same way as buying options. The quote of volatility tokens is the implied volatility based on the constant product market maker formula. The higher the capacity of the liquidity pool is, the lower volatility premium would be.
