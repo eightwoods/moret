@@ -17,6 +17,15 @@ The hedging mechanism relates to how the exposure of option to the token price i
 
 
 
+Sample hedging bot can be found below:
+
+```
+swapParams = { 'fromTokenAddress': funding._address, 'toTokenAddress': underlying._address, 'amount': Number(tradeFunding), 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
+swapData = await fetchAsyncWithParams(oneinchUrl + 'swap', swapParams);
+callData = web3.utils.hexToBytes(swapData['tx']['data']);
+await market.methods.trade(funding._address, maxAmount, spenderAddress, callData, defaultGas).send();
+```
+
 Authorised bots are used to run hedge transactions. When Delta is positive, the liquidity pool converts USDC into the underlying token (WETH or WBTC) using 1Inch Aggregation protocol.&#x20;
 
 #### Volatility Automatic Market Maker
