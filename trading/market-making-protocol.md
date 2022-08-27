@@ -20,10 +20,17 @@ The hedging mechanism relates to how the exposure of option to the token price i
 Sample hedging bot can be found below:
 
 ```
-swapParams = { 'fromTokenAddress': funding._address, 'toTokenAddress': underlying._address, 'amount': Number(tradeFunding), 'fromAddress': market._address, 'slippage': oneinchSlippage, 'disableEstimate': 'true' };
-swapData = await fetchAsyncWithParams(oneinchUrl + 'swap', swapParams);
-callData = web3.utils.hexToBytes(swapData['tx']['data']);
-await market.methods.trade(funding._address, maxAmount, spenderAddress, callData, defaultGas).send();
+let params = { 'fromTokenAddress': sell_address, 'toTokenAddress': buy_address, 'amount': Number(amount), 'fromAddress': market_address, 'slippage': slippage, 'disableEstimate': 'true' };
+
+var url = new URL(‘https://api.1inch.exchange/v4.0/137/swap');
+Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
+let response = await fetch(url);
+let data = await response.json();
+
+let call_data = web3.utils.hexToBytes(data['tx']['data']);
+
+await market.methods.trade(sell_address, max_amount, oneinch_router, call_data, default_gas).send();
+
 ```
 
 Authorised bots are used to run hedge transactions. When Delta is positive, the liquidity pool converts USDC into the underlying token (WETH or WBTC) using 1Inch Aggregation protocol.&#x20;
