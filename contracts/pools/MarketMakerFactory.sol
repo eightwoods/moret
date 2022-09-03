@@ -19,7 +19,7 @@ contract MarketMakerFactory {
         exchange = _exchange;
         }
 
-    function computeAddress(bytes32 salt, address _hedgingBot, address _underlying, bytes32 _description) public view returns (address) {
+    function computeAddress(bytes32 salt, address _hedgingBot, address _underlying, bytes32 _description) external view returns (address) {
         bytes32 _bytecodeHash = keccak256(getCreationCode(_hedgingBot, _underlying, _description));
         return Create2.computeAddress(
                 salt, //keccak256(abi.encodePacked(salt)),
@@ -27,7 +27,7 @@ contract MarketMakerFactory {
                 address(this)
             );}
 
-    function deploy(bytes32 salt, address _hedgingBot, address _underlying, bytes32 _description) public {
+    function deploy(bytes32 salt, address _hedgingBot, address _underlying, bytes32 _description) external {
         count += 1;
         bytes memory _bytecode = getCreationCode(_hedgingBot, _underlying, _description);
         address proxy = Create2.deploy(

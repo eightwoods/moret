@@ -13,8 +13,8 @@ contract VolatilityToken is ERC20, AccessControl{
 
     bytes32 public constant EXCHANGE = keccak256("EXCHANGE");
 
-    uint256 public tenor;
-    address public underlying;
+    uint256 public immutable tenor;
+    address public immutable underlying;
     ERC20 public funding;
 
     // constructor, ownership is transferred to Moret gov token which can mint and burn the tokens.
@@ -28,17 +28,17 @@ contract VolatilityToken is ERC20, AccessControl{
         underlying = _underlying;
         grantRole(EXCHANGE, _exchange);}
 
-    function getMintAmount(uint256 _premium, uint256 _vol) public view returns(uint256 _mintAmount, uint256 _volPrice){
+    function getMintAmount(uint256 _premium, uint256 _vol) external view returns(uint256 _mintAmount, uint256 _volPrice){
         uint256 _supply = totalSupply();
         _volPrice = _supply > 0? _vol.max(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply)): _vol;
         _mintAmount = _premium.ethdiv(_volPrice);}
 
-    function getBurnAmount(uint256 _premium, uint256 _vol) public view returns(uint256 _burnAmount, uint256 _volPrice){
+    function getBurnAmount(uint256 _premium, uint256 _vol) external view returns(uint256 _burnAmount, uint256 _volPrice){
         uint256 _supply = totalSupply();
         _volPrice = _supply > 0? _vol.min(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply)): _vol;
         _burnAmount = _premium.ethdiv(_volPrice);}
 
-    function mint(address _account, uint256 _amount) public onlyRole(EXCHANGE) {_mint(_account, _amount);}
-    function burn(address _account, uint256 _amount) public onlyRole(EXCHANGE) {_burn(_account, _amount);}
-    function pay(address _account, uint256 _amount) public onlyRole(EXCHANGE){require(funding.transfer(_account, _amount), '-VS');}
+    function mint(address _account, uint256 _amount) external onlyRole(EXCHANGE) {_mint(_account, _amount);}
+    function burn(address _account, uint256 _amount) external onlyRole(EXCHANGE) {_burn(_account, _amount);}
+    function pay(address _account, uint256 _amount) external onlyRole(EXCHANGE){require(funding.transfer(_account, _amount), '-VS');}
 }

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../pools/Pool.sol";
 import "../libraries/MathLib.sol";
 import "../interfaces/EMoret.sol";
@@ -58,10 +59,10 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         emit WithdrawPoolTokens(address(_pool), _amount);}
 
     // governable parameters
-    function setProtocolFee(uint256 _newFee) public onlyOwner(){ 
+    function setProtocolFee(uint256 _newFee) external onlyOwner(){ 
         protocolFee = _newFee;
         emit UpdateProtocolFees(_newFee);}
-    function setProtocolRecipient(address _newAddress) public onlyOwner(){ 
+    function setProtocolRecipient(address _newAddress) external onlyOwner(){ 
         require(_newAddress != address(0), "0 address"); 
         protocolFeeRecipient = _newAddress;}
 
@@ -76,7 +77,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
             underlyingList.add(_underlyingAddress);}
         volatilityChainMap[_underlyingAddress] = _newOracle;}
         // emit UpdateToken( _underlyingAddress, address(_newOracle));}
-    function getVolatilityChain(address _underlyingAddress) public view returns(VolatilityChain){
+    function getVolatilityChain(address _underlyingAddress) external view returns(VolatilityChain){
         require(address(volatilityChainMap[_underlyingAddress]) != address(0), "Oracle not registered");
         return volatilityChainMap[_underlyingAddress];}
     
@@ -91,7 +92,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         return VolatilityToken(_volToken);}
     
     // update eligible routes
-    function updateEligibleRoute(address _route, bool _add) public onlyOwner returns(bool){
+    function updateEligibleRoute(address _route, bool _add) external onlyOwner returns(bool){
         require(_route != address(0), "empty address");
         if(_add) { return eligibleTradingRoutes.add(_route);}
         else{ return eligibleTradingRoutes.remove(_route);}}
@@ -99,7 +100,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         return eligibleTradingRoutes.contains(_route);}
     
     // update vol trading pool
-    function updateVolTradingPool(address _poolAddress, bool _add) public onlyOwner returns(bool){
+    function updateVolTradingPool(address _poolAddress, bool _add) external onlyOwner returns(bool){
         require(_poolAddress != address(0), "empty address");
         if(_add) { return volTradingPools.add(_poolAddress);}
         else{ return volTradingPools.remove(_poolAddress);}}

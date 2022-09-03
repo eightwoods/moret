@@ -7,12 +7,12 @@ import "../governance/Moret.sol";
 import "../VolatilityChain.sol";
 
 contract MarketMaker is  EOption{
-  address public  hedgingBot; // hedge bot addresses
-  bytes32 public  description; // description of pool and its hedging strategies
+  address public immutable hedgingBot; // hedge bot addresses
+  bytes32 public immutable description; // description of pool and its hedging strategies
   Moret public  govToken; // Records of which routes are available for hedging strategies
-  address public exchange; // EXCHANGE could be able to extract payments from MarketMaker
-  ERC20 public funding;
-  address public underlying;
+  address public immutable exchange; // EXCHANGE could be able to extract payments from MarketMaker
+  address public immutable funding;
+  address public immutable underlying;
 
   // hedging parameters
   uint256 public loanInterest = 0; // Annualised interest rate for option pricing; default: 0%
@@ -23,7 +23,7 @@ contract MarketMaker is  EOption{
     hedgingBot = _bot;
     description = _description;
     govToken = Moret(_govToken);
-    funding = govToken.funding();
+    funding = address(govToken.funding());
     exchange = _exchange;
     underlying = _underlying;
     }  
@@ -33,7 +33,7 @@ contract MarketMaker is  EOption{
     require(msg.sender == exchange,'-X');
     require(_to != address(0), "0addr");
     if(_amount > 0){
-      require(funding.transfer(_to, _amount));}}
+      require(ERC20(funding).transfer(_to, _amount));}}
 
   // functions to make market by hedging underlyings
   // trade swaps/loans via allowed routes (in MoretBook) such as 1Inch. Arguments: amount to be paid, paid token, route via which the transaction happens, calldata for the transaction bytes data pre-compiled externally, gas allowed for the transaction
@@ -45,10 +45,11 @@ contract MarketMaker is  EOption{
     emit HedgeResponse(msg.sender, address(this), success, data);}
 
   // Reset functions for parameters
-  function setLoanInterest(uint256 _newParameter) external{
+  function setParameter(uint256 _paramId, uint256 _newParameter) external{
     require(msg.sender == hedgingBot, '-H');
-    loanInterest = _newParameter;
-    emit ResetParameter(101, _newParameter);}
+    if(_paramId == 101){loanInterest = _newParameter;}
+    else{hedgingCost=_newParameter;}
+    emit ResetParameter(_paramId, _newParameter);}
 
   function getVolatilityChain() external view returns(VolatilityChain){
     return govToken.getVolatilityChain(underlying);}

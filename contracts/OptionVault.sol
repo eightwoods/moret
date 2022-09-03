@@ -107,7 +107,7 @@ contract OptionVault is EOption, AccessControl{
   //   return Math.max(mDeltaAtZero[_poolAddress], mDeltaAtMax[_poolAddress]).ethmul(_volChain.queryPrice());}
 
   // aggregate delta of all active contracts, optional including expiring contracts yet stamped as Expired. Arguments: spot price and whether to include expiring contracts
-  function calculateAggregateDelta(address _pool, uint256 _price, bool _includeExpiring) public view returns(int256 _delta){
+  function calculateAggregateDelta(address _pool, uint256 _price, bool _includeExpiring) external view returns(int256 _delta){
     _delta= 0;
     uint256 _activeContractCount = getActiveOptionCount(_pool);
     MarketMaker _marketMaker = Pool(_pool).marketMaker();

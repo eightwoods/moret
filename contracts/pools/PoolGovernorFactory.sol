@@ -8,7 +8,7 @@ import "../governance/Govern.sol";
 contract PoolGovernorFactory {
     event ProxyCreated(address poolGov, address pool);
 
-    function deploy(bytes32 salt, address _pool) public{
+    function deploy(bytes32 salt, address _pool) external{
         address _a = Create2.deploy( 0, salt, abi.encodePacked(type(Govern).creationCode, abi.encode(_pool)));
         emit ProxyCreated(_a, _pool);
         }

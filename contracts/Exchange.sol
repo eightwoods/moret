@@ -53,7 +53,7 @@ contract Exchange is Ownable, EOption{
 
   function buyOption(Pool _pool, address _buyer, uint256 _tenor, uint256 _premium, uint256 _price, uint256 _vol, OptionLib.PaymentMethod _payment) internal {
     MarketMaker _marketMaker = _pool.marketMaker();
-    ERC20 _funding = _marketMaker.funding();
+    ERC20 _funding = ERC20(_marketMaker.funding());
     uint256 _fundingDecimals = _funding.decimals();
     address _underlyingAddress = _marketMaker.underlying();
     if(_payment == OptionLib.PaymentMethod.USDC){
@@ -71,7 +71,7 @@ contract Exchange is Ownable, EOption{
 
   function sellOption(Pool _pool, address _buyer, uint256 _tenor, uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol, OptionLib.PaymentMethod _payment) internal {
     MarketMaker _marketMaker = _pool.marketMaker();
-    ERC20 _funding = _marketMaker.funding();
+    ERC20 _funding = ERC20(_marketMaker.funding());
     uint256 _fundingDecimals = _funding.decimals();
     
     if(_payment == OptionLib.PaymentMethod.USDC){
@@ -96,7 +96,7 @@ contract Exchange is Ownable, EOption{
     VolatilityToken _vToken = _marketMaker.govToken().getVolatilityToken(_marketMaker.underlying(), _tenor);
     OptionLib.Option memory _option = OptionLib.Option(OptionLib.PayoffType.Put, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, 0, 0, 0, 0, address(_pool));
 
-    ERC20 _funding = _marketMaker.funding();
+    ERC20 _funding = ERC20(_marketMaker.funding());
     uint256 _fundingDecimals = _funding.decimals();
     (uint256 _premium, , , uint256 _vol) = vault.calcOptionCost(_option, true); 
     
@@ -132,7 +132,7 @@ contract Exchange is Ownable, EOption{
       vault.stampExpiredOption(_expiringId);
       (uint256 _payoff, uint256 _payback,) = vault.getContractPayoff(_expiringId);
       
-      uint256 _fundingDecimals = _pool.marketMaker().funding().decimals();
+      uint256 _fundingDecimals = ERC20(_pool.marketMaker().funding()).decimals();
       uint256 _protocolAmount = _payoff.ethmul(_pool.marketMaker().govToken().protocolFee()).toDecimals(_fundingDecimals);
       uint256 _exerciseAmount = _payoff.ethmul(_pool.exerciseFee()).toDecimals(_fundingDecimals);
       _payback = _payback.toDecimals(_fundingDecimals);
@@ -149,7 +149,7 @@ contract Exchange is Ownable, EOption{
   // add capital by depositing amount in funding tokens
   function addCapital(Pool _pool, uint256 _depositAmount) external {
     uint256 _averageGrossCapital = vault.calcCapital(_pool, false, true);
-    ERC20 _funding = _pool.marketMaker().funding();
+    ERC20 _funding = ERC20(_pool.marketMaker().funding());
     uint256 _mintPoolAmount = _depositAmount.toWei(_funding.decimals()).ethdiv(_averageGrossCapital);
     require(_funding.transferFrom(msg.sender, address(_pool.marketMaker()), _depositAmount));
     _pool.mint(msg.sender, _mintPoolAmount);}
@@ -157,7 +157,7 @@ contract Exchange is Ownable, EOption{
   // remove capital by withdrawing amount in funding tokens
   function withdrawCapital(Pool _pool, uint256 _burnPoolAmount) external {
     uint256 _averageNetCapital = vault.calcCapital(_pool, true, true);
-    uint256 _withdrawValue = _averageNetCapital.ethmul(_burnPoolAmount).toDecimals(_pool.marketMaker().funding().decimals()); 
+    uint256 _withdrawValue = _averageNetCapital.ethmul(_burnPoolAmount).toDecimals(ERC20(_pool.marketMaker().funding()).decimals()); 
     _pool.burn(msg.sender, _burnPoolAmount);
     _pool.marketMaker().settlePayment(msg.sender, _withdrawValue);}
 

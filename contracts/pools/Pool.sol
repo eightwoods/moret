@@ -14,7 +14,7 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
     MarketMaker public immutable marketMaker; // the fixed market maker contract to make markets by providing capital and running hedging programs.
     
     // Governable parameters
-    uint256 public exerciseFee= 0.005e18;  // Fees paid to exercise bots for exercising expiring option contracts; default: 0.5%
+    uint256 public exerciseFee= 0.0025e18;  // Fees paid to exercise bots for exercising expiring option contracts; default: 0.5%
     uint256 public volCapacityFactor = 0.5e18; // volatility capacity factor which determines the curvature of AMM functions; default: 0.5
     uint256 public minVolPrice = 0.5e18; // min annualised vol for trading volatility tokens
     
@@ -26,7 +26,7 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
         exchange = marketMaker.exchange();}
 
     // Reset functions for parameters
-    function setPoolParameters(uint256 _parameterId, uint256 _newParameter) public onlyOwner(){ 
+    function setPoolParameters(uint256 _parameterId, uint256 _newParameter) external onlyOwner(){ 
         if(_parameterId == 1){
             exerciseFee = _newParameter;}
         else if(_parameterId == 2){
@@ -36,11 +36,11 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
         emit ResetParameter(_parameterId, _newParameter);}
 
     // generic mintable functions
-    function mint(address to, uint256 amount) public {
+    function mint(address to, uint256 amount) external {
         require(msg.sender == exchange);
         _mint(to,amount);}
 
-    function burn(address account, uint256 amount) public {
+    function burn(address account, uint256 amount) external {
         require(msg.sender == exchange);
         _burn(account, amount);}
 

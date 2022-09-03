@@ -43,7 +43,7 @@ library OptionLib {
     uint256 _v = _volatilityByT > BASE? BASE: _volatilityByT; // always in (0, 1]
     return _atmPremium.muldiv(_v / 2, BASE + _v / 2 - _m).ethmul(_option.amount);}
 
-  function calcPremium(Option memory _option, uint256 _price, uint256 _volatilityByT, uint256 _loanInterest) public pure returns(uint256 _premium){
+  function calcPremium(Option memory _option, uint256 _price, uint256 _volatilityByT, uint256 _loanInterest) external pure returns(uint256 _premium){
     uint256 _interest = _loanInterest.muldiv( _option.tenor, SECONDS_1Y);
 
     int256 _atm_d = SafeCast.toInt256(_volatilityByT/ 2); // d value when at the money
@@ -53,7 +53,7 @@ library OptionLib {
     uint256 _intrinsicValue = calcIntrinsicValue(_option, _price);
     _premium = _intrinsicValue + _timeValue;}
 
-  function calcCollateral(Option memory _option, uint256 _price, uint256 _premium) public pure returns(uint256 _collateral){
+  function calcCollateral(Option memory _option, uint256 _price, uint256 _premium) external pure returns(uint256 _collateral){
     if(_option.side == OptionSide.Sell){
       if(_option.poType == PayoffType.Put){ 
         _collateral =  _option.amount.ethmul(_option.strike).max(_premium);}
@@ -61,7 +61,7 @@ library OptionLib {
         _collateral = _option.amount.ethmul(_price).max(_premium);}}
   }
 
-  // function calcCost(OptionSide _side, uint256 _premium) public pure returns (uint256 _cost) {
+  // function calcCost(OptionSide _side, uint256 _premium) external pure returns (uint256 _cost) {
   //   _cost = _premium;
   //   if(_side == OptionSide.Sell){
   //     if(_poType == PayoffType.Put){ 
@@ -70,7 +70,7 @@ library OptionLib {
   //       _cost = _amount.ethmul(_price) - _premium;}}}
 
   // payoff is the premium of options, payback is the amount owned to the option holder including both the signed amount of payoff and paid collaterals.
-  function calcPayoff(Option storage _option, uint256 _price) public view returns(uint256 _payoff, uint256 _payback, uint256 _collateral){
+  function calcPayoff(Option storage _option, uint256 _price) external view returns(uint256 _payoff, uint256 _payback, uint256 _collateral){
     _payoff = calcIntrinsicValue(_option, _price);
     _payback = _payoff;
     _collateral = 0;
@@ -82,17 +82,17 @@ library OptionLib {
         _collateral = _option.amount.ethmul(_option.strike);
         _payback = _collateral - _collateral.min(_payoff);}}}
 
-  function getNetNotional(Option storage _option) public view returns(int256 _netNotional){
+  function getNetNotional(Option storage _option) external view returns(int256 _netNotional){
     _netNotional = SafeCast.toInt256(_option.amount);
     if(_option.side == OptionSide.Sell) {_netNotional = -_netNotional;}}
 
-  function sellPutCollateral(Option storage _option) public view returns (uint256 _collateral){
+  function sellPutCollateral(Option storage _option) external view returns (uint256 _collateral){
     if(_option.side == OptionSide.Sell && _option.poType == PayoffType.Put) _collateral = _option.amount.ethmul(_option.strike);}
 
-  function calcRemainingMaturity(Option storage _option) public view returns(uint256 _maturityLeft){
+  function calcRemainingMaturity(Option storage _option) external view returns(uint256 _maturityLeft){
     _maturityLeft = _option.maturity - _option.maturity.min(block.timestamp);}
 
-  function calcDelta(Option storage _option, uint256 _price, uint256 _vol, bool _includeExpiring) public view returns(int256 _delta){
+  function calcDelta(Option storage _option, uint256 _price, uint256 _vol, bool _includeExpiring) external view returns(int256 _delta){
     _delta = 0;
     if(_option.status== OptionStatus.Active && (_includeExpiring || (_option.maturity > block.timestamp))){
       if(_option.side== OptionSide.Buy){
@@ -104,24 +104,24 @@ library OptionLib {
       else if(_option.side== OptionSide.Sell && _option.poType== PayoffType.Call){ 
         _delta = SafeCast.toInt256(_option.amount);}}} // collateral for sell call options. zero for sell put options  
 
-  function calcDeltaAtZero(Option storage _option) public view returns(uint256 _delta){
+  function calcDeltaAtZero(Option storage _option) external view returns(uint256 _delta){
     _delta = _option.poType == PayoffType.Call? _option.amount: 0;}
 
-  function calcDeltaAtMax(Option storage _option) public view returns(uint256 _delta){
+  function calcDeltaAtMax(Option storage _option) external view returns(uint256 _delta){
     _delta = (_option.poType == PayoffType.Put && _option.side== OptionSide.Buy)? _option.amount: 0;}
   
-  function calcGamma(uint256 _price, uint256 _strike, uint256 _vol) public pure returns(uint256 _gamma){
+  function calcGamma(uint256 _price, uint256 _strike, uint256 _vol) external pure returns(uint256 _gamma){
     uint256 _moneyness = _price.ethdiv(_strike);
     int256 _d = SafeCast.toInt256(2 * (_moneyness * BASE).sqrt().ethdiv(_vol)) - SafeCast.toInt256(2 * BASE.ethdiv(_vol)) + SafeCast.toInt256(_vol/ 2);
     _gamma = _d.normalDensity().ethdiv(_price).ethdiv(_vol);}
   
-  function isExpiring(Option storage _option) public view returns (bool){ 
+  function isExpiring(Option storage _option) external view returns (bool){ 
     return (_option.status== OptionStatus.Active) && (_option.maturity <= block.timestamp);}
 
   
 
   // Returns premium, costs (if sell option, cost includes collateral) and implied volatility
-  // function calcCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) public view returns(uint256 , uint256 , uint256 ){
+  // function calcCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) external view returns(uint256 , uint256 , uint256 ){
   //   uint256 _price = volChain.queryPrice();
   //   return calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side);}
 

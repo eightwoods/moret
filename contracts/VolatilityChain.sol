@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -14,7 +13,6 @@ import "./interfaces/IVolatilityChain.sol";
 
 contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
   using MathLib for uint256;
-  using SafeMath for uint256;
   using EnumerableSet for EnumerableSet.UintSet;
 
   bytes32 public constant UPDATE_ROLE = keccak256("UPDATE_ROLE");
@@ -128,7 +126,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     if(!tenors.contains(_tenor)){
       require(tenors.add(_tenor),'-t');}
 
-    sqrtRatios[_tenor] = SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
+    sqrtRatios[_tenor] = SECONDS_1Y.ethdiv(_tenor).sqrt() * 1e9; // in 18 decimal places
     
     require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier);
     volatilityParameters[_tenor] = _volParams;
