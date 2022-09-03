@@ -7,10 +7,11 @@ const settings={
 const volChain = artifacts.require("./VolatilityChain");
 const volToken = artifacts.require("./VolatilityToken");
 const mathLib = artifacts.require('./MathLib');
+const marketLib = artifacts.require('./MarketLib');
 const exchange = artifacts.require('./Exchange');
 
 module.exports = (deployer) => deployer
-  .then(()=> deployVolChain(deployer))
+  // .then(()=> deployVolChain(deployer))
   .then(() => deployVolToken(deployer))
   .then(() => displayDeployed());
 
@@ -28,28 +29,28 @@ async function deployVolChain(deployer){
 async function deployVolToken(deployer) {
   var exchangeInstance = await exchange.deployed();
   await deployer.link(mathLib, volToken);
+  await deployer.link(marketLib, volToken);
 
   await deployer.deploy(
     volToken,
     process.env.STABLE_COIN_ADDRESS,
     process.env.TOKEN_ADDRESS,
     settings.one.seconds,
-    [process.env.TOKEN_NAME, settings.one.ext, 'days'].join(' '),
-    [process.env.TOKEN_NAME, settings.one.ext, 'D'].join(''),
+    [process.env.TOKEN_NAME, settings.one.ext, 'day'].join(' '),
+    [process.env.TOKEN_NAME, settings.one.ext].join(''),
     exchangeInstance.address
   );
 }
 
 async function displayDeployed(){
-  const varChainInstance = await volChain.deployed();
+  // const varChainInstance = await volChain.deployed();
   const varTokenInstance = await volToken.deployed();
   
-  await varChainInstance.resetVolParams(settings.one.seconds, settings.one.params);
-  await varChainInstance.resetVolParams(settings.seven.seconds, settings.seven.params);
-  await varChainInstance.resetVolParams(settings.thirty.seconds, settings.thirty.params);
+  // await varChainInstance.resetVolParams(settings.one.seconds, settings.one.params);
+  // await varChainInstance.resetVolParams(settings.seven.seconds, settings.seven.params);
+  // await varChainInstance.resetVolParams(settings.thirty.seconds, settings.thirty.params);
   
   console.log(`=========
-    Deployed VolatilityChain: ${varChainInstance.address}
     Deployed VolatilityToken: ${varTokenInstance.address}
     =========`)
 }

@@ -30,7 +30,7 @@ contract PoolFactory {
 
         Pool _pool = Pool(proxy);
         // _pool.transferOwnership(_timelock);
-        MoretBroker(_broker).addPool(_pool);
+        MoretBroker(_broker).addPool(_pool, false);
 
         emit PoolCreated(proxy);}
 

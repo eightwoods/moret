@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../pools/Pool.sol";
 import "../libraries/MathLib.sol";
 import "../interfaces/EMoret.sol";
@@ -15,7 +16,7 @@ import "../VolatilityChain.sol";
 import "./Moret.sol";
 
 /// @custom:security-contact eight@moret.io
-contract MoretBroker is EMoret, AccessControl {
+contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
     using MathLib for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableMap for EnumerableMap.AddressToUintMap;
@@ -42,46 +43,54 @@ contract MoretBroker is EMoret, AccessControl {
     // functions to allow pool to exchange their tokens for Moret
     // arguments: pool contract address, amount of pool tokens to be exchanged
     // a minimum capital of 1m USDC is assumed for any exchange calculations.
-    function exchangePoolForMoret(Pool _pool, uint256 _payInAmount) external{
+    function exchangePoolForMoret(address _poolAddr, uint256 _payInAmount) external nonReentrant{
+        Pool _pool = Pool(_poolAddr);
         Moret _gov = _pool.marketMaker().govToken();
-        address _underlyingAddress = _pool.marketMaker().underlying();
-        _gov.getVolatilityChain(_underlyingAddress); // use this function to check if underlying exists.
+        address _undAddr = _pool.marketMaker().underlying();
+        _gov.getVolatilityChain(_undAddr); // use this function to check if underlying exists.
+        _pool.transferFrom(msg.sender, address(_gov), _payInAmount);
 
-        uint256 _poolNetCapital = getAndUpdateTopPool(_pool, _underlyingAddress);
+        uint256 _poolNetCapital = getAndUpdateTopPool(_pool, _undAddr);
         uint256 _payInCapital = _payInAmount.muldiv(_poolNetCapital, _pool.totalSupply());
         uint256 _existingCapital = Math.max(minCapital, poolCapital);
         uint256 _mintAmount = _payInCapital.muldiv(_gov.totalSupply(), _existingCapital);
 
-        _pool.transferFrom(msg.sender, address(_gov), _payInAmount);
         uint256 _updatedCapital = _pool.balanceOf(address(_gov)).muldiv(_poolNetCapital, _pool.totalSupply());
-        if(poolCapitalMap[_underlyingAddress].contains(address(_pool))){
-            poolCapital = poolCapital - Math.min(poolCapital, poolCapitalMap[_underlyingAddress].get(address(_pool))) + _updatedCapital;
+
+        // change stats of MoretBroker contract -> hence suspicious to reentry -> taken care of by nonReentrant and the step that pool tokens are first transferred to gov address
+        if(poolCapitalMap[_undAddr].contains(_poolAddr)){
+            poolCapital = poolCapital - Math.min(poolCapital, poolCapitalMap[_undAddr].get(_poolAddr)) + _updatedCapital;
         }
         else{
             poolCapital = poolCapital + _updatedCapital;
         }
-        poolCapitalMap[_underlyingAddress].set(address(_pool), _updatedCapital);
+        poolCapitalMap[_undAddr].set(_poolAddr, _updatedCapital);
         
         _gov.mint(msg.sender, _mintAmount); // This ensures only the right Moret contract mints.
-        emit ExchangePoolTokens(address(_pool), msg.sender, _payInAmount, _mintAmount);}
+        emit ExchangePoolTokens(_poolAddr, msg.sender, _payInAmount, _mintAmount);}
 
-    function getAndUpdateTopPool(Pool _pool, address _underlyingAddress) internal returns(uint256 _poolNetCapital){
+    function getAndUpdateTopPool(Pool _pool, address _undAddr) internal returns(uint256 _poolNetCapital){
+        require(allPoolMap[_undAddr].contains(address(_pool)),'-P'); // check if pool was registered already
         _poolNetCapital = vault.calcCapital(_pool, true, false);
-        require(_poolNetCapital > minCapital, "min capital not met.");
+        require(_poolNetCapital > minCapital, "mcP"); // pool capital needs to be above threshold
 
-        if (topPoolMap[_underlyingAddress] != address(_pool)){
-            uint256 _topCapital = (topPoolMap[_underlyingAddress] != address(0))? vault.calcCapital(Pool(topPoolMap[_underlyingAddress]), true, false): 0;
+        if (topPoolMap[_undAddr] != address(_pool)){
+            uint256 _topCapital = (topPoolMap[_undAddr] != address(0))? vault.calcCapital(Pool(topPoolMap[_undAddr]), true, false): 0;
             if (_poolNetCapital > _topCapital) {
-                topPoolMap[_underlyingAddress] = address(_pool);}}}
+                topPoolMap[_undAddr] = address(_pool);}}}
 
     // update list of pools
-    function addPool(Pool _pool) external{
-        allPoolMap[_pool.marketMaker().underlying()].add(address(_pool));}
-    function getAllPools(address _underlyingAddress) external view returns(address[] memory){
-        return allPoolMap[_underlyingAddress].values();}
-    function getTopPool(address _underlyingAddress) external view returns(address){
-        return topPoolMap[_underlyingAddress];}
-    // function getPoolsCount(address _underlyingAddress) external view returns(uint256){
-    //     return allPoolMap[_underlyingAddress].length();}
+    function addPool(Pool _pool, bool _remove) external{
+        if(_remove){
+            allPoolMap[_pool.marketMaker().underlying()].remove(address(_pool));    
+        }
+        else{
+        allPoolMap[_pool.marketMaker().underlying()].add(address(_pool));}}
+    function getAllPools(address _undAddr) external view returns(address[] memory){
+        return allPoolMap[_undAddr].values();}
+    function getTopPool(address _undAddr) external view returns(address){
+        return topPoolMap[_undAddr];}
+    // function getPoolsCount(address _undAddr) external view returns(uint256){
+    //     return allPoolMap[_undAddr].length();}
     
 }
