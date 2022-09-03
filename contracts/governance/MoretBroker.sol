@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../pools/Pool.sol";
 import "../libraries/MathLib.sol";
 import "../interfaces/EMoret.sol";
@@ -20,6 +21,7 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
     using MathLib for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableMap for EnumerableMap.AddressToUintMap;
+    using SafeERC20 for ERC20;
 
     // list of pools
     mapping(address=>address) internal topPoolMap; // only the top pool address is allowed to exchange their pool tokens with Moret. underlying token addres => pool address
@@ -47,8 +49,9 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
         Pool _pool = Pool(_poolAddr);
         Moret _gov = _pool.marketMaker().govToken();
         address _undAddr = _pool.marketMaker().underlying();
-        _gov.getVolatilityChain(_undAddr); // use this function to check if underlying exists.
-        _pool.transferFrom(msg.sender, address(_gov), _payInAmount);
+        require(address(_gov.getVolatilityChain(_undAddr)) != address(0), "0volchain"); // use this function to check if underlying exists.
+
+        ERC20(_poolAddr).safeTransferFrom(msg.sender, address(_gov), _payInAmount);
 
         uint256 _poolNetCapital = getAndUpdateTopPool(_pool, _undAddr);
         uint256 _payInCapital = _payInAmount.muldiv(_poolNetCapital, _pool.totalSupply());

@@ -19,6 +19,9 @@ contract VolatilityToken is ERC20, AccessControl{
 
     // constructor, ownership is transferred to Moret gov token which can mint and burn the tokens.
     constructor(ERC20 _funding, address _underlying, uint256 _tenor, string memory _name, string memory _symbol, address _exchange ) ERC20(_name, _symbol) {
+        require(_underlying != address(0), "0addr");
+        require(_exchange != address(0), "0addr");
+
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         funding = _funding;
         tenor = _tenor;

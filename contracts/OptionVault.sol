@@ -51,6 +51,8 @@ contract OptionVault is EOption, AccessControl{
   // function to stamp option as an active contract, only executable by Exchange contract as owner
   // arguments: contract id and holder address
   function stampActiveOption(uint256 _id, address _holder) external onlyRole(EXCHANGE){
+    require(_holder != address(0), "0addr"); 
+
     // update Option records
     OptionLib.Option storage _option = aOption[_id];
     _option.effectiveTime = block.timestamp;

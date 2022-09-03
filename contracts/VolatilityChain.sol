@@ -37,13 +37,15 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
   uint256 internal constant TOLERANCE = 60; // 60s tolerance for updating timestamp
 
   constructor(AggregatorV3Interface _priceSource, uint256 _parameterDecimals, string memory _tokenName, address _updateAddress )  {
+    require(_updateAddress != address(0), "0addr");
+
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); 
 
     _setupRole(UPDATE_ROLE, _updateAddress);
     tokenHash = keccak256(bytes(_tokenName));
-    tenors.add(1 days);
-    tenors.add(7 days);
-    tenors.add(30 days);
+    require(tenors.add(1 days),'-1d');
+    require(tenors.add(7 days),'-7d');
+    require(tenors.add(30 days),'-30d');
 
     priceInterface = _priceSource;
     priceMultiplier = 10 ** _priceSource.decimals();
@@ -100,7 +102,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
           if ((_iTime > _baseTime) || (_baseTime > (_priceTime - _tenor + TOLERANCE)) ){
             _baseTime = _iTime;}
           else{
-            _bookTimeSet.remove(_iTime);
+            require(_bookTimeSet.remove(_iTime),'notremoved');
           }}}}
     
     // update vols
@@ -119,12 +121,12 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     _newStamp.volatility = (_volParameter.ltVolWeighted + (_priceMove * _priceMove).muldiv( _volParameter.q, parameterMultiplier) + (_baseStamp.volatility * _baseStamp.volatility).muldiv( _volParameter.p, parameterMultiplier)).sqrt();
 
     latestBookTime[_tenor] = _priceTime;
-    _bookTimeSet.add(_priceTime);
+    require(_bookTimeSet.add(_priceTime),'-priceTime');
     emit NewVolatilityChainBlock(_tenor, _priceTime, _updatePrice, _newStamp.volatility, _baseTime);}
 
   function resetVolParams(uint256 _tenor, VolParam memory _volParams) external onlyOwner{
     if(!tenors.contains(_tenor)){
-      tenors.add(_tenor);}
+      require(tenors.add(_tenor),'-t');}
 
     sqrtRatios[_tenor] = SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
     
@@ -136,6 +138,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     uint256 _updatePrice = SafeCast.toUint256(_price);
 
     latestBookTime[_tenor] = _priceTime;
+    latestBookTimeSet[_tenor].add(_priceTime);
 
     PriceStamp storage _priceStamp = priceBook[_tenor][_priceTime];
     _priceStamp.startTime = _priceStamp.endTime = _priceTime;
@@ -145,7 +148,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
 
   function removeTenor(uint256 _tenor) external onlyOwner{
     require(tenors.contains(_tenor));
-    tenors.remove(_tenor);
+    require(tenors.remove(_tenor));
     emit RemovedTenor(_tenor, block.timestamp, msg.sender);}
 
   function getPriceBook(uint256 _tenor) external view returns(PriceStamp memory){

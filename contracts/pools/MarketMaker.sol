@@ -31,6 +31,7 @@ contract MarketMaker is  EOption{
   // function for sending option payout, only callable by the unique Exchange contract
   function settlePayment(address _to, uint256 _amount) external {
     require(msg.sender == exchange,'-X');
+    require(_to != address(0), "0addr");
     if(_amount > 0){
       require(funding.transfer(_to, _amount));}}
 

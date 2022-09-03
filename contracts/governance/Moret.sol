@@ -71,6 +71,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
 
     // update/add new volatility oracles
     function updateVolChain(address _underlyingAddress, VolatilityChain _newOracle) external onlyOwner{
+        require(_underlyingAddress != address(0), "0addr");
         if(!underlyingList.contains(_underlyingAddress)){
             underlyingList.add(_underlyingAddress);}
         volatilityChainMap[_underlyingAddress] = _newOracle;}

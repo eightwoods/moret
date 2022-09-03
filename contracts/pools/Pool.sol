@@ -20,8 +20,9 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
     
     // constructor, used only in PoolFactor contract
     constructor(string memory _name, string memory _symbol, address _marketMaker) ERC20(_name, _symbol) ERC20Permit(_name){
+        require(_marketMaker != address(0), "0addr");
         marketMaker = MarketMaker(_marketMaker);
-        marketMaker.getVolatilityChain(); // use this function to check if underlying exists.
+        require(address(marketMaker.getVolatilityChain()) != address(0), "0volchain"); // use this function to check if underlying exists.
         exchange = marketMaker.exchange();}
 
     // Reset functions for parameters
