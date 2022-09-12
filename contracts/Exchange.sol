@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/EOption.sol";
 import "./libraries/MathLib.sol";
@@ -14,7 +15,7 @@ import "./pools/MarketMaker.sol";
 import "./OptionVault.sol";
 import "./VolatilityToken.sol";
 
-contract Exchange is Ownable, EOption{
+contract Exchange is Ownable, Pausable, EOption{
   using MarketLib for uint256;
   using MathLib for uint256;
   using SafeMath for uint256;
@@ -34,7 +35,7 @@ contract Exchange is Ownable, EOption{
 
   // functions to transact for option contracts
   // arguments: pool token address, tenor in seconds, strike in 18 decimals, amount in 18 decimals, payoff type (call 0 or put 1), option side (buy 0 or sell 1)
-  function tradeOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side, OptionLib.PaymentMethod _payment) external {
+  function tradeOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side, OptionLib.PaymentMethod _payment) external whenNotPaused{
     OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, 0, 0, 0, address(_pool));
     (uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol) = vault.calcOptionCost(_option, false);
 
@@ -90,7 +91,7 @@ contract Exchange is Ownable, EOption{
 
   // functions to transact volatility tokens (buy or sell)
   // arguments: pool token address, tenor in seconds, strike in 18 decimals, amount in 18 decimals, payoff type (call 0 or put 1), option side (buy 0 or sell 1)
-  function tradeVolToken(Pool _pool, uint256 _tenor, uint256 _amount, OptionLib.OptionSide _side) external {
+  function tradeVolToken(Pool _pool, uint256 _tenor, uint256 _amount, OptionLib.OptionSide _side) external whenNotPaused{
     MarketMaker _marketMaker = _pool.marketMaker();
     require(_marketMaker.govToken().existVolTradingPool(address(_pool)), '-VP'); // only certified pools can trade vol
     VolatilityToken _vToken = _marketMaker.govToken().getVolatilityToken(_marketMaker.underlying(), _tenor);
@@ -147,7 +148,7 @@ contract Exchange is Ownable, EOption{
       emit Expire(msg.sender, address(this), _optionHolder, _expiringId, _payback);}}}
   
   // add capital by depositing amount in funding tokens
-  function addCapital(Pool _pool, uint256 _depositAmount) external {
+  function addCapital(Pool _pool, uint256 _depositAmount) external whenNotPaused{
     uint256 _averageGrossCapital = vault.calcCapital(_pool, false, true);
     ERC20 _funding = ERC20(_pool.marketMaker().funding());
     uint256 _mintPoolAmount = _depositAmount.toWei(_funding.decimals()).ethdiv(_averageGrossCapital);
@@ -155,10 +156,17 @@ contract Exchange is Ownable, EOption{
     _pool.mint(msg.sender, _mintPoolAmount);}
 
   // remove capital by withdrawing amount in funding tokens
-  function withdrawCapital(Pool _pool, uint256 _burnPoolAmount) external {
+  function withdrawCapital(Pool _pool, uint256 _burnPoolAmount) external whenNotPaused{
     uint256 _averageNetCapital = vault.calcCapital(_pool, true, true);
     uint256 _withdrawValue = _averageNetCapital.ethmul(_burnPoolAmount).toDecimals(ERC20(_pool.marketMaker().funding()).decimals()); 
     _pool.burn(msg.sender, _burnPoolAmount);
     _pool.marketMaker().settlePayment(msg.sender, _withdrawValue);}
 
+  function pause() external onlyOwner{
+    _pause();
+  }
+
+  function unpause() external onlyOwner{
+    _unpause();
+  }
 }

@@ -2,7 +2,7 @@ const moret = artifacts.require('./Moret');
 const broker = artifacts.require('./MoretBroker');
 const moretGov = artifacts.require('./Govern');
 const mathLib = artifacts.require('./MathLib');
-const optionVault = artifacts.require("./OptionVault");
+const exchange = artifacts.require("./Exchange");
 // const timelocker = artifacts.require("./TimelockController");
 
 module.exports = (deployer) => deployer
@@ -15,11 +15,11 @@ module.exports = (deployer) => deployer
 async function deployBroker(deployer) {
     await deployer.link(mathLib, broker);
 
-    var optionVaultInstance = await optionVault.deployed();
+    var exchangeInstance = await exchange.deployed();
     await deployer.deploy(
         broker,
         process.env.STABLE_COIN_ADDRESS,
-        optionVaultInstance.address
+        exchangeInstance.address
         );
 }
 

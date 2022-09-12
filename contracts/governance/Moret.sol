@@ -84,8 +84,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
     
     // update/get vol tokens.
     function updateVolToken(address _underlyingAddress, uint256 _tenor, VolatilityToken _volToken) external onlyOwner{ 
-        require((_volToken.tenor() == _tenor) && (_volToken.underlying() == _underlyingAddress), 'xV');
-        require(_volToken.exchange() == broker.exchange(), '-vE'); // make sure the exchange address is allowed
+        require((_volToken.tenor() == _tenor) && (_volToken.underlying() == _underlyingAddress) && (_volToken.exchange() == broker.exchange()), '-vE'); // make sure the exchange address is allowed
         volatilityTokenMap[_underlyingAddress].set(_tenor, address(_volToken));}
         // emit UpdateVolToken(_underlyingAddress, _tenor, address(_volToken)); }
     function getVolatilityToken(address _underlyingAddress, uint256 _tenor) external view returns (VolatilityToken){
