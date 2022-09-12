@@ -91,17 +91,24 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     
     // find the last time stamp available prior to the tenor period
     uint256 _baseTime = latestBookTime[_tenor];
-    EnumerableSet.UintSet storage _bookTimeSet = latestBookTimeSet[_tenor];
-    uint256 _stampCount = _bookTimeSet.length();
+    // EnumerableSet.UintSet storage _bookTimeSet = latestBookTimeSet[_tenor];
+    uint256 _stampCount = latestBookTimeSet[_tenor].length();
     if(_stampCount > 0){
       for(uint256 i = _stampCount;i> 0;i--){
-        uint256 _iTime = _bookTimeSet.at(i-1);
+        uint256 _iTime = latestBookTimeSet[_tenor].at(i-1);
+        
         if (_iTime <= (_priceTime - _tenor + TOLERANCE)) {
-          if ((_iTime > _baseTime) || (_baseTime > (_priceTime - _tenor + TOLERANCE)) ){
-            _baseTime = _iTime;}
+          if(_baseTime > (_priceTime - _tenor + TOLERANCE)){
+            _baseTime = _iTime;
+          }
           else{
-            require(_bookTimeSet.remove(_iTime),'notremoved');
-          }}}}
+            if (_iTime > _baseTime){
+              require(latestBookTimeSet[_tenor].remove(_baseTime),'-baseTime');
+              _baseTime = _iTime;
+              }
+            else if (_iTime < _baseTime){
+              require(latestBookTimeSet[_tenor].remove(_iTime),'-iTime');
+          }}}}}
     
     // update vols
     PriceStamp storage _baseStamp = priceBook[_tenor][_baseTime];
@@ -119,7 +126,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     _newStamp.volatility = (_volParameter.ltVolWeighted + (_priceMove * _priceMove).muldiv( _volParameter.q, parameterMultiplier) + (_baseStamp.volatility * _baseStamp.volatility).muldiv( _volParameter.p, parameterMultiplier)).sqrt();
 
     latestBookTime[_tenor] = _priceTime;
-    require(_bookTimeSet.add(_priceTime),'-priceTime');
+    require(latestBookTimeSet[_tenor].add(_priceTime),'-priceTime');
     emit NewVolatilityChainBlock(_tenor, _priceTime, _updatePrice, _newStamp.volatility, _baseTime);}
 
   function resetVolParams(uint256 _tenor, VolParam memory _volParams) external onlyOwner{
@@ -158,4 +165,8 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     return sqrtRatios[_tenor];
     // return SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
     }
+
+  function getLatestBookTimeSet(uint256 _tenor) external view returns(uint256[] memory){
+    return latestBookTimeSet[_tenor].values();
+  }
 }

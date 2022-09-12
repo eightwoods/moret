@@ -25,7 +25,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
     EnumerableSet.AddressSet internal underlyingList; // list of underlying tokens
     mapping(address=>VolatilityChain) internal volatilityChainMap; // volatility oracle: token address => volatiltiy chain address
     mapping(address=>EnumerableMap.UintToAddressMap) internal volatilityTokenMap; // volatility token list: token address => volatility token map (tenor => volatility tokens)
-    EnumerableSet.AddressSet internal eligibleTradingRoutes; // list of exchange routes that are allowed for hedging transactions
+    EnumerableSet.AddressSet internal eligibleTradingRoutes; // list of routes that are allowed for hedging transactions
     EnumerableSet.AddressSet internal volTradingPools; // pools allowed to trade volatility tokens
 
     uint256 public protocolFee = 0.005e18; // protocol fees payable to governance token each time option contract is exercised
@@ -55,6 +55,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
 
     // withdraw from certain pool so funding tokens can be saved in. This could be only executed by the owner address
     function withdraw(Pool _pool, uint256 _amount) external onlyOwner{
+        require(_pool.exchange() == broker.exchange(), "-wEx");
         Exchange(_pool.exchange()).withdrawCapital(_pool, _amount);
         emit WithdrawPoolTokens(address(_pool), _amount);}
 
@@ -84,6 +85,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
     // update/get vol tokens.
     function updateVolToken(address _underlyingAddress, uint256 _tenor, VolatilityToken _volToken) external onlyOwner{ 
         require((_volToken.tenor() == _tenor) && (_volToken.underlying() == _underlyingAddress), 'xV');
+        require(_volToken.exchange() == broker.exchange(), '-vE'); // make sure the exchange address is allowed
         volatilityTokenMap[_underlyingAddress].set(_tenor, address(_volToken));}
         // emit UpdateVolToken(_underlyingAddress, _tenor, address(_volToken)); }
     function getVolatilityToken(address _underlyingAddress, uint256 _tenor) external view returns (VolatilityToken){

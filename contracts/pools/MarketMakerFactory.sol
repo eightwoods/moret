@@ -15,6 +15,7 @@ contract MarketMakerFactory {
     event MarketMakerCreated(address indexed underlyingAddress, address marketMaker);
 
     constructor(Moret _govToken, Exchange _exchange) {
+        require(_govToken.broker().exchange() == address(_exchange), 'xExchange'); // make sure exchange address is affliated/fixed with Moret
         govToken = _govToken;
         exchange = _exchange;
         }

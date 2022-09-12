@@ -9,7 +9,7 @@ import "../VolatilityChain.sol";
 contract MarketMaker is  EOption{
   address public immutable hedgingBot; // hedge bot addresses
   bytes32 public immutable description; // description of pool and its hedging strategies
-  Moret public  govToken; // Records of which routes are available for hedging strategies
+  Moret public immutable govToken; // Records of which routes are available for hedging strategies
   address public immutable exchange; // EXCHANGE could be able to extract payments from MarketMaker
   address public immutable funding;
   address public immutable underlying;
@@ -28,9 +28,10 @@ contract MarketMaker is  EOption{
     underlying = _underlying;
     }  
 
-  // function for sending option payout, only callable by the unique Exchange contract
+  // function for sending option payout, 
+  // !!! only callable by the unique Exchange contract address !!!
   function settlePayment(address _to, uint256 _amount) external {
-    require(msg.sender == exchange,'-X');
+    require(msg.sender == exchange, '-mmpX');
     require(_to != address(0), "0addr");
     if(_amount > 0){
       require(ERC20(funding).transfer(_to, _amount));}}
@@ -38,15 +39,15 @@ contract MarketMaker is  EOption{
   // functions to make market by hedging underlyings
   // trade swaps/loans via allowed routes (in MoretBook) such as 1Inch. Arguments: amount to be paid, paid token, route via which the transaction happens, calldata for the transaction bytes data pre-compiled externally, gas allowed for the transaction
   function trade(address _fromAddress, uint256 _fromAmt, address payable _spender, bytes calldata _calldata, uint256 _gas) external {
-    require(msg.sender == hedgingBot, '-H');
-    require(govToken.existEligibleRoute(address(_spender)), '-R');
+    require(msg.sender == hedgingBot, '-tH');
+    require(govToken.existEligibleRoute(address(_spender)), '-R'); // only routes in the eligible route list are allowed
     require(ERC20(_fromAddress).approve(_spender, _fromAmt));
     (bool success, bytes memory data) = _spender.call{gas: _gas}(_calldata);
     emit HedgeResponse(msg.sender, address(this), success, data);}
 
   // Reset functions for parameters
   function setParameter(uint256 _paramId, uint256 _newParameter) external{
-    require(msg.sender == hedgingBot, '-H');
+    require(msg.sender == hedgingBot, '-spH');
     if(_paramId == 101){loanInterest = _newParameter;}
     else{hedgingCost=_newParameter;}
     emit ResetParameter(_paramId, _newParameter);}

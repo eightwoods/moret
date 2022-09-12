@@ -14,6 +14,7 @@ import "../libraries/MathLib.sol";
 import "../interfaces/EMoret.sol";
 import "../OptionVault.sol";
 import "../VolatilityChain.sol";
+import "../Exchange.sol";
 import "./Moret.sol";
 
 /// @custom:security-contact eight@moret.io
@@ -24,7 +25,7 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
     using SafeERC20 for ERC20;
 
     // list of pools
-    mapping(address=>address) internal topPoolMap; // only the top pool address is allowed to exchange their pool tokens with Moret. underlying token addres => pool address
+    mapping(address=>address) internal topPoolMap; // only the top pool address is allowed to swap their pool tokens with Moret. underlying token addres => pool address
     mapping(address=>EnumerableSet.AddressSet) internal allPoolMap; // all created pools
     
     // capital records
@@ -35,15 +36,17 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
     // address
     ERC20 public funding;
     OptionVault public vault;
+    address public immutable exchange;
 
-    constructor(ERC20 _funding, OptionVault _vault){
+    constructor(ERC20 _funding, address _exchange){
         funding = _funding;
-        vault = _vault;
+        exchange = _exchange;
+        vault = Exchange(_exchange).vault();
         }
 
-    // functions to allow pool to exchange their tokens for Moret
+    // functions to allow pool to swap their tokens for Moret
     // arguments: pool contract address, amount of pool tokens to be exchanged
-    // a minimum capital of 1m USDC is assumed for any exchange calculations.
+    // a minimum capital of 1m USDC is assumed for any calculations.
     function exchangePoolForMoret(address _poolAddr, uint256 _payInAmount) external nonReentrant{
         Pool _pool = Pool(_poolAddr);
         Moret _gov = _pool.marketMaker().govToken();
@@ -83,11 +86,14 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
 
     // update list of pools
     function addPool(Pool _pool, bool _remove) external{
+        address _poolUnd = _pool.marketMaker().underlying();
+        require(_pool.marketMaker().funding() == address(funding), 'xfundings');
+        require(_pool.exchange() == exchange, '-pEx');
         if(_remove){
-            allPoolMap[_pool.marketMaker().underlying()].remove(address(_pool));    
+            require(allPoolMap[_poolUnd].remove(address(_pool)), '-rm');    
         }
         else{
-        allPoolMap[_pool.marketMaker().underlying()].add(address(_pool));}}
+            require(allPoolMap[_poolUnd].add(address(_pool)) , '-ad');}}
     function getAllPools(address _undAddr) external view returns(address[] memory){
         return allPoolMap[_undAddr].values();}
     function getTopPool(address _undAddr) external view returns(address){

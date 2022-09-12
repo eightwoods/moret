@@ -2,19 +2,17 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./libraries/MathLib.sol";
 import "./libraries/MarketLib.sol";
 
-contract VolatilityToken is ERC20, AccessControl{
+contract VolatilityToken is ERC20{
     using MathLib for uint256;
     using Math for uint256;
 
-    bytes32 public constant EXCHANGE = keccak256("EXCHANGE");
-
     uint256 public immutable tenor;
     address public immutable underlying;
+    address public immutable exchange;
     ERC20 public funding;
 
     // constructor, ownership is transferred to Moret gov token which can mint and burn the tokens.
@@ -22,11 +20,10 @@ contract VolatilityToken is ERC20, AccessControl{
         require(_underlying != address(0), "0addr");
         require(_exchange != address(0), "0addr");
 
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         funding = _funding;
         tenor = _tenor;
         underlying = _underlying;
-        grantRole(EXCHANGE, _exchange);}
+        exchange = _exchange;}
 
     function getMintAmount(uint256 _premium, uint256 _vol) external view returns(uint256 _mintAmount, uint256 _volPrice){
         uint256 _supply = totalSupply();
@@ -38,7 +35,13 @@ contract VolatilityToken is ERC20, AccessControl{
         _volPrice = _supply > 0? _vol.min(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply)): _vol;
         _burnAmount = _premium.ethdiv(_volPrice);}
 
-    function mint(address _account, uint256 _amount) external onlyRole(EXCHANGE) {_mint(_account, _amount);}
-    function burn(address _account, uint256 _amount) external onlyRole(EXCHANGE) {_burn(_account, _amount);}
-    function pay(address _account, uint256 _amount) external onlyRole(EXCHANGE){require(funding.transfer(_account, _amount), '-VS');}
+    function mint(address _account, uint256 _amount) external {
+        require(msg.sender == exchange, "-vtEx");
+        _mint(_account, _amount);}
+    function burn(address _account, uint256 _amount) external {
+        require(msg.sender == exchange, "-vtEx");
+        _burn(_account, _amount);}
+    function pay(address _account, uint256 _amount) external {
+        require(msg.sender == exchange, "-vtEx");
+        require(funding.transfer(_account, _amount), '-VS');}
 }

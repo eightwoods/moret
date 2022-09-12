@@ -37,11 +37,11 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
 
     // generic mintable functions
     function mint(address to, uint256 amount) external {
-        require(msg.sender == exchange);
+        require(msg.sender == exchange, '-mEx');
         _mint(to,amount);}
 
     function burn(address account, uint256 amount) external {
-        require(msg.sender == exchange);
+        require(msg.sender == exchange, '-bEx');
         _burn(account, amount);}
 
     // The functions below are overrides required by Solidity.
