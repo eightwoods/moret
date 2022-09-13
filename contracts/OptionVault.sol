@@ -40,7 +40,7 @@ contract OptionVault is EOption, AccessControl{
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); }
 
   // function to add new option contracts, only executable by Exchange contract as owner
-  // arguments: tenor of option contracts (in seconds), strike (consistent with price source decimals), amount (consistent with underlying token decimals), option type (call or put), option side (buy or sell), premium (in funding token decimals), cost (in funding token decimals), price (in price source decimals), volatility (in default decimals 18), holder address
+  // arguments: option contracts (in struct), premium (in funding token decimals), collateral (in funding token decimals), price (in price source decimals), volatility (in default decimals 18)
   // return id of option contract
   function addOption(OptionLib.Option memory _option, uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol) external onlyRole(EXCHANGE) returns(uint256 _id){
     require(_option.tenor > 0, "Zero tenor");
@@ -94,19 +94,12 @@ contract OptionVault is EOption, AccessControl{
   function getActiveOptionCount(address _poolAddress) public view returns(uint256) {return mActiveOption[_poolAddress].length();}
   function getActiveOptions(address _poolAddress) external view returns(uint256[] memory) {return mActiveOption[_poolAddress].values();}
 
-  // function getHoldersOption(uint256 _index, address _address) external view returns(OptionLib.Option memory) {return aOption[activeOptionsPerOwner[_address].at(_index)];}
   function getOptionInfo(uint256 _id) external view returns(OptionLib.OptionStatus, OptionLib.OptionSide, address, Pool) {
-    require(_id< aOption.length);
+    require(_id< aOption.length, '-ID');
     return (aOption[_id].status, aOption[_id].side, aOption[_id].holder, Pool(aOption[_id].pool));}
 
-  // functions to get the hedging inputs
-  // maximum hedges needed 
-  // function getMaxHedge(Pool _pool) external view returns (uint256){
-  //   VolatilityChain _volChain = _pool.volChain();
-  //   address _poolAddress = address(_pool);
-  //   return Math.max(mDeltaAtZero[_poolAddress], mDeltaAtMax[_poolAddress]).ethmul(_volChain.queryPrice());}
-
-  // aggregate delta of all active contracts, optional including expiring contracts yet stamped as Expired. Arguments: spot price and whether to include expiring contracts
+  // aggregate delta of all active contracts, optional including expiring contracts yet stamped as Expired. 
+  // Arguments: pool address, spot price and whether to include expiring contracts
   function calculateAggregateDelta(address _pool, uint256 _price, bool _includeExpiring) external view returns(int256 _delta){
     _delta= 0;
     uint256 _activeContractCount = getActiveOptionCount(_pool);
@@ -117,24 +110,7 @@ contract OptionVault is EOption, AccessControl{
       uint256 _maturityLeft = _option.calcRemainingMaturity();
       uint256 _vol = _volChain.queryVol(_maturityLeft);
       _delta += _option.calcDelta(_price, _vol, _includeExpiring);}}
-  
-  // aggregate gamma. Arguments: spot price
-  // function calculateAggregateGamma(address _pool, uint256 _price) external view returns(int256 _gamma){
-  //   _gamma= 0;
-  //   for(uint256 i=0;i<activeContractCount;i++){
-  //     uint256 _id = uint256(activeOptions.at(i));
-  //     if(aOption[_id].status== OptionLib.OptionStatus.Active  && (aOption[_id].maturity > block.timestamp)){
-  //       uint256 _vol = volChain.queryVol(aOption[_id].maturity - block.timestamp);
-  //       int256 _contractGamma = SafeCast.toInt256(OptionLib.calcGamma(_price, aOption[_id].strike, _vol).ethmul(aOption[_id].amount));
-  //       if(aOption[_id].side==OptionLib.OptionSide.Sell){ _gamma -= _contractGamma;}
-  //       else{_gamma += _contractGamma;}}}}
 
-  // hypothetical gamma assuming at the money and 1-day expiry
-  // function calculateSpotGamma() external view returns(int256 _gamma){
-  //   uint256 _vol = volChain.queryVol(86400);
-  //   _gamma = SafeCast.toInt256(OptionLib.calcGamma(BASE, BASE, _vol));}
-
-  // functions used in expiring option contracts
   // contract payoff of specified contract ID
   function getContractPayoff(uint256 _id) external view returns(uint256 _payoff, uint256 _payback, uint256 _collateral){
     Pool _pool = Pool(aOption[_id].pool);
@@ -159,11 +135,6 @@ contract OptionVault is EOption, AccessControl{
         _id = _id_i;
         break;}}}
 
-  // function tryATMOptionCost(Pool _pool, uint256 _tenor, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) public view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _volatilty){
-  //   OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, 0, 0, 0, 0, address(_pool));
-  //   return calcOptionCost(_option, true);
-  // }
-
   function calcOptionCost(OptionLib.Option memory _option, bool _forceATM) public view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _annualisedVol){
     Pool _pool = Pool(_option.pool);
     MarketMaker _market = _pool.marketMaker();
@@ -185,7 +156,7 @@ contract OptionVault is EOption, AccessControl{
     _annualisedVol = _impVol.ethmul(_volChain.getSqrtRatio(_tenor));}
     
   // functions related to capital calculation, addition and removals
-  // calculate capitals. Arguments: net for net capital (removing all collaterals and max exposures of option contracts) or gross (including all exposures in the underlying and funding tokens), average for average capital (total divided by number of Pool tokens) or gross (not divided by tokens)
+  // calculate capitals. Arguments: pool address, net for net capital (removing all collaterals and max exposures of option contracts) or gross (including all exposures in the underlying and funding tokens), average for average capital (total divided by number of Pool tokens) or gross (not divided by tokens)
   function calcCapital(Pool _pool, bool _net, bool _average) external view returns(uint256){
     MarketMaker _market = _pool.marketMaker();
     VolatilityChain _volChain = _market.getVolatilityChain();

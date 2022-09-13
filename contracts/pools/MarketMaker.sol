@@ -34,14 +34,14 @@ contract MarketMaker is  EOption{
     require(msg.sender == exchange, '-mmpX');
     require(_to != address(0), "0addr");
     if(_amount > 0){
-      require(ERC20(funding).transfer(_to, _amount));}}
+      require(ERC20(funding).transfer(_to, _amount), '-transfer');}}
 
-  // functions to make market by hedging underlyings
-  // trade swaps/loans via allowed routes (in MoretBook) such as 1Inch. Arguments: amount to be paid, paid token, route via which the transaction happens, calldata for the transaction bytes data pre-compiled externally, gas allowed for the transaction
+  // functions to make market by hedging underlyings, trade swaps/loans via allowed routes (e.g. 1Inch). 
+  // Arguments: from address, amount to be paid, route via which the transaction happens, calldata for the transaction bytes data pre-compiled externally, gas allowed for the transaction
   function trade(address _fromAddress, uint256 _fromAmt, address payable _spender, bytes calldata _calldata, uint256 _gas) external {
     require(msg.sender == hedgingBot, '-tH');
     require(govToken.existEligibleRoute(address(_spender)), '-R'); // only routes in the eligible route list are allowed
-    require(ERC20(_fromAddress).approve(_spender, _fromAmt));
+    require(ERC20(_fromAddress).approve(_spender, _fromAmt), '-approve');
     (bool success, bytes memory data) = _spender.call{gas: _gas}(_calldata);
     emit HedgeResponse(msg.sender, address(this), success, data);}
 

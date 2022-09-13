@@ -135,7 +135,7 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
 
     sqrtRatios[_tenor] = SECONDS_1Y.ethdiv(_tenor).sqrt() * 1e9; // in 18 decimal places
     
-    require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier);
+    require((_volParams.w + _volParams.p + _volParams.q)==parameterMultiplier, '-SUM');
     volatilityParameters[_tenor] = _volParams;
     volatilityParameters[_tenor].ltVolWeighted = (volatilityParameters[_tenor].ltVol*volatilityParameters[_tenor].ltVol).muldiv( volatilityParameters[_tenor].w, parameterMultiplier);
 
@@ -152,8 +152,8 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     emit ResetVolChainParameter(_tenor, block.timestamp, msg.sender);}
 
   function removeTenor(uint256 _tenor) external onlyOwner{
-    require(tenors.contains(_tenor));
-    require(tenors.remove(_tenor));
+    require(tenors.contains(_tenor), '-tenor');
+    require(tenors.remove(_tenor), '-remove');
     emit RemovedTenor(_tenor, block.timestamp, msg.sender);}
 
   function getPriceBook(uint256 _tenor) external view returns(PriceStamp memory){
@@ -163,7 +163,6 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
   function getSqrtRatio(uint256 _tenor) external view returns(uint256){
     require(tenors.contains(_tenor), "Input tenor not allowed.");
     return sqrtRatios[_tenor];
-    // return SECONDS_1Y.ethdiv(_tenor).sqrt().mul(1e9); // in 18 decimal places
     }
 
   function getLatestBookTimeSet(uint256 _tenor) external view returns(uint256[] memory){

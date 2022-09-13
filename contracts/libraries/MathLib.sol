@@ -28,7 +28,7 @@ function muldiv(
 
     // Handle non-overflow cases, 256 by 256 division
     if (prod1 == 0) {
-        require(denominator > 0);
+        require(denominator > 0, '>0denom');
         assembly {
             result := div(prod0, denominator)
         }
@@ -37,7 +37,7 @@ function muldiv(
 
     // Make sure the result is less than 2**256.
     // Also prevents denominator == 0
-    require(denominator > prod1);
+    require(denominator > prod1, '>prod');
 
     ///////////////////////////////////////////////
     // 512 by 256 division.

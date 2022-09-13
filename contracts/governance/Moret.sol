@@ -65,7 +65,8 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         emit UpdateProtocolFees(_newFee);}
     function setProtocolRecipient(address _newAddress) external onlyOwner(){ 
         require(_newAddress != address(0), "0 address"); 
-        protocolFeeRecipient = _newAddress;}
+        protocolFeeRecipient = _newAddress;
+        emit UpdateProtocolRecipient(_newAddress);}
 
     // list of underlying addresses
     function getAllUnderlyings() external view returns(address[] memory){
@@ -93,18 +94,20 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         return VolatilityToken(_volToken);}
     
     // update eligible routes
-    function updateEligibleRoute(address _route, bool _add) external onlyOwner returns(bool){
+    function updateEligibleRoute(address _route, bool _add) external onlyOwner returns(bool _result){
         require(_route != address(0), "empty address");
-        if(_add) { return eligibleTradingRoutes.add(_route);}
-        else{ return eligibleTradingRoutes.remove(_route);}}
+        if(_add) { _result = eligibleTradingRoutes.add(_route);}
+        else{ _result = eligibleTradingRoutes.remove(_route);}}
+        // emit UpdateRoute(_route, _add);}
     function existEligibleRoute(address _route) external view returns(bool){
         return eligibleTradingRoutes.contains(_route);}
     
     // update vol trading pool
-    function updateVolTradingPool(address _poolAddress, bool _add) external onlyOwner returns(bool){
+    function updateVolTradingPool(address _poolAddress, bool _add) external onlyOwner returns(bool _result){
         require(_poolAddress != address(0), "empty address");
-        if(_add) { return volTradingPools.add(_poolAddress);}
-        else{ return volTradingPools.remove(_poolAddress);}}
+        if(_add) { _result = volTradingPools.add(_poolAddress);}
+        else{ _result = volTradingPools.remove(_poolAddress);}}
+        // emit UpdateVolTradingPool(_poolAddress, _add);}
     function existVolTradingPool(address _poolAddress) external view returns(bool){
         return volTradingPools.contains(_poolAddress);}
 

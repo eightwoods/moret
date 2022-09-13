@@ -44,17 +44,5 @@ contract MarketMakerFactory {
         _marketMakerBytecode = abi.encodePacked(_marketMakerBytecode, abi.encode(_hedgingBot, _description, _underlying, exchange, govToken));
         return _marketMakerBytecode;}
     
-    // function createMarketMaker(address _hedgingBot, address _underlying, bytes32 _description, bytes32 _salt) external {
-    //     require(_hedgingBot != address(0), 'ZERO_ADDRESS');
-    //     count += 1;
-    //     //  = keccak256(abi.encodePacked(_hedgingBot));
-
-    //     address _marketMakerAddress;
-        
-    //     assembly{
-    //         _marketMakerAddress := create2(0, add(_marketMakerBytecode, 0x20), mload(_marketMakerBytecode), _salt)
-    //         if iszero(extcodesize(_marketMakerAddress)) {revert(0,0)}
-    //     }
-    //     emit MarketMakerCreated(_underlying, _marketMakerAddress, _salt);}
 
 }

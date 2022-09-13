@@ -93,12 +93,11 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
             require(allPoolMap[_poolUnd].remove(address(_pool)), '-rm');    
         }
         else{
-            require(allPoolMap[_poolUnd].add(address(_pool)) , '-ad');}}
+            require(allPoolMap[_poolUnd].add(address(_pool)) , '-ad');}
+        emit AddPool(address(_pool), !_remove);}
     function getAllPools(address _undAddr) external view returns(address[] memory){
         return allPoolMap[_undAddr].values();}
     function getTopPool(address _undAddr) external view returns(address){
         return topPoolMap[_undAddr];}
-    // function getPoolsCount(address _undAddr) external view returns(uint256){
-    //     return allPoolMap[_undAddr].length();}
     
 }

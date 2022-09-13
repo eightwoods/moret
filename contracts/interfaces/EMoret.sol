@@ -2,11 +2,13 @@
 pragma solidity ^0.8.4;
 
 interface EMoret{
-    // event UpdateToken(address _underlying, address _oracle);
-    // event UpdateVolToken(address _underlying, uint256 _tenor, address _volToken);
+    event UpdateToken(address _underlying, address _oracle);
+    event UpdateVolToken(address _underlying, uint256 _tenor, address _volToken);
     event UpdateRoute(address _route, bool _addition);
     event UpdateProtocolFees(uint256 _fee);
-    // event UpdateProtocolRecipient(address _address);
+    event UpdateProtocolRecipient(address _address);
+    event UpdateVolTradingPool(address _address, bool _add);
+    event AddPool(address _address, bool _add);
     event WithdrawPoolTokens(address _pool, uint256 _amount);
     // event InvestPoolTokens(address _pool, uint256 _amount);
     // event DivestFromGov(address _receipient, uint256 _amount);

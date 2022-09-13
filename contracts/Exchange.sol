@@ -25,7 +25,7 @@ contract Exchange is Ownable, Pausable, EOption{
   // immutable addresses
   OptionVault public immutable vault;
 
-  // contructor. Arguments: pool tokens, volatility oracle, option vault and bot address
+  // contructor. Arguments: option vault and bot address
   constructor(OptionVault _optionVault){
     vault = _optionVault;}
   
@@ -34,7 +34,7 @@ contract Exchange is Ownable, Pausable, EOption{
     return vault.calcOptionCost(_option, _forceATM);}
 
   // functions to transact for option contracts
-  // arguments: pool token address, tenor in seconds, strike in 18 decimals, amount in 18 decimals, payoff type (call 0 or put 1), option side (buy 0 or sell 1)
+  // arguments: pool token address, tenor in seconds, strike in 18 decimals, amount in 18 decimals, payoff type (call 0 or put 1), option side (buy 0 or sell 1), payment methods 0-usdc/1-token/2-vol
   function tradeOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side, OptionLib.PaymentMethod _payment) external whenNotPaused{
     OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, 0, 0, 0, address(_pool));
     (uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol) = vault.calcOptionCost(_option, false);
@@ -42,8 +42,7 @@ contract Exchange is Ownable, Pausable, EOption{
     // transfer premiums
     if(_side == OptionLib.OptionSide.Buy){
       buyOption(_pool, msg.sender, _tenor, _premium, _price, _vol, _payment);
-    }
-    if(_side == OptionLib.OptionSide.Sell){
+    }else {
       sellOption(_pool, msg.sender, _tenor, _premium, _collateral, _price, _vol, _payment);
     }
 
@@ -57,27 +56,27 @@ contract Exchange is Ownable, Pausable, EOption{
     ERC20 _funding = ERC20(_marketMaker.funding());
     uint256 _fundingDecimals = _funding.decimals();
     address _underlyingAddress = _marketMaker.underlying();
-    if(_payment == OptionLib.PaymentMethod.USDC){
-        require(_funding.transferFrom(_buyer, address(_marketMaker), _premium.toDecimals(_fundingDecimals)), '-PM');}
-      else if (_payment == OptionLib.PaymentMethod.Token){
-        ERC20 _underlying = ERC20(_underlyingAddress);
-        uint256 _decimals = _underlying.decimals();
-        require(_underlying.transferFrom(_buyer, address(_marketMaker), _premium.ethdiv(_price).toDecimals(_decimals)), '-PM');}
-      else if (_payment == OptionLib.PaymentMethod.Vol){
-        VolatilityToken _vToken = _marketMaker.govToken().getVolatilityToken(_underlyingAddress, _tenor);
-        (uint256 _volAmount, uint256 _volPrice) = _vToken.getBurnAmount(_premium, _vol);
-        require(_volPrice > _pool.minVolPrice(), 'mVP');
-        _vToken.burn(msg.sender, _volAmount);
-        _vToken.pay(address(_marketMaker), _premium.toDecimals(_fundingDecimals));}}
+   
+    if (_payment == OptionLib.PaymentMethod.Token){
+      ERC20 _underlying = ERC20(_underlyingAddress);
+      uint256 _decimals = _underlying.decimals();
+      require(_underlying.transferFrom(_buyer, address(_marketMaker), _premium.ethdiv(_price).toDecimals(_decimals)), '-PM');}
+    else if (_payment == OptionLib.PaymentMethod.Vol){
+      VolatilityToken _vToken = _marketMaker.govToken().getVolatilityToken(_underlyingAddress, _tenor);
+      (uint256 _volAmount, uint256 _volPrice) = _vToken.getBurnAmount(_premium, _vol);
+      require(_volPrice > _pool.minVolPrice(), 'mVP');
+      _vToken.burn(msg.sender, _volAmount);
+      _vToken.pay(address(_marketMaker), _premium.toDecimals(_fundingDecimals));}
+    else{
+      require(_funding.transferFrom(_buyer, address(_marketMaker), _premium.toDecimals(_fundingDecimals)), '-PM');}
+  }
 
   function sellOption(Pool _pool, address _buyer, uint256 _tenor, uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol, OptionLib.PaymentMethod _payment) internal {
     MarketMaker _marketMaker = _pool.marketMaker();
     ERC20 _funding = ERC20(_marketMaker.funding());
     uint256 _fundingDecimals = _funding.decimals();
     
-    if(_payment == OptionLib.PaymentMethod.USDC){
-      require(_funding.transferFrom(_buyer, address(_marketMaker), (_collateral - _premium).toDecimals(_fundingDecimals)), '-PM');}
-    else if (_payment == OptionLib.PaymentMethod.Token){
+    if (_payment == OptionLib.PaymentMethod.Token){
       ERC20 _underlying = ERC20(_marketMaker.underlying());
       uint256 _decimals = _underlying.decimals();
       require(_underlying.transferFrom(_buyer, address(_marketMaker), (_collateral - _premium).ethdiv(_price).toDecimals(_decimals)), '-PM');}
@@ -87,10 +86,13 @@ contract Exchange is Ownable, Pausable, EOption{
       VolatilityToken _vToken = _marketMaker.govToken().getVolatilityToken(_marketMaker.underlying(), _tenor);
       (uint256 _volAmount, ) = _vToken.getMintAmount(_premium, _vol);
       _marketMaker.settlePayment(address(_vToken), _premium.toDecimals(_fundingDecimals)); 
-      _vToken.mint(msg.sender, _volAmount);}}
+      _vToken.mint(msg.sender, _volAmount);}
+    else{
+      require(_funding.transferFrom(_buyer, address(_marketMaker), (_collateral - _premium).toDecimals(_fundingDecimals)), '-PM');}
+    }
 
   // functions to transact volatility tokens (buy or sell)
-  // arguments: pool token address, tenor in seconds, strike in 18 decimals, amount in 18 decimals, payoff type (call 0 or put 1), option side (buy 0 or sell 1)
+  // arguments: pool token address, tenor in seconds, amount in 18 decimals, option side (buy 0 or sell 1)
   function tradeVolToken(Pool _pool, uint256 _tenor, uint256 _amount, OptionLib.OptionSide _side) external whenNotPaused{
     MarketMaker _marketMaker = _pool.marketMaker();
     require(_marketMaker.govToken().existVolTradingPool(address(_pool)), '-VP'); // only certified pools can trade vol
