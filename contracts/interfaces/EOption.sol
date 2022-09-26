@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity 0.8.16;
 
 interface EOption{
     event TradeVolatility(address indexed _purchaser, address indexed _exchange, uint256 _cost, uint256 _volAmount, bool _isPurchase);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity 0.8.16;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -61,14 +61,6 @@ library OptionLib {
         _collateral = _option.amount.ethmul(_price).max(_premium);}}
   }
 
-  // function calcCost(OptionSide _side, uint256 _premium) external pure returns (uint256 _cost) {
-  //   _cost = _premium;
-  //   if(_side == OptionSide.Sell){
-  //     if(_poType == PayoffType.Put){ 
-  //       _cost =  _amount.ethmul(_strike) - _premium;}
-  //     else if(_poType == PayoffType.Call){ 
-  //       _cost = _amount.ethmul(_price) - _premium;}}}
-
   // payoff is the premium of options, payback is the amount owned to the option holder including both the signed amount of payoff and paid collaterals.
   function calcPayoff(Option storage _option, uint256 _price) external view returns(uint256 _payoff, uint256 _payback, uint256 _collateral){
     _payoff = calcIntrinsicValue(_option, _price);
@@ -117,13 +109,5 @@ library OptionLib {
   
   function isExpiring(Option storage _option) external view returns (bool){ 
     return (_option.status== OptionStatus.Active) && (_option.maturity <= block.timestamp);}
-
-  
-
-  // Returns premium, costs (if sell option, cost includes collateral) and implied volatility
-  // function calcCost(uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) external view returns(uint256 , uint256 , uint256 ){
-  //   uint256 _price = volChain.queryPrice();
-  //   return calcOptionCost(_tenor, _price, _strike, _amount, _poType, _side);}
-
 
 }
