@@ -2,12 +2,9 @@
 
 The fundamental principal of Moret tokenomics is to align economics with value creations. Therefore, it is designed as a blend of fixed and inflationary supply.
 
-Initially, the Moret token starts with 1 million fixed supply allocating to the following
+Initially, the Moret token starts with 100 million fixed supply allocating to the following
 
-* 1/4 for incentives for early adopters with regressive rate
-* 1/4 for yield enhancement of liquidity providers
-* 1/4 for gas fee rebate, bounty program and Option Vault development
-* 1/4 earmarked for future developments
+<figure><img src="../../.gitbook/assets/image.png" alt=""><figcaption><p>Moret Tokenomics at the initial stage</p></figcaption></figure>
 
 Protocol fees from options expired in the money are accumulated in Moret reserve, which is the Moret token address. Moret tokens can be burned in exchange for USDC in reserve which returns the protocol fees to the holders.&#x20;
 
