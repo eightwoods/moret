@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interfaces/EOption.sol";
 import "../governance/Moret.sol";
+import "../governance/MoretBroker.sol";
 import "../VolatilityChain.sol";
 
 contract MarketMaker is  EOption{
@@ -23,7 +24,7 @@ contract MarketMaker is  EOption{
     hedgingBot = _bot;
     description = _description;
     govToken = Moret(_govToken);
-    funding = address(govToken.funding());
+    funding = address(govToken.broker().funding());
     exchange = _exchange;
     underlying = _underlying;
     }  

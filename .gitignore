@@ -9,3 +9,4 @@ app
 archive
 *.py
 *.pyc
+/trading

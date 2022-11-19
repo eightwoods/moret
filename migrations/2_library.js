@@ -2,6 +2,14 @@ const optionLib = artifacts.require('./OptionLib');
 const mathLib = artifacts.require('./MathLib');
 const marketLib = artifacts.require('./MarketLib');
 
+const exchange = artifacts.require('./Exchange');
+const optionVault = artifacts.require("./OptionVault");
+const moret = artifacts.require('./Moret');
+const broker = artifacts.require('./MoretBroker');
+const volChain = artifacts.require("./VolatilityChain");
+const volToken = artifacts.require("./VolatilityToken");
+const fip = artifacts.require('./FixedIncomeAnnuity');
+
 module.exports =(deployer) => deployer
   .then(() => deployMathLibrary(deployer))
   .then(()=> deployOptionLibrary(deployer))

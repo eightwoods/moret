@@ -17,6 +17,7 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
     uint256 public exerciseFee= 0.0025e18;  // Fees paid to exercise bots for exercising expiring option contracts; default: 0.5%
     uint256 public volCapacityFactor = 0.5e18; // volatility capacity factor which determines the curvature of AMM functions; default: 0.5
     uint256 public minVolPrice = 0.5e18; // min annualised vol for trading volatility tokens
+    uint256 public exposureSigma = 4e18; // multiplier on price for calculating exposures in AMM
     
     // constructor, used only in PoolFactor contract
     constructor(string memory _name, string memory _symbol, address _marketMaker) ERC20(_name, _symbol) ERC20Permit(_name){
@@ -33,6 +34,8 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
             volCapacityFactor = _newParameter;}
         else if (_parameterId == 3){
             minVolPrice = _newParameter;}
+        else if (_parameterId == 4){
+            exposureSigma = _newParameter;}
         emit ResetParameter(_parameterId, _newParameter);}
 
     // generic mintable functions

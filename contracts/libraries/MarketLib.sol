@@ -82,31 +82,9 @@ library MarketLib {
 
   // calculate the gross capital of a market address, in DEFAULT decimals.
   function getGrossCapital(MarketMaker _market, uint256 _price) external view returns(uint256){
-    // _price = _volChain.queryPrice();
-    // if(_pool.aaveAddressesProvider() != address(0)){
-    //   IProtocolDataProvider _protocolDataProvider = IProtocolDataProvider(ILendingPoolAddressesProvider(_pool.aaveAddressesProvider()).getAddress("0x1"));
-    //   (uint256 _underlyingBalance, , uint256 _debtBalance) = getTokenBalances(address(_pool), _protocolDataProvider, _pool.underlying());
-    //   (uint256 _fundingBalance, uint256 _collateralBalance,) = getTokenBalances(address(_pool), _protocolDataProvider, _pool.govToken().funding());
-
-    //   _capital = _fundingBalance + _collateralBalance + _underlyingBalance.ethmul(_price);
-    //   uint256 _debt_amount = _debtBalance.ethmul(_price);
-    //   require(_capital > _debt_amount, "Negative equity.");
-    //   _capital -= _debt_amount;}
-    // else{
     uint256 _underlyingBalance = balanceDef(ERC20(_market.underlying()), address(_market));
-    uint256 _fundingBalance = balanceDef(_market.govToken().funding(), address(_market));
+    uint256 _fundingBalance = balanceDef(ERC20(_market.funding()), address(_market));
     return  _fundingBalance + _underlyingBalance.ethmul(_price);}
   
-  function calcRiskPremium(uint256 _grossCapital, int256 _currentNetNotional, int256 _newNetNotional, uint256 _runningVol,uint256 _volCapacityFactor ) external pure returns(uint256){
-    int256 _riskPremium = calcRiskPremiumAMM(_grossCapital, _currentNetNotional,  _runningVol, _volCapacityFactor).average(calcRiskPremiumAMM(_grossCapital, _newNetNotional, _runningVol, _volCapacityFactor));
-    require((SafeCast.toInt256(_runningVol) + _riskPremium) > 0,"Incorrect vol premium");
-    return SafeCast.toUint256(SafeCast.toInt256(_runningVol) + _riskPremium); 
-  }
-
-  function calcRiskPremiumAMM(uint256 _max, int256 _input, uint256 _constant, uint256 _volCapacityFactor) public pure returns(int256) {
-    int256 _capacity = SafeCast.toInt256(BASE); // capacity should be in (0,2)
-    if(_input < 0){_capacity +=  SafeCast.toInt256(uint256(-_input).muldiv(_volCapacityFactor, _max));}
-    if(_input > 0){ _capacity -= SafeCast.toInt256(uint256(_input).muldiv(_volCapacityFactor, _max));}
-    require(_capacity>=0 , "Capacity breached.");
-    return SafeCast.toInt256(_constant.ethdiv(uint256(_capacity))) - SafeCast.toInt256(_constant);}
+  
 }

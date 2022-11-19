@@ -29,7 +29,7 @@ contract MoretBroker is EMoret, AccessControl, ReentrancyGuard {
     mapping(address=>EnumerableSet.AddressSet) internal allPoolMap; // all created pools
     
     // capital records
-    uint256 public constant minCapital = 1e24; // 1m min notional (in 18 decimals) // 1m minimum capital for the whole Moret pool and for exchanges
+    uint256 public constant minCapital = 3e25; // 30m min notional (in 18 decimals) which is fully diluted capital for moret token
     uint256 public poolCapital = 0; // total capitals
     mapping(address=>EnumerableMap.AddressToUintMap) internal poolCapitalMap;
     

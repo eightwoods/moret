@@ -161,8 +161,12 @@ contract VolatilityChain is Ownable, AccessControl, IVolatilityChain{
     return priceBook[_tenor][latestBookTime[_tenor]];}
 
   function getSqrtRatio(uint256 _tenor) external view returns(uint256){
-    require(tenors.contains(_tenor), "Input tenor not allowed.");
-    return sqrtRatios[_tenor];
+    if(tenors.contains(_tenor)){
+      return sqrtRatios[_tenor];
+    }
+    else{
+      return SECONDS_1Y.ethdiv(_tenor).sqrt() * 1e9; // in 18 decimal places
+    }
     }
 
   function getLatestBookTimeSet(uint256 _tenor) external view returns(uint256[] memory){

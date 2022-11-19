@@ -1,5 +1,5 @@
 {
-  "name": "moret",
+  "name": "@moret.io/contracts",
   "version": "1.0.0",
   "description": "Moret Exchange",
   "main": "truffle-config.js",
@@ -20,7 +20,7 @@
     "volatility",
     "token"
   ],
-  "author": "eightwoods",
+  "author": "moret",
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@aave/protocol-v2": "^1.0.1",
@@ -33,13 +33,16 @@
     "dotenv": "^10.0.0",
     "greeks": "^1.0.0",
     "node-fetch": "^3.2.5",
-    "truffle": "^5.1.67",
+    "npmrc": "^1.1.1",
+    "npx": "^10.2.2",
+    "solc": "^0.7.3",
+    "truffle": "^5.6.4",
     "truffle-contract-size": "^2.0.1",
     "uuid": "^8.3.2",
     "web3": "^1.7.3"
   },
   "files": [
-    "build/contracts/MoretMarketMaker.json",
+    "build/contracts/Moret.json",
     "build/contracts/Exchange.json",
     "contracts/**/*"
   ],

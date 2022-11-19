@@ -6,8 +6,6 @@ const settings={
 
 const volChain = artifacts.require("./VolatilityChain");
 const volToken = artifacts.require("./VolatilityToken");
-const mathLib = artifacts.require('./MathLib');
-const marketLib = artifacts.require('./MarketLib');
 const exchange = artifacts.require('./Exchange');
 
 module.exports = (deployer) => deployer
@@ -16,7 +14,6 @@ module.exports = (deployer) => deployer
   .then(() => displayDeployed());
 
 async function deployVolChain(deployer){
-  await deployer.link(mathLib, volChain);
   await deployer.deploy(
     volChain,
     process.env.CHAINLINK_FEED,
@@ -28,9 +25,6 @@ async function deployVolChain(deployer){
 
 async function deployVolToken(deployer) {
   var exchangeInstance = await exchange.deployed();
-  await deployer.link(mathLib, volToken);
-  await deployer.link(marketLib, volToken);
-
   await deployer.deploy(
     volToken,
     process.env.STABLE_COIN_ADDRESS,

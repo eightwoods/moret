@@ -29,15 +29,16 @@ contract Exchange is Ownable, Pausable, EOption{
   constructor(OptionVault _optionVault){
     vault = _optionVault;}
   
-  function queryOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side, bool _forceATM) external view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _volatility){
-    OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, 0, 0, 0, address(_pool));
-    return vault.calcOptionCost(_option, _forceATM);}
+  function queryOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _spread, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side) external view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _volatility, int256 _exposure){
+    OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, _spread, 0, 0, 0, address(_pool), 0);
+    return vault.calcOptionCost(_option);}
 
   // functions to transact for option contracts
   // arguments: pool token address, tenor in seconds, strike in 18 decimals, amount in 18 decimals, payoff type (call 0 or put 1), option side (buy 0 or sell 1), payment methods 0-usdc/1-token/2-vol
-  function tradeOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side, OptionLib.PaymentMethod _payment) external whenNotPaused{
-    OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, 0, 0, 0, address(_pool));
-    (uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol) = vault.calcOptionCost(_option, false);
+  function tradeOption(Pool _pool, uint256 _tenor, uint256 _strike, uint256 _spread, uint256 _amount, OptionLib.PayoffType _poType, OptionLib.OptionSide _side, OptionLib.PaymentMethod _payment) external whenNotPaused{
+    require(_pool.exchange() == address(this), "-Ex");
+    OptionLib.Option memory _option = OptionLib.Option(_poType, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _strike, _spread, 0, 0, 0, address(_pool), 0);
+    (uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol, int256 _exposure) = vault.calcOptionCost(_option);
 
     // transfer premiums
     if(_side == OptionLib.OptionSide.Buy){
@@ -46,7 +47,7 @@ contract Exchange is Ownable, Pausable, EOption{
       sellOption(_pool, msg.sender, _tenor, _premium, _collateral, _price, _vol, _payment);
     }
 
-    uint256 _id = vault.addOption(_option, _premium, _collateral, _price, _vol);
+    uint256 _id = vault.addOption(_option, _premium, _collateral, _price, _vol, _exposure);
     vault.stampActiveOption(_id, msg.sender);
 
     emit NewOption(msg.sender, _pool.marketMaker().underlying(), _id);}
@@ -97,11 +98,12 @@ contract Exchange is Ownable, Pausable, EOption{
     MarketMaker _marketMaker = _pool.marketMaker();
     require(_marketMaker.govToken().existVolTradingPool(address(_pool)), '-VP'); // only certified pools can trade vol
     VolatilityToken _vToken = _marketMaker.govToken().getVolatilityToken(_marketMaker.underlying(), _tenor);
-    OptionLib.Option memory _option = OptionLib.Option(OptionLib.PayoffType.Put, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, 0, 0, 0, 0, address(_pool));
+    VolatilityChain _volChain = _marketMaker.getVolatilityChain();
+    OptionLib.Option memory _option = OptionLib.Option(OptionLib.PayoffType.Put, _side, OptionLib.OptionStatus.Draft, msg.sender, 0, block.timestamp,  0, _tenor, 0,  0, _amount, 0, _volChain.queryPrice(), 0, 0, 0, 0, address(_pool), 0);
 
     ERC20 _funding = ERC20(_marketMaker.funding());
     uint256 _fundingDecimals = _funding.decimals();
-    (uint256 _premium, , , uint256 _vol) = vault.calcOptionCost(_option, true); 
+    (uint256 _premium, , , uint256 _vol, ) = vault.calcOptionCost(_option); 
     
     uint256 _volAmount;
     if (_side == OptionLib.OptionSide.Buy){
@@ -141,13 +143,13 @@ contract Exchange is Ownable, Pausable, EOption{
       _payback = _payback.toDecimals(_fundingDecimals);
 
       if(_optionSide == OptionLib.OptionSide.Buy){
-        _payback = _payback - Math.min(_payback, _protocolAmount + _exerciseAmount);
+        _payback = _payback - Math.min(_payback, _protocolAmount + _exerciseAmount);}
 
       MarketMaker _marketMaker = MarketMaker(_pool.marketMaker());
       _marketMaker.settlePayment(_optionHolder, _payback);
       _marketMaker.settlePayment(_pool.marketMaker().govToken().protocolFeeRecipient(), _protocolAmount);
       _marketMaker.settlePayment(_exerciseFeeRecipient, _exerciseAmount);      
-      emit Expire(msg.sender, address(this), _optionHolder, _expiringId, _payback);}}}
+      emit Expire(msg.sender, address(this), _optionHolder, _expiringId, _payback);}}
   
   // add capital by depositing amount in funding tokens
   function addCapital(Pool _pool, uint256 _depositAmount) external whenNotPaused{

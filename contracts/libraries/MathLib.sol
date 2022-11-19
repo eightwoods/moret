@@ -177,6 +177,29 @@ function normalDensity(int x) external pure returns (uint y){
 
     if(i==iTotal) { y =   uint(yArray[i-1]);}
     if(i>0 && i<iTotal) { 
-        y = (uint(yArray[i-1]) * uint(int(xArray[i]) - x) / uint(int(xArray[i]) - int(xArray[i-1]) )) + (uint(yArray[i]) * uint(x - int(xArray[i-1])) / uint(int(xArray[i]) - int(xArray[i-1]))) ; }    }
+        y = (uint(yArray[i-1]) * uint(int(xArray[i]) - x) / uint(int(xArray[i]) - int(xArray[i-1]) )) + (uint(yArray[i]) * uint(x - int(xArray[i-1])) / uint(int(xArray[i]) - int(xArray[i-1]))) ; 
+        }    
+        }
+
+
+function absmax(int x, int y) external pure returns (uint z){
+    if(x > 0)
+    {
+        if (y > 0){
+            z = x > y? uint(x): uint(y);
+        }
+        else{
+            z = uint(x);
+        }
+    }
+    else{
+        if(y>0){
+            z = uint(y);
+        }
+        else{
+            z = 0;
+        }
+    }
+}
 
 }

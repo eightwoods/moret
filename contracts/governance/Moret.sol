@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../pools/Pool.sol";
 import "../libraries/MathLib.sol";
 import "../interfaces/EMoret.sol";
@@ -21,6 +21,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
     using MathLib for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableMap for EnumerableMap.UintToAddressMap;
+    // using SafeERC20 for ERC20;
 
     EnumerableSet.AddressSet internal underlyingList; // list of underlying tokens
     mapping(address=>VolatilityChain) internal volatilityChainMap; // volatility oracle: token address => volatiltiy chain address
@@ -31,14 +32,11 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
     uint256 public protocolFee = 0.005e18; // protocol fees payable to governance token each time option contract is exercised
     address public protocolFeeRecipient;
     
-    // funding token address
-    ERC20 public funding;
     MoretBroker public broker;
 
     constructor(MoretBroker _broker) ERC20("Moret", "MOR") ERC20Permit("Moret") {
         broker = _broker;
-        funding = _broker.funding();
-        _mint(msg.sender, 1e24); // initial mint, 1e6 * 1e18
+        _mint(msg.sender, 1e26); // initial mint, 1e8 * 1e18
         protocolFeeRecipient = msg.sender;
         }
     
@@ -47,9 +45,9 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         require(address(broker) == msg.sender, 'broker only');
         _mint(_to, _amount);}
     function divest(uint256 _amount) external {
-        uint256 _capitalToDivest = _amount.muldiv(funding.balanceOf(address(this)), totalSupply());
+        uint256 _capitalToDivest = _amount.muldiv(broker.funding().balanceOf(address(this)), totalSupply());
         _burn(msg.sender, _amount);
-        funding.transfer(msg.sender, _capitalToDivest);
+        broker.funding().transfer(msg.sender, _capitalToDivest);
         // emit DivestFromGov(msg.sender, _capitalToDivest);}
     }
 
@@ -67,10 +65,6 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
         require(_newAddress != address(0), "0 address"); 
         protocolFeeRecipient = _newAddress;
         emit UpdateProtocolRecipient(_newAddress);}
-
-    // list of underlying addresses
-    function getAllUnderlyings() external view returns(address[] memory){
-        return underlyingList.values();}
 
     // update/add new volatility oracles
     function updateVolChain(address _underlyingAddress, VolatilityChain _newOracle) external onlyOwner{
