@@ -2,8 +2,8 @@
 
 #### Oct 2021
 
-* [x] Deployed to Polygon mainnet for beta test
-* [x] Grant from 1Inch
+* [x] Deployed to Polygon chain for beta test
+* [x] Received Grant from 1Inch Foundation
 
 #### Dec 2021
 
