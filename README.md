@@ -30,5 +30,7 @@ Normally premium is only a tiny fraction of asset price. For example, typical 1-
   * Fat-tailed, non-normal price changes and non-stationary volatility
 * In addition, there is no venue to trade volatility as a separate investment.
 
+Zee Prime Capital has written a great article about the current state of DeFi options. Many of the current issues in this space are tackled with in Moret.
 
+{% embed url="https://zeeprime.capital/a-lot-of-on-chain-options-but-few-to-exercise-a-deep-dive-into-defi-option-protocols" %}
 

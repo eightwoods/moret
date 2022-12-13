@@ -17,7 +17,23 @@ The hedging mechanism relates to how the exposure of option to the token price i
 
 
 
-Bots can run from authorised address to instruct hedge transactions with 1Inch aggregator. In a normal hedging algorithm, when Delta is positive, the liquidity pool converts USDC into the underlying token (WETH or WBTC) using 1Inch Aggregation protocol.&#x20;
+Sample hedging bot can be found below:
+
+```
+let params = { 'fromTokenAddress': sell_address, 'toTokenAddress': buy_address, 'amount': Number(amount), 'fromAddress': market_address, 'slippage': slippage, 'disableEstimate': 'true' };
+
+var url = new URL(‘https://api.1inch.exchange/v4.0/137/swap');
+Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
+let response = await fetch(url);
+let data = await response.json();
+
+let call_data = web3.utils.hexToBytes(data['tx']['data']);
+
+await market.methods.trade(sell_address, max_amount, oneinch_router, call_data, default_gas).send();
+
+```
+
+Authorised bots are used to run hedge transactions. When Delta is positive, the liquidity pool converts USDC into the underlying token (WETH or WBTC) using 1Inch Aggregation protocol.&#x20;
 
 #### Volatility Automatic Market Maker
 
@@ -29,15 +45,13 @@ Backbone volatility is a rolling weighted average historical realised volatility
 
 Volatility premium is determined by the capacity of the liquidity pool, via a constant product market making model. Each option bought by investors has positive risk exposure to the liquidity pool, while each option sold by investors as part of the covered short positions, has negative risk exposure to the liquidity pool. The more positive the net risk positions are, the less capacity the whole protocol can support investors to buy additional options. Therefore, a constant product formula works neatly in defining the volatility premium that investors need to pay in order to buy put or call options. Conceptually volatility premium \* capacity = constant. The higher the capacity is the lower volatility premium would be. If there are more selling positions than buying, the capacity could exceed the total liquidity provided, in which case the volatility premium can even be negative.&#x20;
 
-The risk exposure of an option contract is defined as the delta at a stress price level. For a call option, it is set as the delta when the price is 4 times backbone volatility higher than the spot price. For put options, the delta is calculated at a price with the same distance lower.  The stress level can be set differently at each liquidity pool through the LP governance process.
-
 #### Volatility Skew
 
-Because the buying and selling pressures are different for put options vs call options, the volatility premiums are calculated separately based on the aggregate risk exposure of call options on the upside and aggregate risk exposure of put options on the downside. The effect is the volatility skew.&#x20;
+The difference in volatility between options with at-the-money strike and other strikes is the volatility skew. Moret formulaically constructs the volatility skew so in-the-money or out-the-money option purchasers take on more volatilities than those buying at-the-money options.
 
 ![](https://cdn-images-1.medium.com/max/1200/1\*VY5HRpcJkos8V\_uKnw9PCw.png)
 
-**Bespoke Liquidity Pools**
 
-The hedging algorithms and AMM curve parameters can be independently set for different liquidity pools. This allows anyone to create new liquidity pools with their own bots for hedging algorithms. Depending on their risk appetite, market makers can change how sensitive the volatility premiums are to the aggregate risk exposures of options, by fine tuning the AMM parameters. This incentivises market makers to compete in risk management and to provide the best option quotes for investors.&#x20;
+
+
 
