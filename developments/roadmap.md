@@ -21,9 +21,16 @@
 
 **Apr 2022**
 
-* [ ] Launch governance token
-* [ ] New web interface
-* [ ] Launch option vaults with risk managed products for ETC and BTC
+* [x] Launch governance token
+* [x] New web interface with brand new trading apps
+
+**Sep 2022**
+
+* [x] Audit by CertiK
+
+**Nov 2022**
+
+* [x] Launch the first structured products for ETC and BTC
 
 ****
 
