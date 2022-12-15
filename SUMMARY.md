@@ -3,15 +3,15 @@
 ## Overview
 
 * [DeFi Option Exchanges](README.md)
-* [Moret: Option exchange](overview/moret-option-exchange.md)
-* [Moret: Volatility tokens](overview/moret-volatility-tokens.md)
-* [Moret: Liquidity pools](overview/moret-liquidity-pools.md)
+* [Crypto Options Landscape](overview/crypto-options-landscape.md)
+* [Liquidity Pool, Market Maker and RFQ](overview/liquidity-pool-market-maker-and-rfq.md)
 
 ## Trading Guide <a href="#trading" id="trading"></a>
 
 * [Option Traders](trading/how-to-trade.md)
 * [Volatility Tokens](trading/volatility-tokens.md)
-* [Market Makers](trading/market-making-protocol.md)
+* [Liquidity Providers](trading/market-making-protocol.md)
+* [Option Vaults](trading/option-vaults.md)
 
 ## Oracle
 

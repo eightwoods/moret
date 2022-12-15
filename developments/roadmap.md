@@ -32,5 +32,12 @@
 
 * [x] Launch the first structured products for ETC and BTC
 
+**Q1 2023**
+
+* [ ] Built partial collateral model using LP tokens
+* [ ] Deploy on BNB chain
+* [ ] Integrate on NEAR protocol
+* [ ] Cross-chain integration
+
 ****
 

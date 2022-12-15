@@ -1,0 +1,13 @@
+# Option Vaults
+
+We’ve launched our fixed income products on the back of the powerful crypto option exchange Moret this month. Incidentally, the recent market reaction to the demise of the once ‘omnipotent’ exchange FTX has not only vindicated the true value of decentralised finance as opposed to the opaque and scandal-ridden centralised intermediaries, but also generated much appetite for structured products on-chain which protect the values of crypto investments from an adverse market movement during winding up the bad players in the crypto world.
+
+Therefore the timing won’t be any better for us to launch the first on-chain saver product: the ‘buffer’ fixed income products. The buffer means that for a 7-day saver, the value of the portfolio will be compensated for any loss within 5% in any single day. For example, on 8 Nov 2022, when Ethereum price dropped by 15%, holder of this fixed income product would have been credited by 5%. Most of time (>99% of time), the daily price drawdown is within 5% and the value of the product is floored. In addition, the saver product has a yield (hence the name ‘fixed income’) as well as participation of any rebound of the Ethereum price up to 5% at the end of the vintage cycle.
+
+<figure><img src="https://miro.medium.com/max/1400/1*08GJjhUp64K51FuAFZQYNQ.png" alt=""><figcaption><p>Not hit by red, while gaining from green!</p></figcaption></figure>
+
+The fixed income products run in vintage cycles of 7 days or 30 days. Within each cycle the scheme is closed for investment. Once the vintage is up there will be an investment window when new deposits and withdrawals are available.
+
+As an example, the newly-launched Ethereum fixed income saver started on 13 Nov with the starting price at $1,223. For the next 7 days the saver will earn any price appreciation of Ethereum up to $1,284. In the meanwhile, any losses within 5% on a daily basis are covered. As we are now in a gradual winding up of the apparatus of FTX, it is highly possible of an extended and slow bear market due to the constant sell pressure from collateralised and leveraged positions. However, it is not certain when this process concludes which will surely mean a rebound in price. Therefore this saver product is ideal to capture the upside whilst being protected from the highly probable continuous market downturn.
+
+The entire investment is done on-chain with audited Moret exchange so there won’t be risk of funds being misappropriated by bad actors in the guise of crypto, as vindicated by the cases of numerous downfalls of centralised entities and protocols this year.
