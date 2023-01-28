@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
@@ -30,8 +30,9 @@ library OptionLib {
     uint256 volatility;
     uint256 premium;uint256 cost;
     address pool;
-    int256 exposure;}
-  
+    int256 exposure;
+    uint256 fee;}
+
   uint256 internal constant BASE  = 1e18;
 
   function calcIntrinsicValue(Option memory _option, uint256 _price) public pure returns(uint256){
@@ -52,7 +53,10 @@ library OptionLib {
     if(_volatilityByT == 0) return 0;
     uint256 _m = _strike > _price? _price.ethdiv(_strike) : _strike.ethdiv(_price); // always in (0,1]
     uint256 _v = _volatilityByT > BASE? BASE: _volatilityByT; // always in (0, 1]
-    return _atmPremium.muldiv(_v / 2, BASE + _v / 2 - _m).ethmul(_amount);}
+    uint256 _v0 = (_v / 2).ethdiv(BASE + _v / 2); // base value of v0 when _m = 0, always < 1
+    uint256 _v1 = (_v / 2).ethdiv(BASE + _v / 2 - _m); // otm adjustment, always in [_v0, 1]
+    uint256 _adj = _v1.muldiv(_v1 - _v0, BASE - _v0);
+    return _atmPremium.ethmul(_adj).ethmul(_amount);}
 
   function calcPremium(Option memory _option, uint256 _price, uint256 _volatilityByT, uint256 _loanInterest) external pure returns(uint256 _premium){
     uint256 _intrinsicValue = calcIntrinsicValue(_option, _price);
@@ -76,31 +80,29 @@ library OptionLib {
     _premium = _intrinsicValue + _timeValue - _spreadTimeValue;}
 
   function calcCollateral(Option memory _option, uint256 _price, uint256 _premium) external pure returns(uint256 _collateral){
-    if(_option.side == OptionSide.Sell){
-      if(_option.poType == PayoffType.Put){ 
-        _collateral =  _option.amount.ethmul(_option.strike).max(_premium);}
-      else if(_option.poType == PayoffType.Call){ 
-        _collateral = _option.amount.ethmul(_price).max(_premium);}}
-      else if(_option.poType == PayoffType.PutSpread || _option.poType == PayoffType.CallSpread){ 
-        _collateral =  _option.amount.ethmul(_option.spread).max(_premium);}
+    if(_option.poType == PayoffType.Put){ 
+      _collateral =  _option.amount.ethmul(_option.strike);
+    }
+    else if(_option.poType == PayoffType.Call){ 
+      _collateral = _option.amount.ethmul(_price);
+    }
+    else if(_option.poType == PayoffType.PutSpread || _option.poType == PayoffType.CallSpread){ 
+      _collateral =  _option.amount.ethmul(_option.spread);
+    }
+    require(_collateral > _premium , 'wrong premium');
   }
 
   // payoff is the premium of options, payback is the amount owned to the option holder including both the signed amount of payoff and paid collaterals.
-  function calcPayoff(Option storage _option, uint256 _price) external view returns(uint256 _payoff, uint256 _payback, uint256 _collateral){
-    _payoff = calcIntrinsicValue(_option, _price);
-    _payback = _payoff;
-    _collateral = 0;
+  function calcPayoff(Option storage _option, uint256 _price) external view returns(uint256){
+    uint256 _intrinsic = calcIntrinsicValue(_option, _price);
     if(_option.side == OptionSide.Sell){
-      if (_option.poType == PayoffType.Call){
-        _collateral = _option.amount.ethmul(_price);
-        _payback = _collateral - _collateral.min(_payoff);}
-      else if(_option.poType == PayoffType.Put){
-        _collateral = _option.amount.ethmul(_option.strike);
-        _payback = _collateral - _collateral.min(_payoff);}
-      else if(_option.poType == PayoffType.PutSpread || _option.poType == PayoffType.CallSpread){ 
-        _collateral = _option.amount.ethmul(_option.spread);
-        _payback = _collateral - _collateral.min(_payoff);}
-      }}
+      uint256 _collateral = _option.amount.ethmul((_option.poType == PayoffType.Call)? _price : ((_option.poType == PayoffType.Put)? _option.strike: _option.spread));
+      return _collateral - _collateral.min(_intrinsic);
+    }
+    else{
+      return _intrinsic;
+    }
+  }
 
   function getUnderCollateral(Option storage _option) external view returns(uint256 _collateral){
     if(_option.side == OptionSide.Sell && _option.poType == PayoffType.Call) {
@@ -166,7 +168,4 @@ library OptionLib {
     require(_capacity>=0 , "Capacity breached.");
     return SafeCast.toInt256(_constant.ethdiv(uint256(_capacity))) - SafeCast.toInt256(_constant);}
   
-  function isExpiring(Option storage _option) external view returns (bool){ 
-    return (_option.status== OptionStatus.Active) && (_option.maturity <= block.timestamp);}
-
 }

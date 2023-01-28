@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -20,7 +20,6 @@ contract OptionVault is EOption, AccessControl{
   
   using OptionLib for OptionLib.Option;
   using EnumerableSet for EnumerableSet.UintSet;
-  using EnumerableSet for EnumerableSet.AddressSet;
 
   bytes32 public constant EXCHANGE = keccak256("EXCHANGE");
   
@@ -30,26 +29,42 @@ contract OptionVault is EOption, AccessControl{
   mapping(address=>EnumerableSet.UintSet) internal mActiveOption;
   mapping(address=>uint256) public mUnderCollateral;
   mapping(address=>uint256) public mFundCollateral;
+  mapping(address=>uint256) public mShortPremiums;
   mapping(address=>int256) public mExposureUp;
   mapping(address=>int256) public mExposureDown;
 
   // immutable and constant values
   uint256 internal constant BASE  = 1e18;
   uint256 internal constant SCALING = 1e5;
+  uint256 internal constant SECONDS_1Y = 31536000; // 86400 * 365
 
   // constructor
   constructor(){
     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender); }
+  
+  // functions to get information of the option list -> ONLY USED in VIEW, gas cost unlimited
+  function getHolderOptions(address _pool, address _address) external view returns(uint256[] memory){
+    return mHolderAtiveOption[_pool][_address].values();}
+  function getOption(uint256 _id) public view returns(OptionLib.Option memory) {return aOption[_id];}
+  function getActiveOptionCount(address _poolAddress) public view returns(uint256) {return mActiveOption[_poolAddress].length();}
+  function getActiveOptions(address _poolAddress) external view returns(uint256[] memory) {return mActiveOption[_poolAddress].values();}
+
+  function getOptionInfo(uint256 _id) external view returns(OptionLib.OptionStatus, uint256, address, Pool) {
+    require(_id< aOption.length, '-ID');
+    return (aOption[_id].status, aOption[_id].maturity, aOption[_id].holder, Pool(aOption[_id].pool));}
 
   // function to add new option contracts, only executable by Exchange contract as owner
   // arguments: option contracts (in struct), premium (in funding token decimals), collateral (in funding token decimals), price (in price source decimals), volatility (in default decimals 18)
   // return id of option contract
-  function addOption(OptionLib.Option memory _option, uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol, int256 _exposure) external onlyRole(EXCHANGE) returns(uint256 _id){
+  function addOption(OptionLib.Option memory _option, uint256 _premium, uint256 _collateral, uint256 _price, uint256 _vol, uint256 _fee) external onlyRole(EXCHANGE) returns(uint256 _id){
     require(_option.tenor > 0, "Zero tenor");
     _id = aOption.length;
+    Pool _pool = Pool(_option.pool);
+    VolatilityChain _volChain = _pool.marketMaker().getVolatilityChain();
+    (, int256 _exposure) = calcOptionExposure(_option, _price, _volChain.queryVol(_option.tenor), calcCapital(_pool, false, false));
     
     // Arguments: option type, option side, contract status (default to draft), contract holder address, contract id, creation timestamp, effective timestamp (default to 0), tenor in seconds, maturity timestamp (default to 0), excersie timestamp (default to 0), amount or size of contract, current spot price, option strike, implied volatility, calculated premium and total cost including collaterals.
-    aOption.push(OptionLib.Option(_option.poType, _option.side, OptionLib.OptionStatus.Draft, _option.holder, _id, block.timestamp,  0, _option.tenor, 0,  0, _option.amount, _price, _option.strike, _option.spread, _vol, _premium, _collateral, _option.pool, _exposure));}
+    aOption.push(OptionLib.Option(_option.poType, _option.side, OptionLib.OptionStatus.Draft, _option.holder, _id, block.timestamp,  0, _option.tenor, 0,  0, _option.amount, _price, _option.strike, _option.spread, _vol, _premium, _collateral, _option.pool, _exposure, _fee));}
 
   // function to stamp option as an active contract, only executable by Exchange contract as owner
   // arguments: contract id and holder address
@@ -66,6 +81,8 @@ contract OptionVault is EOption, AccessControl{
     address _poolAddress = _option.pool;
     mUnderCollateral[_poolAddress] += _option.getUnderCollateral();
     mFundCollateral[_poolAddress] += _option.sellFundCollateral();
+    mShortPremiums[_poolAddress] += _option.side == OptionLib.OptionSide.Sell? _option.premium: 0;
+
     if(_option.poType == OptionLib.PayoffType.Call || _option.poType == OptionLib.PayoffType.CallSpread){
       mExposureUp[_poolAddress] += _option.exposure;}
     else{
@@ -86,95 +103,74 @@ contract OptionVault is EOption, AccessControl{
 
     mUnderCollateral[_poolAddress] -= Math.min(mUnderCollateral[_poolAddress], _option.getUnderCollateral());
     mFundCollateral[_poolAddress] -= Math.min(mFundCollateral[_poolAddress], _option.sellFundCollateral());
+    mShortPremiums[_poolAddress] -= Math.min(mShortPremiums[_poolAddress], _option.side == OptionLib.OptionSide.Sell? _option.premium: 0);
 
     if(_option.poType == OptionLib.PayoffType.Call || _option.poType == OptionLib.PayoffType.CallSpread){
       mExposureUp[_poolAddress] -= _option.exposure;}
     else{
       mExposureDown[_poolAddress] -= _option.exposure;}
    
-    _option.status = OptionLib.OptionStatus.Expired;
-    _option.exerciseTime = block.timestamp;}
-
-  // functions to get information of the option list -> ONLY USED in VIEW, gas cost unlimited
-  function getHolderOptions(address _pool, address _address) external view returns(uint256[] memory){
-    return mHolderAtiveOption[_pool][_address].values();}
-  function getOption(uint256 _id) external view returns(OptionLib.Option memory) {return aOption[_id];}
-  function getActiveOptionCount(address _poolAddress) public view returns(uint256) {return mActiveOption[_poolAddress].length();}
-  function getActiveOptions(address _poolAddress) external view returns(uint256[] memory) {return mActiveOption[_poolAddress].values();}
-
-  function getOptionInfo(uint256 _id) external view returns(OptionLib.OptionStatus, OptionLib.OptionSide, address, Pool) {
-    require(_id< aOption.length, '-ID');
-    return (aOption[_id].status, aOption[_id].side, aOption[_id].holder, Pool(aOption[_id].pool));}
+    _option.status = (msg.sender == _option.holder)? OptionLib.OptionStatus.Exercised: OptionLib.OptionStatus.Expired;
+    _option.exerciseTime = block.timestamp;
+  }
 
   // contract payoff of specified contract ID
-  function getContractPayoff(uint256 _id) external view returns(uint256 _payoff, uint256 _payback, uint256 _collateral){
+  function getContractPayoff(uint256 _id) external view returns(uint256 _toHolder, uint256 _toProtocol, uint256 _toExerciser){
     Pool _pool = Pool(aOption[_id].pool);
     VolatilityChain _volChain = _pool.marketMaker().getVolatilityChain();
-    return aOption[_id].calcPayoff(_volChain.queryPrice());}
+    uint256 _price = _volChain.queryPrice();
     
-  // check if any option contract is expiring
-  function anyOptionExpiring(address _poolAddress) external view returns(bool _isExpiring) {
-    _isExpiring = false;
-    uint256 _count = mActiveOption[_poolAddress].length();
-    for(uint256 i=0;i<_count;i++){
-      if(aOption[uint256(mActiveOption[_poolAddress].at(i))].isExpiring()){
-        _isExpiring = true;
-        break;}}}
-
-  // get the id of any expiring contract -> please only run it on view function as it has unlimited gas usage.
-  function getExpiringOptionId(address _poolAddress) external view returns(uint256 _id){
-    // uint256[] memory _id;
-    uint256 _count = mActiveOption[_poolAddress].length();
-    for(uint256 i=0;i<_count;i++){
-      uint256 _id_i = uint256(mActiveOption[_poolAddress].at(i));
-      if(aOption[_id_i].isExpiring()){
-        _id = _id_i;
-        break;}}}
-
-  function calcOptionCost(OptionLib.Option memory _option) external view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _annualisedVol, int256 _exposure){
-    _price = getPrice(_option);
-    (uint256 _volT, uint256 _maxExposure, uint256 _sqrt, uint256 _interest) = getOptionParams(_option);
     
-    uint256 _impVol;
-    if(_option.poType == OptionLib.PayoffType.Call || _option.poType == OptionLib.PayoffType.CallSpread){
-      (_impVol, _exposure) = calcCallOptionCost(_option, _price, _volT, _maxExposure);
+    _toHolder = aOption[_id].calcPayoff(_price);
+    _toProtocol = aOption[_id].fee;
+    _toExerciser = aOption[_id].amount.ethmul(_price).muldiv(aOption[_id].tenor, SECONDS_1Y).ethmul(_pool.exerciseFee());
+    
+    if(aOption[_id].side == OptionLib.OptionSide.Buy){
+      _toHolder = _toHolder - Math.min(_toHolder, _toExerciser);
     }
-    else{
-      (_impVol, _exposure) = calcPutOptionCost(_option, _price, _volT, _maxExposure);
-    }
-    _annualisedVol = _impVol.ethmul(_sqrt);
-    _premium = _option.calcPremium(_price, _impVol, _interest);
-    _collateral = _option.calcCollateral(_price, _premium);
   }
 
-  function getPrice(OptionLib.Option memory _option) public view returns (uint256 _price){
-    Pool _pool = Pool(_option.pool);
-    return _pool.marketMaker().getVolatilityChain().queryPrice();
+  // contract unwind value of specified contract ID. no exerciser as only holder can unwind exiting contract
+  function calcOptionUnwindValue(uint256 _id) external view returns(uint256 _toHolder, uint256 _toProtocol){
+    OptionLib.Option memory _option = getOption(_id);
+    _option.side = _option.side == OptionLib.OptionSide.Buy? OptionLib.OptionSide.Sell: OptionLib.OptionSide.Buy;
+    
+    (uint256 _premium, , uint256 _price , , ) = calcOptionCost(_option);
+    uint256 _feeProrata = _option.fee.muldiv(((_option.effectiveTime > 0) && (_option.maturity > _option.effectiveTime)) ? Math.min(_option.tenor, Math.max(block.timestamp, _option.maturity) - _option.effectiveTime): _option.tenor, _option.tenor);
+
+    _toHolder = _option.side == OptionLib.OptionSide.Buy? (_option.calcCollateral(_price, _premium) - _premium ): _premium; // collateral for buy backs
+    _toHolder = _toHolder + _option.fee - _feeProrata;
+    _toProtocol = _feeProrata;
   }
 
-  function getOptionParams(OptionLib.Option memory _option) public view returns(uint256 _vol, uint256 _maxExposure, uint256 _sqrt, uint256 _interest){
+  function calcOptionCost(OptionLib.Option memory _option) public view returns(uint256 _premium, uint256 _collateral, uint256 _price, uint256 _annualisedVol, uint256 _fee){
     Pool _pool = Pool(_option.pool);
     MarketMaker _market = _pool.marketMaker();
     VolatilityChain _volChain = _market.getVolatilityChain();
-    return (_volChain.queryVol(_option.tenor), calcCapital(_pool, false, false), _volChain.getSqrtRatio(_option.tenor), _market.loanInterest());
+    _price = _volChain.queryPrice();
+
+    (uint256 _impVol, ) = calcOptionExposure(_option, _price, _volChain.queryVol(_option.tenor), calcCapital(_pool, false, false));
+    
+    _annualisedVol = _impVol.ethmul(_volChain.getSqrtRatio(_option.tenor));
+    _premium = _option.calcPremium(_price, _impVol, _market.loanInterest());
+    _collateral = _option.side == OptionLib.OptionSide.Sell? _option.calcCollateral(_price, _premium): 0;
+    _fee = _option.amount.ethmul(_price).muldiv(_option.tenor, SECONDS_1Y).ethmul(_market.govToken().protocolFee());
   }
 
-  function calcCallOptionCost(OptionLib.Option memory _option, uint256 _price, uint256 _volT, uint256 _maxExposure) public view returns(uint256 _impVol, int256 _exposureUp){
+  function calcOptionExposure(OptionLib.Option memory _option, uint256 _price, uint256 _volT, uint256 _maxExposure) public view returns(uint256, int256){
     Pool _pool = Pool(_option.pool);
     uint256 _exposureSigma = _pool.exposureSigma();
     uint256 _capacityFactor = _pool.volCapacityFactor();
-    uint256 _priceUp = _price.ethmul(BASE + _volT.ethmul(_exposureSigma));
-    int256 _currentExposure = mExposureUp[_option.pool];
-    (_impVol, _exposureUp) = _option.quoteCallVol(_priceUp, _volT, _capacityFactor, _currentExposure , _maxExposure );  
-  }
-
-  function calcPutOptionCost(OptionLib.Option memory _option, uint256 _price, uint256 _volT, uint256 _maxExposure) public view returns(uint256 _impVol, int256 _exposureDown){
-    Pool _pool = Pool(_option.pool);
-    uint256 _exposureSigma = _pool.exposureSigma();
-    uint256 _capacityFactor = _pool.volCapacityFactor();
-    uint256 _priceDown = _price.ethdiv(BASE + _volT.ethmul(_exposureSigma));
-    int256 _currentExposure = mExposureDown[_option.pool];
-    (_impVol, _exposureDown) = _option.quotePutVol(_priceDown, _volT, _capacityFactor, _currentExposure, _maxExposure);  
+    if(_option.poType == OptionLib.PayoffType.Call || _option.poType == OptionLib.PayoffType.CallSpread){
+      uint256 _priceAfter = _price.ethmul(BASE + _volT.ethmul(_exposureSigma));
+      int256 _currentExposure = mExposureUp[_option.pool];
+      return _option.quoteCallVol(_priceAfter, _volT, _capacityFactor, _currentExposure , _maxExposure);  
+    }
+    else{
+      uint256 _priceAfter = _price.ethdiv(BASE + _volT.ethmul(_exposureSigma));
+      int256 _currentExposure = mExposureDown[_option.pool];
+      return _option.quotePutVol(_priceAfter, _volT, _capacityFactor, _currentExposure, _maxExposure);  
+    }
   }
     
   // functions related to capital calculation, addition and removals
@@ -187,9 +183,8 @@ contract OptionVault is EOption, AccessControl{
 
     address _poolAddress = address(_pool);
     uint256 _collateral = mUnderCollateral[_poolAddress].ethmul(_price) + mFundCollateral[_poolAddress];
-    _capital -= Math.min(_collateral, _capital);
+    _capital = _capital - Math.min(_collateral, _capital) + mShortPremiums[_poolAddress];
     
-
     if(_net){ 
       uint256 _exposure = mExposureUp[_poolAddress].absmax(-mExposureDown[_poolAddress]).ethmul(_price);
       _capital -= Math.min(_exposure, _capital);}
@@ -201,5 +196,6 @@ contract OptionVault is EOption, AccessControl{
       else if(_poolSupply == 0 && _capital == 0) {
         _capital = BASE;}}
     
-    return _capital;}
+    return _capital;
+  }
 }

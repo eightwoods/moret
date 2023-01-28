@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -24,16 +24,20 @@ contract VolatilityToken is ERC20{
         underlying = _underlying;
         exchange = _exchange;}
 
-    function getMintAmount(uint256 _premium, uint256 _vol) external view returns(uint256 _mintAmount, uint256 _volPrice){
+    function calcAmount(uint256 _premium, uint256 _vol, bool _mint) external view returns(uint256 _amount, uint256 _volPrice){
         uint256 _supply = totalSupply();
-        _volPrice = _supply > 0? _vol.max(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply)): _vol;
-        _mintAmount = _premium.ethdiv(_volPrice);}
-
-    function getBurnAmount(uint256 _premium, uint256 _vol) external view returns(uint256 _burnAmount, uint256 _volPrice){
-        uint256 _supply = totalSupply();
-        _volPrice = _supply > 0? _vol.min(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply)): _vol;
-        _burnAmount = _premium.ethdiv(_volPrice);}
-
+        _volPrice = _vol;
+        if(_supply > 0){
+            if(_mint){
+                _volPrice = _vol.max(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply));
+            }
+            else{
+                _volPrice = _vol.min(MarketLib.balanceDef(funding, address(this)).ethdiv(_supply));
+            }
+        }
+        _amount = _premium.ethdiv(_volPrice);
+    }
+    
     function mint(address _account, uint256 _amount) external {
         require(msg.sender == exchange, "-vtEx");
         _mint(_account, _amount);}

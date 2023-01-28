@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -14,7 +14,7 @@ contract Pool is ERC20, ERC20Permit, ERC20Votes, Ownable, EOption{
     MarketMaker public immutable marketMaker; // the fixed market maker contract to make markets by providing capital and running hedging programs.
     
     // Governable parameters
-    uint256 public exerciseFee= 0.0025e18;  // Fees paid to exercise bots for exercising expiring option contracts; default: 0.5%
+    uint256 public exerciseFee=  0.01e18;  // Fees paid to exercise bots for exercising expiring option contracts; default: 0.5%
     uint256 public volCapacityFactor = 0.5e18; // volatility capacity factor which determines the curvature of AMM functions; default: 0.5
     uint256 public minVolPrice = 0.5e18; // min annualised vol for trading volatility tokens
     uint256 public exposureSigma = 4e18; // multiplier on price for calculating exposures in AMM

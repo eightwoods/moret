@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -13,11 +13,14 @@ import "../pools/MarketMaker.sol";
 import "../pools/Pool.sol";
 import "../libraries/MathLib.sol";
 import "../libraries/OptionLib.sol";
+import "../libraries/MarketLib.sol";
 
-contract FixedIncomeAnnuity is Ownable, ERC20, ReentrancyGuard{
+contract FixedIndex is Ownable, ERC20, ReentrancyGuard{
     using MathLib for uint256;
     using Math for uint256;
     using SafeERC20 for ERC20;
+    using MarketLib for uint256;
+    using MarketLib for ERC20;
 
     struct FIAParam{uint256 callMoney; uint256 callTenor; uint256 putMoney; uint256 putTenor; uint256 putSpread; uint256 tradeWindow; uint256 leverage; uint256 multiplier;}
     struct VintageStats{uint256 optionAmount; uint256 callStrike; uint256 putStrike; uint256 putSpread; uint256 startLevel; uint256 startNAV;}
@@ -29,6 +32,7 @@ contract FixedIncomeAnnuity is Ownable, ERC20, ReentrancyGuard{
     VolatilityChain public immutable oracle;
     Exchange public immutable exchange;
     ERC20 public immutable funding;
+    uint256 public immutable fundingDecimals;
     uint256 public immutable fundingMultiplier;
     Pool public pool;
 
@@ -49,7 +53,7 @@ contract FixedIncomeAnnuity is Ownable, ERC20, ReentrancyGuard{
         
         funding = ERC20(market.funding());
         funding.increaseAllowance(address(exchange), 2**256 - 1);
-        uint256 fundingDecimals = funding.decimals();
+        fundingDecimals = funding.decimals();
         fundingMultiplier = 10 ** fundingDecimals;
 
         nextRebTime = block.timestamp;
@@ -90,6 +94,7 @@ contract FixedIncomeAnnuity is Ownable, ERC20, ReentrancyGuard{
         emit FIPDivest(msg.sender, _toDivest, assetToDivest);
     }
 
+    // get unit assets in funding token decimals
     function getRollsUnitAsset() public view returns(uint256 unitAsset){
         require(block.timestamp >= nextVintageTime, "Invest is unavailable.");
         uint256[] memory options = exchange.vault().getHolderOptions(address(pool), address(this));
@@ -109,9 +114,9 @@ contract FixedIncomeAnnuity is Ownable, ERC20, ReentrancyGuard{
         require(block.timestamp >= (nextVintageTime + fiaParams.tradeWindow), "pdRolls");
         uint256 unitAsset = getRollsUnitAsset();
         require(unitAsset> 0, "0asset");
-        vintage.startNAV = unitAsset;
+        vintage.startNAV = unitAsset.toWei(fundingDecimals);
 
-        uint256 currentAssets = funding.balanceOf(address(this)).ethdiv(fundingMultiplier);
+        uint256 currentAssets = funding.balanceDef(address(this));
         uint256 currentPrice = oracle.queryPrice();
         vintage.startLevel = currentPrice;
         vintage.optionAmount = currentAssets.ethdiv(currentPrice).muldiv(fiaParams.leverage, fiaParams.multiplier);
@@ -171,5 +176,26 @@ contract FixedIncomeAnnuity is Ownable, ERC20, ReentrancyGuard{
         emit FIPRoll(block.timestamp, nextRebTime, false);
     }
 
+    // returns present value of the whole protocol in funding token decimals.
+    function getPV() external view returns(uint256){
+        OptionVault _vault = exchange.vault();
+        uint256[] memory options = _vault.getHolderOptions(address(pool), address(this));
+        require(options.length <= 2, "options count incorrect");
+
+        uint256 _optionMV = 0;
+        if(options.length >= 1){
+            (uint256 _unwindValue, ) = _vault.calcOptionUnwindValue(options[0]);
+            _optionMV = _optionMV + _unwindValue;
+        }
+        if(options.length == 2){
+            (uint256 _unwindValue, ) = _vault.calcOptionUnwindValue(options[1]);
+            _optionMV = _optionMV + _unwindValue;
+        }
+
+        // add to remaining USDC
+        uint256 _remainingBalance = funding.balanceDef(address(this));
+
+        return _optionMV + _remainingBalance;
+    }
 
 }

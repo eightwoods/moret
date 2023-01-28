@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
@@ -29,7 +29,7 @@ contract PoolFactory {
         );
 
         Pool _pool = Pool(proxy);
-        // _pool.transferOwnership(_timelock);
+        _pool.transferOwnership(msg.sender);
         MoretBroker(_broker).addPool(_pool, false);
 
         emit PoolCreated(proxy);}

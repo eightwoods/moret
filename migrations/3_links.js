@@ -8,15 +8,12 @@ const moret = artifacts.require('./Moret');
 const broker = artifacts.require('./MoretBroker');
 const volChain = artifacts.require("./VolatilityChain");
 const volToken = artifacts.require("./VolatilityToken");
-const fip = artifacts.require('./FixedIncomeAnnuity');
+
 
 module.exports = (deployer) => deployer
     .then(() => linkLibraries(deployer));
 
 async function linkLibraries(deployer) {
-    await deployer.link(mathLib, fip);
-    await deployer.link(optionLib, fip);
-
     await deployer.link(mathLib, optionVault);
     await deployer.link(optionLib, optionVault);
     await deployer.link(marketLib, optionVault);

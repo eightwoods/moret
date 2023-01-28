@@ -88,7 +88,7 @@ module.exports = {
       networkCheckTimeout: 1000000000,
     network_id: 137,       // polygon mainnet's id
     gas: 1e7,
-    gasPrice: 40e9,
+    gasPrice: 60e9,
     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
     timeoutBlocks: 1000,  // # of blocks before a deployment times out  (minimum/default: 50)
     skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
@@ -109,7 +109,7 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.16",    // Fetch exact version from solc-bin (default: truffle's version)
+      version: "0.8.17",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
       // settings: {          // See the solidity docs for advice about optimization and evmVersion
        optimizer: {

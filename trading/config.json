@@ -1,14 +1,14 @@
 {
-    "moretAddress": "0xb12AA22d4b0749a72A1438C6794d2e723CE576d8",
-    "exchangeAddress": "0x63464F921ae0DaEEc9F1ce5E63159558770D5E43",
+    "moretAddress": "0xD294BF485222f50c76591751B69d7A188499B145",
+    "exchangeAddress": "0x117E34f9180696EE310fcF70858de3598F706d6b",
     "poolAddresses": {
-        "ETH": "0xf57d76413Cfa7724F972382B986ACEa91F6f79c8",
-        "BTC": "0xD3A6e60d5A4E4F611072A8AfeCdC3df8a962ee3A"
+        "ETH": "0xbe15Abc2Dffc8a5fdD4A86965Be96176C950E69D",
+        "BTC": "0x1255a5a5c73b95cD63E4e54159b80cB43293e3a8"
     },
     "tokenAddresses": { "ETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "BTC": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6"},
     "aaveAddressesProvider": "0xd05e3E715d945B59290df0ae8eF85c1BdB684744",
     "minTicks": {"ETH": 50, "BTC": 100},
-    "tokens": ["ETH"],
+    "tokens": ["ETH", "BTC"],
     "chainId": 137,
     "maxAmount": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
     "hedgeThreshold": 0.001,

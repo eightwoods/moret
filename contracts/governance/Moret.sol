@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -29,7 +29,7 @@ contract Moret is ERC20, Ownable, ERC20Permit, ERC20Votes, EMoret {
     EnumerableSet.AddressSet internal eligibleTradingRoutes; // list of routes that are allowed for hedging transactions
     EnumerableSet.AddressSet internal volTradingPools; // pools allowed to trade volatility tokens
 
-    uint256 public protocolFee = 0.005e18; // protocol fees payable to governance token each time option contract is exercised
+    uint256 public protocolFee =  0.01e18; // protocol fees payable to governance token each time option contract is exercised
     address public protocolFeeRecipient;
     
     MoretBroker public broker;

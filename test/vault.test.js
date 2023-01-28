@@ -1,26 +1,21 @@
 const { assert } = require("chai");
 
-const FixedIncomeAnnuity = artifacts.require('./FixedIncomeAnnuity');
+const FixedIndex = artifacts.require('./FixedIndex');
+const Perp = artifacts.require('./Perp');
 
-const oneday = 86400;
-const fiaParams = [1.05e6, oneday * 7, 1e6, oneday, 0.95e6, oneday / 12, 0.9e6, 1e6];
-const fipAddress = '0x2285ac4A9f53aD5aC0e36CC727a5a5E5641f6296'
-const poolAddress = '0xE896ad64c88042F4f397DE14f3B034957969616C'
-let token_name = process.env.TOKEN_NAME;
+const poolAddress = '0x33B53299bC6C5D3433AeF84397A1B82e6F7c7E81'
+const oneday = 86400;     
 
 contract("Vault test", async accounts => {
-    it("Add new Vault", async () => {
+    // deploy fixed index annuity
+    it("Add new FI", async () => {
+        const fiaParams = [1.05e6, oneday * 28, 1e6, oneday * 7, 0.95e6, oneday, 0.9e6, 1e6];
+        
         const account_one = accounts[0];
 
-        const fipName = 'Moret Variable Income ' + token_name;
-        const fipSymbol = token_name + 'mvip'; 
-
-        // const exchangeInstance = await Exchange.deployed();
-        // const vaultInstance = await OptionVault.deployed();
-        // const moretInstance = await Moret.deployed();
-
-        const fipInstance = await FixedIncomeAnnuity.new(poolAddress, fipName, fipSymbol, fiaParams);
+        const fipInstance = await FixedIndex.new(poolAddress, 'Moret Fixed Index ' + process.env.TOKEN_NAME, process.env.TOKEN_NAME + 'fi', fiaParams);
         // console.log(fipInstance.address);
+
         const fundingAddress = await fipInstance.funding();
         const funding = await ERC20.at(fundingAddress);
         
@@ -36,26 +31,12 @@ contract("Vault test", async accounts => {
         console.log(web3.utils.fromWei(initialTokens));
     })
 
-    it("Vault rolls", async () => {
+    it("FI rolls", async () => {
         const account_one = accounts[0];
 
-        const fipInstance = await FixedIncomeAnnuity.at(fipAddress);
+        var fipInstance = await FixedIndex.at(fipAddress);
         await fipInstance.setParameters(fiaParams);
-        
-        // let unitAssets = await fipInstance.getRollsUnitAsset();
-        // let params = await fipInstance.fiaParams();
-
-        // const funding = await ERC20.at(web3.utils.toChecksumAddress(process.env.STABLE_COIN_ADDRESS));
-        // let currentAssets = await funding.balanceOf(fipInstance.address);
-
-        // let oracleAddress = await fipInstance.oracle();
-        // let oracle = await VolatilityChain.at(oracleAddress);
-        // let spotPrice = await oracle.queryPrice();
-        // let optionAmount = Number(currentAssets) / 1e6 / parseFloat(web3.utils.fromWei(spotPrice))
-
-        // let callStrike = parseFloat(web3.utils.fromWei(spotPrice)) * Number(params[0]) / 1e6
-        
-        // let optionPrice = await exchange.queryOption(web3.utils.toChecksumAddress(process.env.POOL), params[1], web3.utils.toWei(callStrike.toFixed(18)), web3.utils.toWei(optionAmount.toFixed(18)) , 0, 1, 0);
+        var params = await fipInstance.fiaParams();
 
         await fipInstance.rollover({ from: account_one });
 
@@ -70,5 +51,41 @@ contract("Vault test", async accounts => {
         let option = await vaultInstance.getOption(optionList[0])
         console.log(web3.utils.fromWei(optionCount));
     })
+
+    // deploy perps
+    it("Add new Perp", async () => {
+        // strike, strike2, leverage, critical level and 0.03% daily penalty fee which is ~10% annually
+        var params = [0.75, 0.8, 3.5, 2.5, 0.0003] // for 3x perp
+        // var params = [0.55, 0.6, 2, 1.75, 0.0003] // for 2x perp
+        var tokenDescription = 'Moret Perpetual ' + process.env.TOKEN_NAME + ' ' + ((params[2] + params[3]) / 2).toFixed(0) + 'x'
+        var tokenSymbol = process.env.TOKEN_NAME + ((params[2] + params[3]) / 2).toFixed(0) + 'x'
+        var perpParams = [true, web3.utils.toWei(params[0].toString()), web3.utils.toWei(params[1].toString()), web3.utils.toWei(params[2].toString()), web3.utils.toWei(params[3].toString()), web3.utils.toWei(params[4].toString()), oneday*30]
+        
+        const account_one = accounts[0];
+
+        var perpInstance = await Perp.new(poolAddress, tokenDescription, tokenSymbol, perpParams)
+        console.log(perpInstance.address);
+
+        let currentLev = await perpInstance.getCurrentLeverage();
+        console.log(web3.utils.fromWei(currentLev))
+
+        const fundingAddress = await perpInstance.funding();
+        const fundingDecimals = await perpInstance.fundingDecimals();
+        const funding = await ERC20.at(fundingAddress);
+
+        const initialInvest = 0.1 * (10 ** fundingDecimals);
+        await funding.approve(perpInstance.address, process.env.MAX_AMOUNT, { from: account_one });
+        // await funding.transfer(perpInstance.address, web3.utils.toBN(initialInvest), {from:account_one});
+        await perpInstance.invest(web3.utils.toBN(initialInvest), { from: account_one });
+        await perpInstance.createOption({ from: account_one })
+        await perpInstance.unwindOption({ from: account_one })
+        await perpInstance.setLiquidation(true, { from: account_one })
+        
+        // await perpInstance.divest(web3.utils.toBN(initialInvest), { from: account_one });
+
+        let initialTokens = await perpInstance.balanceOf(account_one);
+        console.log(web3.utils.fromWei(initialTokens));
+    })
+
 })
 

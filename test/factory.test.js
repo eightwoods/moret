@@ -27,7 +27,6 @@ const OptionVault = artifacts.require('./OptionVault');
 const initialCapital = 1;
 const optionAmount = 1e16;
 let token_address = web3.utils.toChecksumAddress(process.env.TOKEN_ADDRESS);
-let token_name = process.env.TOKEN_NAME;
 
 contract("Factory test", async accounts => {
     it("add hedging bot", async () => {
@@ -41,7 +40,7 @@ contract("Factory test", async accounts => {
 
         const moretInstance = await Moret.deployed();
         // const volChainInstance = await VolatilityChain.deployed();
-        // const volChainInstance = await VolatilityChain.new(web3.utils.toChecksumAddress(process.env.CHAINLINK_FEED), 8, token_name, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT));
+        // const volChainInstance = await VolatilityChain.new(web3.utils.toChecksumAddress(process.env.CHAINLINK_FEED), 8, process.env.TOKEN_NAME, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT));
         // await volChainInstance.resetVolParams(one.seconds, one.params);
         // await volChainInstance.resetVolParams(seven.seconds, seven.params);
         // await volChainInstance.resetVolParams(thirty.seconds, thirty.params);
@@ -70,17 +69,17 @@ contract("Factory test", async accounts => {
         // add 1d, 7d and 30d vol tokens
         var exchangeInstance = await Exchange.deployed();
         // await deployer.link(mathLib, volToken);
-        var volToken = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, one.seconds, [token_name, one.ext, 'days'].join(' '), [token_name, one.ext].join(''), exchangeInstance.address);
+        var volToken = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, one.seconds, [process.env.TOKEN_NAME, one.ext, 'days'].join(' '), [process.env.TOKEN_NAME, one.ext].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, one.seconds, volToken.address, { from: account_one });
         outVolToken = await moretInstance.getVolatilityToken(token_address, one.seconds);
         assert.equal(outVolToken, volToken.address, '1d vol token not deployed correctly')
 
-        volToken = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, seven.seconds, [token_name, seven.ext, 'days'].join(' '), [token_name, seven.ext].join(''), exchangeInstance.address);
+        volToken = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, seven.seconds, [process.env.TOKEN_NAME, seven.ext, 'days'].join(' '), [process.env.TOKEN_NAME, seven.ext].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, seven.seconds, volToken.address, {from: account_one} );
         outVolToken = await moretInstance.getVolatilityToken(token_address, seven.seconds);
         assert.equal(outVolToken, volToken.address, '7d vol token not deployed correctly')
 
-        volToken = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, thirty.seconds, [token_name, thirty.ext, 'days'].join(' '), [token_name, thirty.ext].join(''), exchangeInstance.address);
+        volToken = await VolatilityToken.new(process.env.STABLE_COIN_ADDRESS, token_address, thirty.seconds, [process.env.TOKEN_NAME, thirty.ext, 'days'].join(' '), [process.env.TOKEN_NAME, thirty.ext].join(''), exchangeInstance.address);
         await moretInstance.updateVolToken(token_address, thirty.seconds, volToken.address, {from: account_one});
         outVolToken = await moretInstance.getVolatilityToken(token_address, thirty.seconds);
         assert.equal(outVolToken, volToken.address, '30d vol token not deployed correctly')
@@ -100,21 +99,21 @@ contract("Factory test", async accounts => {
 
         let factoryCount = await marketFactoryInstance.count();
         let salt = web3.utils.keccak256(factoryCount.toString());
-        let marketMakerDescription = web3.utils.fromAscii('MarketMaker ' + token_name);
+        let marketMakerDescription = web3.utils.fromAscii('MarketMaker ' + process.env.TOKEN_NAME);
         await marketFactoryInstance.deploy(salt, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT), token_address, marketMakerDescription, {from: account_one});
         let marketAddress = await marketFactoryInstance.computeAddress(salt, web3.utils.toChecksumAddress(process.env.RELAY_ACCOUNT), token_address, marketMakerDescription);
         let market = await MarketMaker.at(marketAddress);
         let outHedgingCost = await market.hedgingCost();
         assert.equal(web3.utils.fromWei(outHedgingCost), 0.003, 'wrong MarketMaker fees');
 
-        let poolName = token_name + ' Pool';
-        let poolSymbol = token_name + 'mp';
+        let poolName = process.env.TOKEN_NAME + ' Pool';
+        let poolSymbol = process.env.TOKEN_NAME + 'mp';
 
         await poolFactoryInstance.deploy(salt, poolName, poolSymbol, marketAddress, brokerInstance.address, { from: account_one });
         let poolAddress = await poolFactoryInstance.computeAddress(salt, poolName, poolSymbol, marketAddress);
         let pool = await Pool.at(poolAddress);
         let outExerciseFee = await pool.exerciseFee();
-        assert.equal(web3.utils.fromWei(outExerciseFee), 0.0025, 'wrong Pool fees');
+        assert.equal(web3.utils.fromWei(outExerciseFee), 0.01, 'wrong Pool fees');
 
         await poolGovFactoryInstance.deploy(salt, poolAddress, {from: account_one});
         let poolGovBytecode = web3.utils.soliditySha3(Govern.bytecode, web3.eth.abi.encodeParameters(['address'], [poolAddress]));

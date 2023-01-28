@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 library VaultLib {
     struct FIAParam{uint256 callMoney; uint256 callTenor; uint256 putMoney; uint256 putTenor; uint256 putSpread; uint256 tradeWindow; }

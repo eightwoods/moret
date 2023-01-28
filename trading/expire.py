@@ -5,7 +5,8 @@ import library as lib
 import os 
 from datetime import datetime
 
-tokensList = ['ETH']
+chainId = 137
+tokensList = ['ETH','BTC']
 
 web3 = Web3(Web3.HTTPProvider(lib.infuraUrl()))
 web3.eth.defaultAccount = Account.from_key(os.environ['MNEMONIC']).address
@@ -22,13 +23,15 @@ vault = lib.contract(web3, vaultAddress, 'OptionVault.json')
 for token in tokensList:
     tokenAddress = lib.tokenAddress(token)
     pools = broker.functions.getAllPools(tokenAddress).call()
+    print(token, pools)
     for pool in pools:
         any_expiring = vault.functions.anyOptionExpiring(pool).call()
         if any_expiring:
-            # expireId = vault.function.getExpiringOptionId(pool).call()
+            expireId = vault.functions.getExpiringOptionId(pool).call()
             nonce = web3.eth.get_transaction_count(web3.eth.default_account)
-            txn = exchange.functions.expireOption(pool, web3.eth.default_account).buildTransaction(
-                {'gas': gas, 'from': web3.eth.default_account, 'nonce': nonce, 'chainId': lib.chainId, 'gasPrice': gas_price})
+            print(expireId)
+            txn = exchange.functions.expireOption(expireId, web3.eth.default_account).buildTransaction(
+                {'gas': gas, 'from': web3.eth.default_account, 'nonce': nonce, 'chainId': chainId, 'gasPrice': gas_price})
             signed_txn = web3.eth.account.signTransaction(txn, private_key=os.environ['MNEMONIC'])
             web3.eth.sendRawTransaction(signed_txn.rawTransaction)
 

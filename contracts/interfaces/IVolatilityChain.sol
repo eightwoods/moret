@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.17;
 
 interface IVolatilityChain{
     // tenors, timestamp when volchain block is added and the information on the price stamp 
