@@ -32,6 +32,11 @@
 
 * [x] Launch the first structured products for ETC and BTC
 
+**Jan 2023**
+
+* [x] Launch leveraged perpetual for ETC and BTC
+* [x] Allow traders to unwind of existing options
+
 **Q1 2023**
 
 * [ ] Build partial collateral model using LP tokens

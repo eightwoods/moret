@@ -9,6 +9,7 @@
 ## Trading Guide <a href="#trading" id="trading"></a>
 
 * [Option Traders](trading/how-to-trade.md)
+* [Perpetuals](trading/perpetuals.md)
 * [Volatility Tokens](trading/volatility-tokens.md)
 * [Liquidity Providers](trading/market-making-protocol.md)
 * [Option Vaults](trading/option-vaults.md)
