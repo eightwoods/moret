@@ -23,7 +23,7 @@ contract Perp is ERC20, Ownable, ReentrancyGuard{
     using MarketLib for uint256;
     using OptionLib for OptionLib.Option;
 
-    struct PerpParam{bool long; uint itm; uint itm2; uint leverage; uint criticalLev; uint penalty; uint tenor;}
+    struct PerpParam{bool long; uint itm; uint itm2; uint leverage; uint lower; uint256 upper; uint penalty; uint tenor;}
 
     event PerpInvest(address investor, uint256 tokenUnit, uint256 investAmount);
     event PerpDivest(address investor, uint256 tokenUnit, uint256 divestAmount);
@@ -101,13 +101,13 @@ contract Perp is ERC20, Ownable, ReentrancyGuard{
         }
         uint256 _previousBalance = funding.balanceOf(address(this));
         uint256 _previousSupply = totalSupply();
+        uint256 _redeemAmount = _divestment.min(_previousBalance.muldiv(balanceOf(msg.sender), _previousSupply));
 
         // burn tokens
-        uint256 _burnTokenAmount = _previousSupply.muldiv(_divestment, _previousBalance).min(balanceOf(msg.sender));
+        uint256 _burnTokenAmount = _previousSupply.muldiv(_redeemAmount, _previousBalance);
         _burn(msg.sender, _burnTokenAmount);
 
         // transfer out divestment
-        uint256 _redeemAmount = _previousBalance.muldiv(_burnTokenAmount, _previousSupply);
         require(funding.transfer(msg.sender, _redeemAmount), 'divest error');
 
         // create options
@@ -120,7 +120,7 @@ contract Perp is ERC20, Ownable, ReentrancyGuard{
     function rebalance() external{
         // check bounds: can only reblance if leverage is below threshold
         uint256 _currentLev = getCurrentLeverage();
-        if(_currentLev < params.criticalLev && !liquidating){
+        if(((_currentLev < params.lower) || (_currentLev > params.upper)) && !liquidating){
             // unwind existing option
             if(optionId > 0){
                 exchange.unwindOption(optionId);
@@ -190,12 +190,12 @@ contract Perp is ERC20, Ownable, ReentrancyGuard{
     function getPV() public view returns(uint256 _pv){
         // calculate unwind value, in funding token decimals
         if(optionId > 0){
-            (uint256 _unwindValue, ) = vault.calcOptionUnwindValue(optionId);
+            (uint256 _optionPV, ) = vault.calcOptionUnwindValue(optionId);
 
             // add to remaining USDC
             uint256 _remainingBalance = funding.balanceDef(address(this));
 
-            _pv = _unwindValue + _remainingBalance;
+            _pv = _optionPV + _remainingBalance;
         }
     }
 

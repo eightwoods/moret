@@ -4,8 +4,6 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/IProtocolDataProvider.sol";
-import "../interfaces/ILendingPoolAddressesProvider.sol";
 import "../pools/Pool.sol";
 import "../pools/MarketMaker.sol";
 import "./MathLib.sol";
@@ -16,31 +14,6 @@ library MarketLib {
   uint256 public constant LTV_DECIMALS = 4;
   uint256 public constant DECIMALS = 18;
   uint256 internal constant BASE  = 1e18;
-
-  // Returns balances of ERC20 token (as for _tokenAddress), its corresponding aToken (i.e. collaterals posted), and its debt tokens (including both variable and fixed loans)
-  function getTokenBalances(address _contractAddress, IProtocolDataProvider _protocolDataProvider, ERC20 _token) external view returns(uint256, uint256, uint256) {
-    (address _aToken, address _stableLoan, address _variableLoan) = _protocolDataProvider.getReserveTokensAddresses(address(_token));
-    return (balanceDef(_token, _contractAddress), balanceDef(ERC20(_aToken), _contractAddress),balanceDef(ERC20(_stableLoan), _contractAddress) + balanceDef(ERC20(_variableLoan), _contractAddress)); }
-
-  function getLTV(IProtocolDataProvider _protocolDataProvider, address _tokenAddress) public view returns (uint256) {
-    (, uint256 _ltv, ,,,,,,, ) = _protocolDataProvider.getReserveConfigurationData(_tokenAddress);
-    return toWei(_ltv, LTV_DECIMALS); } 
-    
-  function getLoanTrade(address _contractAddress, IProtocolDataProvider _protocolDataProvider, int256 _aggregateDelta, ERC20 _underlying, bool _useVariableRate) external view returns(int256 _loanChange, uint256 _targetLoan, address _loanAddress){
-    ( , address _stableLoanAddress,  address _variableLoanAddress) = _protocolDataProvider.getReserveTokensAddresses(address(_underlying));
-    _loanAddress = _useVariableRate? _variableLoanAddress: _stableLoanAddress;
-    uint256 _debtBalance = balanceDef(ERC20(_loanAddress), _contractAddress);
-    _targetLoan = _aggregateDelta >=0 ? 0: uint256(-_aggregateDelta);
-    _loanChange = SafeCast.toInt256(_targetLoan) - SafeCast.toInt256(_debtBalance);}
-  
-  function getCollateralTrade(address _contractAddress, IProtocolDataProvider _protocolDataProvider, uint256 _targetLoan, uint256 _price, ERC20 _funding, ERC20 _underlying, uint256 _overCollateral) external view returns(int256 _collateralChange, address _collateralAddress) {
-    (_collateralAddress, , ) = _protocolDataProvider.getReserveTokensAddresses(address(_funding));
-    uint256 _ltv = getLTV(_protocolDataProvider, address(_underlying));
-    uint256 _collateralBalance = balanceDef(ERC20(_collateralAddress), _contractAddress);
-    uint256 _requiredCollateral = _targetLoan.muldiv(_price , _ltv).accrue(_overCollateral);
-    uint256 _fundingBalance = balanceDef(_funding, _contractAddress);
-    require(_requiredCollateral<= (_fundingBalance + _collateralBalance), "Insufficient collateral;");
-    _collateralChange =  SafeCast.toInt256(_requiredCollateral) - SafeCast.toInt256(_collateralBalance);}
 
   function balanceDef(ERC20 _token, address _accountAddress) public view returns(uint256){
     return toWei(_token.balanceOf(_accountAddress), _token.decimals());}

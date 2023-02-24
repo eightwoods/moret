@@ -37,15 +37,28 @@ library OptionLib {
 
   function calcIntrinsicValue(Option memory _option, uint256 _price) public pure returns(uint256){
     uint256 _intrinsicValue = 0;
-    if((_option.poType == PayoffType.Call) && (_price > _option.strike)){ _intrinsicValue = _price - _option.strike; }
-    if((_option.poType == PayoffType.Put) && (_price < _option.strike)){ _intrinsicValue = _option.strike - _price;}
+    if((_option.poType == PayoffType.Call) && (_price > _option.strike)){
+      _intrinsicValue = _price - _option.strike; 
+    }
+    if((_option.poType == PayoffType.Put) && (_price < _option.strike)){ 
+      _intrinsicValue = _option.strike - _price;
+    }
     if((_option.poType == PayoffType.CallSpread) && (_price > _option.strike)) {
-      if(_price >= _option.strike + _option.spread){ _intrinsicValue = _option.spread;}
-      else{ _intrinsicValue = _price - _option.strike; }}
+      if(_price >= _option.strike + _option.spread){ 
+        _intrinsicValue = _option.spread;
+      }
+      else{ 
+        _intrinsicValue = _price - _option.strike; 
+      }
+    }
     if((_option.poType == PayoffType.PutSpread) && (_price < _option.strike)){
       require(_option.strike > _option.spread, "option spread wrong");
-      if(_price <= _option.strike - _option.spread){ _intrinsicValue = _option.spread;}
-      else{_intrinsicValue = _option.strike - _price;}
+      if(_price <= _option.strike - _option.spread){ 
+        _intrinsicValue = _option.spread;
+      }
+      else{
+        _intrinsicValue = _option.strike - _price;
+      }
     }
     return _intrinsicValue.ethmul(_option.amount); }
 
@@ -55,16 +68,16 @@ library OptionLib {
     uint256 _v = _volatilityByT > BASE? BASE: _volatilityByT; // always in (0, 1]
     uint256 _v0 = (_v / 2).ethdiv(BASE + _v / 2); // base value of v0 when _m = 0, always < 1
     uint256 _v1 = (_v / 2).ethdiv(BASE + _v / 2 - _m); // otm adjustment, always in [_v0, 1]
-    uint256 _adj = _v1.muldiv(_v1 - _v0, BASE - _v0);
-    return _atmPremium.ethmul(_adj).ethmul(_amount);}
+    uint256 _vadj = _v1 - _v0; // ratio adjusted with v0 so that the ratio -> 0 when _m -> 0, always in [0, 1 - _v0]
+    return _atmPremium.ethmul(_vadj).ethmul(_amount);}
 
   function calcPremium(Option memory _option, uint256 _price, uint256 _volatilityByT, uint256 _loanInterest) external pure returns(uint256 _premium){
     uint256 _intrinsicValue = calcIntrinsicValue(_option, _price);
 
-    uint256 _interest = _loanInterest.muldiv( _option.tenor, SECONDS_1Y);
-    int256 _atm_d = SafeCast.toInt256(_volatilityByT/ 2); // d value when at the money
-    uint256 _discount = (_atm_d - SafeCast.toInt256(_volatilityByT)).logistic().discount(_interest);
-    uint256 _atmPremium = _price.ethmul(_atm_d.logistic() - _discount);
+    // uint256 _interest = _loanInterest.muldiv( _option.tenor, SECONDS_1Y);
+    // int256 _atm_d = SafeCast.toInt256(_volatilityByT/ 2); // d1 value when at the money
+    // uint256 _discount = (_atm_d - SafeCast.toInt256(_volatilityByT)).logistic().discount(_interest);
+    uint256 _atmPremium = _price.ethmul(_volatilityByT / 4); // use 0.25 sigma as atm premium to ensure arbitrage free //_atm_d.logistic() - _discount);
     
     uint256 _timeValue = calcTimeValue(_option.strike, _option.amount, _price, _volatilityByT, _atmPremium);
     uint256 _spreadTimeValue = 0;

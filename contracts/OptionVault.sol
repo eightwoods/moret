@@ -61,7 +61,7 @@ contract OptionVault is EOption, AccessControl{
     _id = aOption.length;
     Pool _pool = Pool(_option.pool);
     VolatilityChain _volChain = _pool.marketMaker().getVolatilityChain();
-    (, int256 _exposure) = calcOptionExposure(_option, _price, _volChain.queryVol(_option.tenor), calcCapital(_pool, false, false));
+    (, int256 _exposure) = calcOptionExposure(_option, _price, _volChain.queryVol(_option.tenor), calcCapital(_pool, false, false).ethdiv(_price));
     
     // Arguments: option type, option side, contract status (default to draft), contract holder address, contract id, creation timestamp, effective timestamp (default to 0), tenor in seconds, maturity timestamp (default to 0), excersie timestamp (default to 0), amount or size of contract, current spot price, option strike, implied volatility, calculated premium and total cost including collaterals.
     aOption.push(OptionLib.Option(_option.poType, _option.side, OptionLib.OptionStatus.Draft, _option.holder, _id, block.timestamp,  0, _option.tenor, 0,  0, _option.amount, _price, _option.strike, _option.spread, _vol, _premium, _collateral, _option.pool, _exposure, _fee));}
@@ -120,7 +120,6 @@ contract OptionVault is EOption, AccessControl{
     VolatilityChain _volChain = _pool.marketMaker().getVolatilityChain();
     uint256 _price = _volChain.queryPrice();
     
-    
     _toHolder = aOption[_id].calcPayoff(_price);
     _toProtocol = aOption[_id].fee;
     _toExerciser = aOption[_id].amount.ethmul(_price).muldiv(aOption[_id].tenor, SECONDS_1Y).ethmul(_pool.exerciseFee());
@@ -133,12 +132,13 @@ contract OptionVault is EOption, AccessControl{
   // contract unwind value of specified contract ID. no exerciser as only holder can unwind exiting contract
   function calcOptionUnwindValue(uint256 _id) external view returns(uint256 _toHolder, uint256 _toProtocol){
     OptionLib.Option memory _option = getOption(_id);
-    _option.side = _option.side == OptionLib.OptionSide.Buy? OptionLib.OptionSide.Sell: OptionLib.OptionSide.Buy;
+    bool isBuyOption = _option.side == OptionLib.OptionSide.Buy;
+    _option.side = isBuyOption? OptionLib.OptionSide.Sell: OptionLib.OptionSide.Buy;
     
     (uint256 _premium, , uint256 _price , , ) = calcOptionCost(_option);
     uint256 _feeProrata = _option.fee.muldiv(((_option.effectiveTime > 0) && (_option.maturity > _option.effectiveTime)) ? Math.min(_option.tenor, Math.max(block.timestamp, _option.maturity) - _option.effectiveTime): _option.tenor, _option.tenor);
 
-    _toHolder = _option.side == OptionLib.OptionSide.Buy? (_option.calcCollateral(_price, _premium) - _premium ): _premium; // collateral for buy backs
+    _toHolder = isBuyOption? _premium: (_option.calcCollateral(_price, _premium) - _premium ); // collateral for buy backs
     _toHolder = _toHolder + _option.fee - _feeProrata;
     _toProtocol = _feeProrata;
   }
@@ -149,7 +149,7 @@ contract OptionVault is EOption, AccessControl{
     VolatilityChain _volChain = _market.getVolatilityChain();
     _price = _volChain.queryPrice();
 
-    (uint256 _impVol, ) = calcOptionExposure(_option, _price, _volChain.queryVol(_option.tenor), calcCapital(_pool, false, false));
+    (uint256 _impVol, ) = calcOptionExposure(_option, _price, _volChain.queryVol(_option.tenor), calcCapital(_pool, false, false).ethdiv(_price));
     
     _annualisedVol = _impVol.ethmul(_volChain.getSqrtRatio(_option.tenor));
     _premium = _option.calcPremium(_price, _impVol, _market.loanInterest());
