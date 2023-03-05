@@ -35,15 +35,16 @@
 **Jan 2023**
 
 * [x] Launch leveraged perpetual for ETC and BTC
-* [x] Allow traders to unwind of existing options
 
 **Q1 2023**
 
-* [ ] Build partial collateral model using LP tokens
-* [ ] Build explicit RFQ mode
-* [ ] Deploy on BNB chain
-* [ ] Integrate on NEAR protocol
-* [ ] Cross-chain integration
+* [x] Build partial collateral model including call and put spreads
+* [x] List on DeFiLlama
+* [ ] Launch of 0TDE options
+* [ ] Expand underlying tokens to options other than Bitcoin and Ethereum
+* [ ] Expand leverage offerings of perpetuals
+* [ ] 1st trading competitions
 
-****
+**Q2 2023**
 
+* [ ] Moret token launch
