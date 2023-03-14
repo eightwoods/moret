@@ -69,7 +69,7 @@ $$\lambda$$ is a liquidity pool level parameter setting how sensitive implied vo
 
 ### At option expiry
 
-On Moret, option contracts are European style, meaning they expire at the fixed expiry time and not earlier. To automate the process of expiring contracts while keeping it decentralised, external bots are incentivised to settle the options when they expire, in return for 0.3% of the option payoff in order to compensate for the gas fee.
+On Moret, option contracts are European style, meaning they expire at the fixed expiry time and not earlier. To automate the process of expiring contracts while keeping it decentralised, external bots are incentivised to settle the options when they expire, in return for 1% annualised of the option nominal in order to compensate for the gas fee.
 
 At expiry, the payoff amount will be paid back to the option holders in USDC if they are buyers of the options. For option sellers, collateral amount minus the payoff is paid back in USDC.
 
